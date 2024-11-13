@@ -13,3 +13,4 @@ mobileMenuClose.addEventListener('click', function () {
     mobileMenu.classList.add('translate-x-full');
     mobileMenu.classList.remove('translate-x-0');
 });
+
