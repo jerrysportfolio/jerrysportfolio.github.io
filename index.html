@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="/assets/dist/tailwind.css">
 </head>
 
 <body class="overflow-x-hidden">
@@ -18,7 +19,7 @@
             <nav class="flex justify-between font-medium">
                 <a href="index.html">Jerry Hu</a>
                 <a class="hidden md:inline" href="index.html">Home</a>
-                <a class="hidden md:inline" href="work.html">Work</a>
+                <a class="hidden md:inline" href="https://github.com/AccessRetrieved?tab=repositories">Projects</a>
                 <a class="hidden md:inline" href="about.html">About</a>
                 <a class="hidden md:inline" href="contact.html">Contact</a>
                 <button id="mobile_menu_trigger" class="inline md:hidden"><svg width="24" height="15"
@@ -66,42 +67,50 @@
                 <span class="ml-10">App Postman</span>
                 <a href="https://geeringup.apsc.ubc.ca/"><span class="ml-10">UBC Geering Up Engineering</span></a>
                 <a href="https://globalscholars.yale.edu/"><span class="ml-10">Yale Young Global Scholars</span></a>
+                <a href="https://github.com/AccessRetrieved/codegpt"><span class="ml-10">CodeGPT</span></a>
             </div>
         </div>
         <div class="container grid grid-cols-12 gap-8">
             <div class="col-span-12 md:col-span-6">
                 <!-- Project card -->
-                <a href="https://constellationhub.org" class="block relative mb-16 mt-32">
-                    <img class="relative -z-10" src="assets/img/constellation.jpg" alt="">
+                <a href="https://codegpt-deploy.onrender.com/" class="block relative mb-16">
+                    <img class="relative -z-10" src="assets/img/CodeGPT.jpeg" alt="">
                     <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
-                        <h3 class="text-lg lg:text-xl font-medium">Constellation Networking</h3>
+                        <h3 class="text-lg lg:text-xl font-medium">CodeGPT (2025)</h3>
                     </div>
                 </a>
                 <!-- Project card -->
                 <a href="https://gptnotes.iamjerryhu.org" class="block relative mb-16">
                     <img class="relative -z-10" src="assets/img/gptnotes.jpg" alt="">
                     <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
-                        <h3 class="text-lg lg:text-xl font-medium">GPTNotes</h3>
-                    </div>
-                </a>
-            </div>
-            <div class="col-span-12 md:col-span-6">
-                <!-- Project card -->
-                <a href="" class="block relative mb-16">
-                    <img class="relative -z-10" src="assets/img/postman.jpg" alt="">
-                    <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
-                        <h3 class="text-lg lg:text-xl font-medium">App Postman</h3>
+                        <h3 class="text-lg lg:text-xl font-medium">GPTNotes (2022 - 2023)</h3>
                     </div>
                 </a>
                 <!-- Project card -->
                 <a href="https://accessretrieved.github.io/Music/" class="block relative mb-16">
                     <img class="relative -z-10" src="assets/img/oh-my-music.jpg" alt="">
                     <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
-                        <h3 class="text-lg lg:text-xl font-medium">Oh My Music</h3>
+                        <h3 class="text-lg lg:text-xl font-medium">Oh My Music (2020)</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-span-12 md:col-span-6">
+                <!-- Project card -->
+                <a href="https://constellationhub.org" class="block relative mb-16 mt-40">
+                    <img class="relative -z-10" src="assets/img/constellation.jpg" alt="">
+                    <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
+                        <h3 class="text-lg lg:text-xl font-medium">Constellation Networking (2023 - Present)</h3>
+                    </div>
+                </a>
+                <!-- Project card -->
+                <a href="" class="block relative mb-16">
+                    <img class="relative -z-10" src="assets/img/postman.jpg" alt="">
+                    <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
+                        <h3 class="text-lg lg:text-xl font-medium">App Postman (2021)</h3>
                     </div>
                 </a>
                 <div class="flex">
-                    <a class="flex items-center font-medium ml-auto" href="https://github.com/AccessRetrieved">
+                    <a class="flex items-center font-medium ml-auto mt-auto" href="https://github.com/AccessRetrieved">
                         See all works
                         <svg class="ml-4" width="11" height="18" viewBox="0 0 11 18" fill="none"
                             xmlns="http://www.w3.org/2000/svg">
@@ -119,18 +128,19 @@
     <!--=================================-->
     <section class="pt-16 lg:pt-28 pb-20 lg:pb-40">
         <div class="container relative grid grid-cols-12 gap-8">
-            <h2 class="text-xl lg:text-2xl font-medium col-span-12 lg:col-span-6 mb-12">Awards and honours</h2>
+            <h2 class="text-xl lg:text-2xl font-medium col-span-12 lg:col-span-6 mb-12 animate-bounsce"><a
+                    href="works.html">Awards and honours</a></h2>
         </div>
         <div class="container relative grid grid-cols-12 gap-8">
             <!-- Service card -->
             <div class="col-span-12 md:col-span-4">
-                <h3 class="text-lg lg:text-xl font-medium mb-4">Music competitions</h3>
+                <h3 class="text-lg lg:text-xl font-medium mb-4">Music</h3>
                 <p>2nd place @ Canadian Music Competitions, 1st place @ Vancouver Kiwanis Festivals, 2nd place @ VAYA
                     International Music Festivals, 2nd place @ Canadian Music Festival</p>
             </div>
             <!-- Service card -->
             <div class="col-span-12 md:col-span-4">
-                <h3 class="text-lg lg:text-xl font-medium mb-4">Coding and math competitions</h3>
+                <h3 class="text-lg lg:text-xl font-medium mb-4">Coding and math</h3>
                 <p>Top 5% Honour Roll @ Canadian Computing Competition Junior, Top 25% @ Canadian Computing Competition
                     Senior, School champion @ Pascal Contest, School champion @ Cayley Contest, Top 25% @ Gauss Contest,
                     WRCA Design award, WRCA Science awards, Most oustanding student...</p>
@@ -142,6 +152,11 @@
                     Scholar's '24 SGC II, looking to solve a wide degree of challenge sent across the world (i.e. the
                     future of AI development/ethical issues, energy transition, political polarization, etc.).</p>
             </div>
+            <!-- Service card -->
+            <div class="col-span-12 md:col-span-4">
+                <h3 class="text-lg lg:text-xl font-medium mb-4">Hackathons</h3>
+                <p>Best Hack for Hackers (CodeGPT) at MLH Hacks for Hackers 2025, nwHacks from nwPlus coming up.</p>
+            </div>
         </div>
     </section>
     <!--=================================-->
@@ -151,7 +166,7 @@
         <div class="container relative grid grid-cols-12 gap-8">
             <div
                 class="col-start-1 lg:col-start-4 col-span-12 lg:col-span-6 flex flex-col justify-center text-center mb-16 lg:mb-24 ">
-                <h2 class="text-2xl lg:text-3xl font-medium">Get in touch</h2>
+                <h2 class="text-2xl lg:text-3xl font-medium mb-10">Get in touch</h2>
                 <a href="contact.html"
                     class="bg-primary hover:bg-transparent px-16 py-4 border border-solid border-primary text-white hover:text-primary text-center font-medium rounded-full no-underline col-span-2 self-center transition-colors duration-150">Contact</a>
             </div>
@@ -181,7 +196,7 @@
                 <rect y="17.4246" width="24" height="3" transform="rotate(-45 0 17.4246)" fill="#fff" />
             </svg></button>
         <a href="index.html">Home</a>
-        <a href="work.html">Work</a>
+        <a href="https://github.com/AccessRetrieved?tab=repositories">Projects</a>
         <a href="about.html">About</a>
         <a href="contact.html">Contact</a>
     </div>
