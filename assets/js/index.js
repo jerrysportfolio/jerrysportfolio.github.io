@@ -4,8 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (isMobileDevice()) {
-        document.getElementById('cursor').style.display = 'none';
-        console.log('hidden')
         document.getElementById('projects').innerHTML = `
         <div class="container grid grid-cols-12 gap-8">
             <div class="col-span-12 md:col-span-6">
@@ -131,6 +129,20 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>
 </div>`;
+
+        document.body.innerHTML += `
+        <div id="cursor">
+        <div class="cursor-circle circle-big">
+            <svg height="30" width="30">
+                <circle cx="15" cy="15" r="12" stroke-width="0"></circle>
+            </svg>
+        </div>
+        <div class="cursor-circle circle-small">
+            <svg height="10" width="10">
+                <circle cx="5" cy="5" r="4" stroke-width="0"></circle>
+            </svg>
+        </div>
+    </div>`;
 
         document.getElementById('cursor').style.display = 'block';
         const cursor = document.getElementById("cursor");
