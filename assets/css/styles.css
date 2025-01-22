@@ -1241,3 +1241,43 @@ body {
     font-size: 45.23px;
   }
 }
+
+/* Add this CSS to handle the layout change */
+@media (max-width: 768px) {
+    .project-container {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .project-container > a {
+        width: 100%;
+    }
+}
+
+@media (min-width: 769px) {
+    .project-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+    }
+
+    .project-container > a {
+        width: auto;
+    }
+}
+
+/* Hide mobile content by default */
+.mobile-content {
+    display: none;
+}
+
+/* Show mobile content and hide desktop content on small screens */
+@media (max-width: 768px) {
+    .desktop-content {
+        display: none;
+    }
+
+    .mobile-content {
+        display: block;
+    }
+}
