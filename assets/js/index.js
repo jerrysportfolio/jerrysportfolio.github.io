@@ -144,7 +144,6 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     </div>`;
 
-        document.getElementById('cursor').style.display = 'block';
         const cursor = document.getElementById("cursor");
         const cursorBallBig = document.querySelector(".circle-big");
         const cursorBallSmall = document.querySelector(".circle-small");
