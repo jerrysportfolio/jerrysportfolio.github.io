@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (isMobileDevice()) {
+        document.getElementById('cursor').style.display = 'none';
+        console.log('hidden')
         document.getElementById('projects').innerHTML = `
         <div class="container grid grid-cols-12 gap-8">
             <div class="col-span-12 md:col-span-6">
