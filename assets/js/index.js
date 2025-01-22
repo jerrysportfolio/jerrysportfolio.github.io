@@ -4,8 +4,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (isMobileDevice()) {
-        document.getElementById('cursor').style.display = 'none';
-        
         document.getElementById('projects').innerHTML = `
         <div class="container grid grid-cols-12 gap-8">
             <div class="col-span-12 md:col-span-6">
@@ -132,6 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>`;
 
+        document.getElementById('cursor').style.display = 'block';
         const cursor = document.getElementById("cursor");
         const cursorBallBig = document.querySelector(".circle-big");
         const cursorBallSmall = document.querySelector(".circle-small");
