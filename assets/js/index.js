@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <img class="relative -z-10" src="assets/img/medlinks.jpeg" alt="">
                     <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
                         <h3 class="text-lg lg:text-xl font-medium">Medlinks (2025)</h3>
-                        <p>nwHacks, nwPlus</p>
+                        <p>nwHacks, nwPlus + Major Leagues Hacking</p>
                     </div>
                 </a>
                 <!-- Project card -->
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <img class="relative -z-10" src="assets/img/medlinks.jpeg" alt="">
             <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
                 <h3 class="text-lg lg:text-xl font-medium">Medlinks (2025)</h3>
-                <p>nwHacks, nwPlus</p>
+                <p>nwHacks, nwPlus + Major Leagues Hacking</p>
             </div>
         </a>
         <!-- Project card -->
