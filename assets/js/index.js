@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function () {
     </div>
 </div>`;
 
-        document.body.innerHTML += `
+        document.getElementById('cursor-injection').innerHTML += `
         <div id="cursor">
         <div class="cursor-circle circle-big">
             <svg height="30" width="30">
