@@ -1,0 +1,48 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on pushes to the main branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install Minification and Obfuscation Tools
+        run: |
+          npm install -g terser clean-css-cli html-minifier-terser javascript-obfuscator
+
+      - name: Minify and Obfuscate JavaScript
+        run: |
+          for file in $(find ./assets/js -type f -name "*.js"); do
+            javascript-obfuscator "$file" --output "$file"
+          done
+
+      - name: Minify CSS
+        run: |
+          for file in $(find ./assets/css -type f -name "*.css"); do
+            cleancss -o "$file" "$file"
+          done
+
+      - name: Minify HTML
+        run: |
+          for file in $(find . -type f -name "*.html"); do
+            html-minifier-terser --collapse-whitespace --remove-comments --minify-css true --minify-js true -o "$file" "$file"
+          done
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: .  # Deploy files from the root of the repository
+          clean: true  # Ensures the gh-pages branch is cleaned before deploying
