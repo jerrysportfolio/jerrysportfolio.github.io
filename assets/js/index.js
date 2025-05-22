@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <img class="relative -z-10" src="assets/img/CodeGPT.jpeg" alt="">
                     <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
                         <h3 class="text-lg lg:text-xl font-medium">CodeGPT (2025)</h3>
+                        <p><i>Winner of Best overall hack, 2025</i></p>
                         <p>Hacks for Hackers, Major Leagues Hacking</p>
                     </div>
                 </a>
@@ -75,6 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
             <img class="relative -z-10" src="assets/img/CodeGPT.jpeg" alt="">
             <div class="bg-white w-10/12 pt-4 pr-4 -mt-28">
                 <h3 class="text-lg lg:text-xl font-medium">CodeGPT (2025)</h3>
+                <p><i>Winner of Best overall hack, 2025</i></p>
                 <p>Hacks for Hackers, Major Leagues Hacking</p>
             </div>
         </a>
