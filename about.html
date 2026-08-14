@@ -14,6 +14,7 @@
 </head>
 
 <body class="bg-bg">
+    <div id="cursor-injection"></div>
     <header class="pt-10 lg:pt-8 pb-8 md:pt-28 bg-white">
         <div class="container">
             <nav class="flex justify-between font-medium">
@@ -131,6 +132,13 @@
         <a href="https://github.com/AccessRetrieved?tab=repositories">Projects</a>
         <a href="about.html">About</a>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="assets/js/cursor.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            initCustomCursor({ intro: true });
+        });
+    </script>
     <script src="assets/js/scripts.js"></script>
 </body>
 
