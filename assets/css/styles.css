@@ -1293,3 +1293,9 @@ body {
     width: auto;
   }
 }
+
+@media (max-width: 767px) {
+  .mobile-no-mt {
+    margin-top: 0;
+  }
+}
