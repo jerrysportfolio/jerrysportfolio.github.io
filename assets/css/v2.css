@@ -259,7 +259,7 @@ body.v2{
 }
 
 /* ---------- page header ---------- */
-.v2 .page-header{padding:40px 0 48px; max-width:1180px; margin:0 auto;}
+.v2 .page-header{padding:40px 0 28px; max-width:1180px; margin:0 auto;}
 .v2 .eyebrow{
   font-family:var(--font-code); font-size:.8rem; letter-spacing:.09em; text-transform:uppercase;
   color:var(--accent); font-weight:600; display:block; margin-bottom:10px;
@@ -342,7 +342,7 @@ body.v2{
 .v2 .projects-link{
   font-weight:600; color:var(--accent); font-size:.92rem;
 }
-.v2 .social-row{display:flex; gap:12px; margin-top:4px;}
+.v2 .social-row{display:flex; flex-wrap:wrap; gap:12px; margin-top:4px;}
 .v2 .social-row a{
   width:36px; height:36px; border-radius:50%; border:1px solid var(--line);
   display:flex; align-items:center; justify-content:center; transition:all .2s;
@@ -489,26 +489,55 @@ body.v2{
   padding:24px; box-shadow:var(--shadow-sm); align-self:start; position:sticky; top:24px;
 }
 .v2 .info-card .avatar{
-  width:76px; height:76px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
-  display:flex; align-items:center; justify-content:center; font-family:var(--font-display);
-  font-size:1.5rem; font-weight:600; margin-bottom:14px;
+  width:110px; height:110px; border-radius:50%; object-fit:cover;
+  display:block; margin-bottom:16px;
 }
-.v2 .info-card h2{font-family:var(--font-display); font-size:1.6rem; margin:0 0 4px;}
+.v2 .info-card h2{
+  font-family:var(--font-main); font-size:1.6rem; font-weight:700;
+  letter-spacing:-.02em; margin:0 0 4px;
+}
 .v2 .info-card .role{color:var(--ink-soft); font-size:.9rem; margin-bottom:18px;}
 .v2 .info-row{
-  display:flex; gap:10px; font-size:.88rem; padding:9px 0; border-top:1px solid var(--line); color:var(--ink-soft);
+  display:flex; gap:10px; font-size:.88rem; padding:9px 0; border-top:1px solid var(--line);
+  color:var(--ink-soft); align-items:flex-start;
 }
+.v2 .location-stack{display:flex; flex-direction:column; gap:3px;}
 .v2 .info-row:first-of-type{border-top:none;}
 .v2 .info-row b{color:var(--ink); font-weight:600;}
 
+.v2 .role-list{list-style:none; padding:0; margin:0 0 22px; display:flex; flex-direction:column; gap:8px;}
+.v2 .role-list li{position:relative; padding-left:14px; font-size:.95rem; color:var(--ink-soft);}
+.v2 .role-list li::before{content:"–"; position:absolute; left:0; color:var(--ink-faint);}
+.v2 .role-list .role-title{color:var(--ink); font-weight:600;}
+.v2 .role-list a{color:var(--accent); font-weight:600; text-decoration:underline; text-underline-offset:2px; text-decoration-color:var(--line); transition:text-decoration-color .2s;}
+.v2 .role-list a:hover{text-decoration-color:var(--accent);}
+
 .v2 .chip-list{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 26px;}
 .v2 .skill-chip{
-  border:1px solid var(--line); border-radius:100px; padding:6px 14px; font-size:.85rem;
-  background:var(--paper-card);
+  display:inline-block; border:1px solid var(--line); border-radius:100px; padding:6px 14px; font-size:.85rem;
+  background:var(--paper-card); transition:transform .18s cubic-bezier(.22,1,.36,1), border-color .18s ease, color .18s ease, box-shadow .18s ease;
 }
-.v2 .timeline{list-style:none; padding:0; margin:0 0 30px;}
-.v2 .timeline li{padding:16px 0; border-top:1px solid var(--line);}
-.v2 .timeline li:first-child{border-top:none;}
+.v2 .skill-chip:hover{
+  transform:translateY(-2px); border-color:var(--accent); color:var(--accent); box-shadow:var(--shadow-sm);
+}
+@media (prefers-reduced-motion: reduce){
+  .v2 .skill-chip{transition:border-color .18s ease, color .18s ease;}
+  .v2 .skill-chip:hover{transform:none;}
+}
+.v2 .timeline{list-style:none; padding:0; margin:0 0 30px; position:relative;}
+.v2 .timeline::before{
+  content:""; position:absolute; left:5px; top:6px; bottom:6px; width:1px; background:var(--line);
+}
+.v2 .timeline li{position:relative; padding:0 0 22px 28px;}
+.v2 .timeline li:last-child{padding-bottom:0;}
+.v2 .timeline li::before{
+  content:""; position:absolute; left:0; top:4px; width:11px; height:11px;
+  border-radius:50%; border:1px solid var(--ink-faint); background:var(--paper-card); box-sizing:border-box;
+}
+.v2 .timeline li::after{
+  content:""; position:absolute; left:3px; top:7px; width:5px; height:5px;
+  border-radius:50%; background:var(--ink-faint);
+}
 .v2 .timeline .t-date{
   font-family:var(--font-code); font-size:.75rem; color:var(--ink-faint); text-transform:uppercase;
   letter-spacing:.05em; margin-bottom:4px;
