@@ -412,6 +412,11 @@ body.v2{
   font-family:var(--font-main); font-size:.95rem; transition:all .2s;
 }
 .v2 .load-more:hover{border-color:var(--accent); color:var(--accent);}
+/* An author `display:block` rule always beats the browser's default
+   `[hidden]{display:none}` UA rule regardless of selector specificity — so
+   without this, setting the `hidden` property in JS never actually hid the
+   button; it just kept showing whatever text was rendered right before. */
+.v2 .load-more[hidden]{display:none;}
 
 /* ---------- gallery lightbox: image + metadata panel on the right ---------- */
 .v2 .lightbox{

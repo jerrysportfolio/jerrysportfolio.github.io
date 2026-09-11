@@ -219,8 +219,7 @@
 
     var setButtonState = function () {
       if (!loadMoreBtn) return;
-      if (exhausted) { loadMoreBtn.hidden = true; return; }
-      loadMoreBtn.hidden = false;
+      loadMoreBtn.hidden = exhausted;
       loadMoreBtn.disabled = loading;
       loadMoreBtn.textContent = loading ? 'Loading…' : 'More photographs ↓';
     };
