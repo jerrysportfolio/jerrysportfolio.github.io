@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="750" viewBox="0 0 600 750">
+  <defs>
+    <pattern id="diag" width="14" height="14" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="#f6ede0"/>
+      <line x1="0" y1="0" x2="0" y2="14" stroke="#e6ddc8" stroke-width="6"/>
+    </pattern>
+  </defs>
+  <rect width="600" height="750" fill="url(#diag)"/>
+  <rect x="1" y="1" width="598" height="748" fill="none" stroke="#a1682e" stroke-width="2" stroke-dasharray="6 6"/>
+  <text x="50%" y="46%" text-anchor="middle" font-family="monospace" font-size="42" fill="#1c1a16">PLACEHOLDER: gallery-03.svg</text>
+  <text x="50%" y="56%" text-anchor="middle" font-family="monospace" font-size="30" fill="#5c574a">4:5, any real photo</text>
+</svg>

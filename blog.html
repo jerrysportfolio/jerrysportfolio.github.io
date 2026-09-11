@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[Your Name] — Writing</title>
+    <!-- PLACEHOLDER: favicon, see assets/placeholder/MANIFEST.md -->
+    <link rel="icon" href="assets/placeholder/logo/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Serif+4:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/v2.css">
+</head>
+
+<body class="v2">
+
+    <nav class="navbar">
+        <a class="logo" href="index.html"><span>@</span>[HANDLE]</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="portfolio.html">Portfolio</a>
+            <a href="gallery.html">Gallery</a>
+            <a href="blog.html" class="active">Blog</a>
+            <a href="about.html">About</a>
+        </div>
+        <a class="contact-link" href="mailto:[your@email.com]">Get in touch</a>
+        <button class="nav-toggle" aria-label="Open menu">
+            <svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="22" height="2.4" fill="currentColor" />
+                <rect y="11.6" width="22" height="2.4" fill="currentColor" />
+            </svg>
+        </button>
+        <button class="nav-close" aria-label="Close menu">✕</button>
+    </nav>
+
+    <div class="v2-wrap">
+
+        <div class="page-header">
+            <span class="eyebrow">Notes &amp; observations</span>
+            <h1 class="page-title">Writing</h1>
+            <p class="page-sub fill-me">[One-line subhead — e.g. "Things I'm learning, building, or thinking about."]</p>
+        </div>
+
+        <div class="v2-section">
+
+            <div class="filter-bar">
+                <button class="pill active" data-filter="all">All</button>
+                <button class="pill" data-filter="misc">Misc</button>
+                <button class="pill" data-filter="tech">Tech</button>
+                <button class="pill" data-filter="life">Life</button>
+                <button class="pill" data-filter="literature">Literature</button>
+                <input class="search-input" type="text" placeholder="Search articles">
+            </div>
+
+            <div class="blog-list">
+
+                <a class="blog-row" data-category="tech" href="blog-post.html">
+                    <div class="blog-thumb fill-me">[img]</div>
+                    <div class="b-body">
+                        <div class="b-date fill-me">[Month Day, Year]</div>
+                        <h3 class="fill-me">[Post title — placeholder]</h3>
+                        <p class="fill-me">[One-sentence dek describing the post.]</p>
+                    </div>
+                    <span class="b-tag">Tech</span>
+                </a>
+
+                <a class="blog-row" data-category="life" href="blog-post.html">
+                    <div class="blog-thumb fill-me">[img]</div>
+                    <div class="b-body">
+                        <div class="b-date fill-me">[Month Day, Year]</div>
+                        <h3 class="fill-me">[RECAP Year — placeholder]</h3>
+                        <p class="fill-me">[One-sentence dek describing the post.]</p>
+                    </div>
+                    <span class="b-tag">Life</span>
+                </a>
+
+                <a class="blog-row" data-category="literature" href="blog-post.html">
+                    <div class="blog-thumb fill-me">[img]</div>
+                    <div class="b-body">
+                        <div class="b-date fill-me">[Month Day, Year]</div>
+                        <h3 class="fill-me">[Post title — placeholder]</h3>
+                        <p class="fill-me">[One-sentence dek describing the post.]</p>
+                    </div>
+                    <span class="b-tag">Literature</span>
+                </a>
+
+                <a class="blog-row" data-category="misc" href="blog-post.html">
+                    <div class="blog-thumb fill-me">[img]</div>
+                    <div class="b-body">
+                        <div class="b-date fill-me">[Month Day, Year]</div>
+                        <h3 class="fill-me">[Post title — placeholder]</h3>
+                        <p class="fill-me">[One-sentence dek describing the post.]</p>
+                    </div>
+                    <span class="b-tag">Misc</span>
+                </a>
+
+            </div>
+        </div>
+
+        <footer class="v2-footer">
+            <span>© <span id="v2-year"></span> [Your Name].</span>
+            <div class="footer-links">
+                <a href="about.html">About</a>
+                <a href="rss.xml">RSS</a>
+                <a href="mailto:[your@email.com]">Say hello ↗</a>
+            </div>
+        </footer>
+
+    </div>
+
+    <script src="assets/js/v2.js"></script>
+    <script>document.getElementById('v2-year').textContent = new Date().getFullYear();</script>
+</body>
+
+</html>

@@ -3,143 +3,126 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About</title>
+    <title>[Your Name] — About</title>
+    <!-- PLACEHOLDER: favicon, see assets/placeholder/MANIFEST.md -->
+    <link rel="icon" href="assets/placeholder/logo/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css">
-    <link rel="stylesheet" href="/assets/dist/tailwind.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Serif+4:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/v2.css">
 </head>
 
-<body class="bg-bg">
-    <div id="cursor-injection"></div>
-    <header class="pt-10 lg:pt-8 pb-8 md:pt-28 bg-white">
-        <div class="container">
-            <nav class="flex justify-between font-medium">
-                <a href="index.html">Jerry Hu</a>
-                <a class="hidden md:inline" href="index.html">Home</a>
-                <a class="hidden md:inline" href="https://github.com/AccessRetrieved?tab=repositories">Projects</a>
-                <a class="hidden md:inline" href="about.html">About</a>
-                <button id="mobile_menu_trigger" class="inline md:hidden"><svg width="24" height="15"
-                        viewBox="0 0 24 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect y="0.5" width="24" height="4" fill="#201F27" />
-                        <rect x="12" y="10.5" width="12" height="4" fill="#201F27" />
-                    </svg></button>
-            </nav>
-        </div>
-    </header>
-    <div class="bg-white">
-        <section class="pt-6 pb-8 lg:pb-8">
-        <div class="container grid grid-cols-12 gap-8">
-            <h1 class="text-xl md:text-2xl lg:text-3xl font-medium col-span-12 lg:col-span-8">Who am I?</h1>
-        </div>
-    </section>
-    <!-- <section class="h-64 lg:h-screen-90 w-full bg-no-repeat bg-center bg-cover" style="background-image: url(./images/portrait_big.jpg);"></section> -->
-    <section class="mt-8 lg:mt-24 pb-16">
-        <div class="container grid grid-cols-12 gap-8">
-            <p class="col-span-12 lg:col-span-10 text-lg font-medium mb-8">Computer engineering student at UIUC. As a tech-savvy student who is passionate in the field of CE and Cybersecurity, he has accumulated
-                more than three years of Python, JavaScript, Swift, Java, as well as HTML/CSS background and worked
-                on numerous projects both individually and as a part of a team.</p>
-            <div class="grid grid-cols-1 lg:grid-cols-2 col-span-full mb-8">
-                <h2 class="text-xl font-medium max-w-sm mb-4 lg:mb-0">A bit of my philosophy</h2>
-                <p>Freshman studying Computer Engineering at the University of Illinois Urbana-Champaign. Over the past two years, I have been steadily developing my
-                    skills in Python, Java, and HTML/CSS/JS exploring the vast and intricate world of Artificial
-                    Intelligence (AI) and Computer Science (CS). This journey has involved a range of projects, some
-                    undertaken independently and others as part of a team, where I've learned to apply theoretical
-                    knowledge to practical challenges.
+<body class="v2">
 
-                    My technical portfolio includes proficiency in multiple programming languages such as Python, Java,
-                    Swift, JavaScript, Node.JS, HTML/CSS, and I am in the process of learning C++. This range of
-                    programming languages allows me to approach problems from various angles, although I am still in the
-                    process of deepening my expertise in each.
+    <nav class="navbar">
+        <a class="logo" href="index.html"><span>@</span>[HANDLE]</a>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="portfolio.html">Portfolio</a>
+            <a href="gallery.html">Gallery</a>
+            <a href="blog.html">Blog</a>
+            <a href="about.html" class="active">About</a>
+        </div>
+        <a class="contact-link" href="mailto:[your@email.com]">Get in touch</a>
+        <button class="nav-toggle" aria-label="Open menu">
+            <svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="22" height="2.4" fill="currentColor" />
+                <rect y="11.6" width="22" height="2.4" fill="currentColor" />
+            </svg>
+        </button>
+        <button class="nav-close" aria-label="Close menu">✕</button>
+    </nav>
 
-                    My programming journey began as a self-initiated endeavour during the COVID-19 pandemic. It was
-                    during this time that I immersed myself in learning and applying new programming languages, leading
-                    to the completion of several projects. My interest in computer engineering also led me to explore
-                    DIY hardware projects, such as using the Raspberry Pi and CAD design, which have been both
-                    challenging and rewarding.
-                </p>
-            </div>
-            <!-- <div class="grid grid-cols-1 lg:grid-cols-2 col-span-full mb-8">
-                <h2 class="text-xl font-medium max-w-sm mb-4 lg:mb-0">Past experiences</h2>
-                <div class="flex flex-col">
-                    <div
-                        class="flex justify-between flex-auto font-medium pb-4 mb-6 border-b border-solid border-gray-400">
-                        <span>Director of IT</span>
-                        <span>Millennium STEM BC</span>
-                        <span>Feb 2024 - </span>
+    <div class="v2-wrap">
+
+        <div class="page-header">
+            <span class="eyebrow">Behind the work</span>
+            <h1 class="page-title">About Me</h1>
+            <p class="page-sub fill-me">[One-line subhead — e.g. "Computer Engineering student based in [City]."]</p>
+        </div>
+
+        <div class="about-grid v2-section">
+
+            <aside class="info-card">
+                <div class="avatar">JH</div>
+                <h2>[Your Name]</h2>
+                <div class="role fill-me">[Role / title]</div>
+
+                <div class="info-row"><b>Location</b><span class="fill-me">[City, Country]</span></div>
+                <div class="info-row"><b>Email</b><span class="fill-me">[your@email.com]</span></div>
+                <!-- PLACEHOLDER: resume.pdf, see assets/placeholder/MANIFEST.md -->
+                <div class="info-row"><b>Resume</b><a href="assets/placeholder/resume.pdf" style="color:var(--accent); font-weight:600;">Resume (PDF) ↓</a></div>
+
+                <div class="social-row">
+                    <a href="https://github.com/AccessRetrieved" aria-label="GitHub">GH</a>
+                    <a href="https://www.linkedin.com/in/iamjerryhu/" aria-label="LinkedIn">in</a>
+                    <a href="https://x.com/i_am_jerry_huu" aria-label="X">X</a>
+                    <a href="https://instagram.com/i.am.jerry.hu" aria-label="Instagram">IG</a>
+                </div>
+            </aside>
+
+            <div class="about-content">
+                <p class="fill-me">[Bio paragraph — a few sentences about your background, what you study, what you build, and what you're curious about right now.]</p>
+                <p class="fill-me">[Second paragraph, optional — projects you're proud of, or what got you into this field.]</p>
+
+                <h3>Tech Stack</h3>
+                <div>
+                    <div class="post-meta">Languages</div>
+                    <div class="chip-list">
+                        <span class="skill-chip">Python</span>
+                        <span class="skill-chip">TypeScript</span>
+                        <span class="skill-chip">Java</span>
+                        <span class="skill-chip fill-me">[+more]</span>
                     </div>
-                    <div
-                        class="flex justify-between flex-auto font-medium pb-4 mb-6 border-b border-solid border-gray-400">
-                        <span>Chief Technology Officer</span>
-                        <span>Constellation Networking</span>
-                        <span>Nov 2023 - </span>
-                    </div>
-                    <div
-                        class="flex justify-between flex-auto font-medium pb-4 mb-6 border-b border-solid border-gray-400">
-                        <span>Junior Instructor</span>
-                        <span>UBC Geering Up</span>
-                        <span>May 2024 - </span>
-                    </div>
-                    <div
-                        class="flex justify-between flex-auto font-medium pb-4 mb-6 border-b border-solid border-gray-400">
-                        <span>Yale Young Global Scholars</span>
-                        <span>Yale University</span>
-                        <span>2024</span>
-                    </div>
-                    <div
-                        class="flex justify-between flex-auto font-medium pb-4 mb-6 border-b border-solid border-gray-400">
-                        <span>Photographer</span>
-                        <span>Simon Fraser University</span>
-                        <span>Sep 2023</span>
-                    </div>
-                    <div
-                        class="flex justify-between flex-auto font-medium pb-4 mb-6 border-b border-solid border-gray-400">
-                        <span>Director of IT</span>
-                        <span>Constellation Networking</span>
-                        <span>Sep 2023 - Nov 2023</span>
+                    <div class="post-meta">Frameworks &amp; Tools</div>
+                    <div class="chip-list">
+                        <span class="skill-chip">React</span>
+                        <span class="skill-chip">Node.js</span>
+                        <span class="skill-chip">Tailwind CSS</span>
+                        <span class="skill-chip fill-me">[+more]</span>
                     </div>
                 </div>
-            </div> -->
-        </div>
-    </section>
-    </div>
-    <footer class="pt-10 pb-8 bg-bg">
-        <div class="container relative grid grid-cols-12 gap-8">
-            <div
-                class="col-span-12 md:col-span-10 lg:col-span-8 col-start-1 md:col-start-2 lg:col-start-3 flex flex-col md:flex-row items-center justify-start md:justify-between space-y-4 md:space-y-0 text-lg font-medium mb-8">
-                <a href="https://github.com/AccessRetrieved">Github</a>
-                <a href="https://www.linkedin.com/in/iamjerryhu/">LinkedIn</a>
-                <a href="https://x.com/i_am_jerry_huu">X.</a>
-                <a href="https://instagram.com/i.am.jerry.hu">Instagram</a>
+
+                <h3>Education</h3>
+                <ul class="timeline">
+                    <li>
+                        <div class="t-date fill-me">[Year] — [Year]</div>
+                        <h4 class="fill-me">[Degree] · [School]</h4>
+                        <p class="fill-me">[One sentence about coursework, focus, or achievements.]</p>
+                    </li>
+                </ul>
+
+                <h3>Work</h3>
+                <ul class="timeline">
+                    <li>
+                        <div class="t-date fill-me">[Month Year] — Present</div>
+                        <h4 class="fill-me">[Role] · [Organization]</h4>
+                        <p class="fill-me">[One paragraph describing what you did / are doing.]</p>
+                    </li>
+                    <li>
+                        <div class="t-date fill-me">[Month Year] — [Month Year]</div>
+                        <h4 class="fill-me">[Role] · [Organization]</h4>
+                        <p class="fill-me">[One paragraph describing what you did.]</p>
+                    </li>
+                </ul>
             </div>
+
         </div>
-    </footer>
-    <!--=================================-->
-    <!--==== Mobile Menu ================-->
-    <!--=================================-->
-    <div id="mobile_menu"
-        class="w-full bg-primary text-white flex flex-col justify-center text-2xl space-y-4 fixed right-0 translate-x-full top-0  bottom-0 z-50 pl-8 transition-transform duration-500">
-        <button id="mobile_menu_close" class="absolute top-10 right-4 flex items-center text-base">close <svg
-                class="ml-4" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2.12109" y="0.454041" width="24" height="3" transform="rotate(45 2.12109 0.454041)"
-                    fill="#fff" />
-                <rect y="17.4246" width="24" height="3" transform="rotate(-45 0 17.4246)" fill="#fff" />
-            </svg></button>
-        <a href="index.html">Home</a>
-        <a href="https://github.com/AccessRetrieved?tab=repositories">Projects</a>
-        <a href="about.html">About</a>
+
+        <footer class="v2-footer">
+            <span>© <span id="v2-year"></span> [Your Name].</span>
+            <div class="footer-links">
+                <a href="about.html">About</a>
+                <a href="rss.xml">RSS</a>
+                <a href="mailto:[your@email.com]">Say hello ↗</a>
+            </div>
+        </footer>
+
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
-    <script src="assets/js/cursor.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            initCustomCursor({ intro: true });
-        });
-    </script>
-    <script src="assets/js/scripts.js"></script>
+
+    <script src="assets/js/v2.js"></script>
+    <script>document.getElementById('v2-year').textContent = new Date().getFullYear();</script>
 </body>
 
 </html>
