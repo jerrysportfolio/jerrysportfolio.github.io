@@ -483,7 +483,13 @@ body.v2{
 
 /* ---------- about page ---------- */
 .v2 .about-grid{display:grid; grid-template-columns:300px 1fr; gap:40px;}
-@media (max-width:860px){.v2 .about-grid{grid-template-columns:1fr;}}
+@media (max-width:860px){
+  .v2 .about-grid{grid-template-columns:1fr;}
+  /* The sidebar only makes sense as a sticky rail next to a second column;
+     once the grid collapses to one column it's just another block, and
+     leaving it sticky makes it float over the content scrolling past it. */
+  .v2 .info-card{position:static; top:auto;}
+}
 .v2 .info-card{
   background:var(--paper-card); border:1px solid var(--line); border-radius:var(--radius-md);
   padding:24px; box-shadow:var(--shadow-sm); align-self:start; position:sticky; top:24px;
