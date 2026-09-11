@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[Your Name] — About</title>
+    <title>Jerry Hu — About</title>
     <!-- PLACEHOLDER: favicon, see assets/placeholder/MANIFEST.md -->
     <link rel="icon" href="assets/placeholder/logo/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,7 @@
 <body class="v2" data-page="about">
 
     <nav class="navbar">
-        <a class="logo" href="index.html"><span>@</span>[HANDLE]</a>
+        <a class="logo" href="index.html"><span>@</span>iamjerryhu</a>
         <div class="nav-links">
             <div class="nav-indicator" aria-hidden="true"></div>
             <a href="index.html" data-page="home">Home</a>
@@ -48,18 +48,17 @@
 
             <aside class="info-card">
                 <div class="avatar">JH</div>
-                <h2>[Your Name]</h2>
+                <h2>Jerry Hu</h2>
                 <div class="role fill-me">[Role / title]</div>
 
                 <div class="info-row"><b>Location</b><span class="fill-me">[City, Country]</span></div>
                 <div class="info-row"><b>Email</b><span class="fill-me">[your@email.com]</span></div>
                 <!-- PLACEHOLDER: resume.pdf, see assets/placeholder/MANIFEST.md -->
-                <div class="info-row"><b>Resume</b><a href="assets/placeholder/resume.pdf" style="color:var(--accent); font-weight:600;">Resume (PDF) ↓</a></div>
+                <div class="info-row"><b>Resume</b><a href="assets/placeholder/resume.pdf" id="resume-link" style="color:var(--accent); font-weight:600;">Resume (PDF) ↓</a></div>
 
                 <div class="social-row">
                     <a href="https://github.com/AccessRetrieved" aria-label="GitHub">GH</a>
-                    <a href="https://www.linkedin.com/in/iamjerryhu/" aria-label="LinkedIn">in</a>
-                    <a href="https://x.com/i_am_jerry_huu" aria-label="X">X</a>
+                    <a href="https://linkedin.com/in/iamjerryhu" aria-label="LinkedIn">in</a>
                     <a href="https://instagram.com/i.am.jerry.hu" aria-label="Instagram">IG</a>
                 </div>
             </aside>
@@ -118,7 +117,7 @@
         </main>
 
         <footer class="v2-footer">
-            <span>© <span id="v2-year"></span> [Your Name].</span>
+            <span>© <span id="v2-year"></span> Jerry Hu.</span>
             <div class="footer-links">
                 <a href="about.html">About</a>
                 <a href="rss.xml">RSS</a>
@@ -128,10 +127,11 @@
 
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+    <script src="assets/js/firebase-config.js"></script>
     <script src="assets/js/v2.js"></script>
-<!-- impeccable-live-start -->
-<script src="http://localhost:8400/live.js?token=5354a896-2ffd-4865-8a14-1be3e97b1294"></script>
-<!-- impeccable-live-end -->
 </body>
 
 </html>

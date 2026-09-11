@@ -111,6 +111,46 @@ a small same-origin router:
   `.reading-progress` fresh on every scroll event instead of binding to a specific node,
   so one persistent listener survives any number of page swaps.
 
+## Firebase: Analytics + gallery view/download counters
+
+`assets/js/firebase-config.js` holds `window.FIREBASE_CONFIG` (blank until you paste in
+your project's config — see that file's header comment for the exact setup steps).
+Everything below it no-ops safely when the config is blank or the SDK is blocked, so the
+site works identically with or without Firebase configured.
+
+- **SDK**: compat build (`firebase-app-compat.js`, `-analytics-compat.js`,
+  `-firestore-compat.js`) via CDN `<script>` tags on every page, loaded before
+  `v2.js` — chosen over the modular v9+ SDK so it drops into the site's existing plain
+  `<script>` architecture without converting anything to ES modules.
+- **Analytics**: `initFirebase()` calls `firebase.analytics()` once (auto-logs the first
+  page_view). Every subsequent AJAX route change calls `logPageView()` manually from
+  `setActiveNav()`, since the SPA-style router means the browser never does a real
+  navigation for Analytics to observe on its own.
+- **Gallery counters**: `initGalleryStats()` reads/writes `stats/gallery` in Firestore
+  (`views`, `downloads`, both `FieldValue.increment(1)`). A view only counts once per
+  browser session (`sessionStorage` guard) so reloading or navigating back doesn't
+  inflate it. `window.recordGalleryDownload()` is exposed and ready to wire to a real
+  download control once the gallery has actual downloadable photos — nothing calls it
+  yet.
+- **Resume clicks**: `initResumeTracking()` binds a click listener on `about.html`'s
+  `#resume-link` and logs GA4's own recommended `file_download` event (with
+  `file_name`/`file_extension`/`link_text`/`link_url`) rather than a made-up event name,
+  so it shows up in Analytics' standard File downloads report/funnels.
+- Country, session length, per-page engagement time, most/least-viewed pages, and
+  visitor retention are **not custom-built** — they're standard GA4 reports that Firebase
+  Analytics populates automatically from the `page_view` events already being logged
+  correctly per route. Find them in the linked Google Analytics 4 property
+  (analytics.google.com, not the Firebase console) under Reports → Demographics
+  (country), Engagement → Pages and screens (per-page time, most/least viewed), and
+  Retention. Data typically takes 24–48 hours to start appearing after Analytics goes
+  live on real traffic.
+- **Security**: `firestore.rules` (repo root) locks `stats/gallery` to public read +
+  increment-only writes (each write may raise `views`/`downloads` by at most 1 over the
+  current value, nothing else). This matters because the Firebase config object is
+  necessarily public in client-side JS — the rules, not secrecy, are what stop someone
+  from scripting arbitrary writes from devtools. Deploy the rules file via the Firebase
+  CLI or by pasting it into the Console; it does nothing just sitting in the repo.
+
 ## Placeholder-asset protocol
 
 Every image/file asset that stands in for real content lives under
@@ -121,6 +161,11 @@ full swap-in workflow. Text placeholders use the `[Bracketed]` convention with a
 
 ## Open decisions / things to revisit
 
+- Deferred by request, not yet designed: a Cloud Function to auto-scrape LinkedIn for
+  profile/experience data, and Firebase Remote Config (or similar) to dynamically adjust
+  what the site shows based on Analytics. Scraping LinkedIn specifically is worth
+  re-checking against LinkedIn's ToS before building it — flagging now so it isn't
+  forgotten, not proposing an approach yet.
 - Nav still links to `blog.html`/`blog-post.html` and the footer links to `rss.xml`,
   even though the home page no longer promotes blog posts (swapped for project
   highlights, since this site doesn't run a blog). Decide whether to keep the blog

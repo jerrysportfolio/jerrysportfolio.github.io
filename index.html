@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[Your Name] — Home</title>
+    <title>Jerry Hu — Home</title>
     <!-- PLACEHOLDER: favicon, see assets/placeholder/MANIFEST.md -->
     <link rel="icon" href="assets/placeholder/logo/favicon.svg" type="image/svg+xml">
     <!-- PLACEHOLDER: og:image, see assets/placeholder/MANIFEST.md -->
@@ -18,7 +18,7 @@
 <body class="v2" data-page="home">
 
     <nav class="navbar">
-        <a class="logo" href="index.html"><span>@</span>[HANDLE]</a>
+        <a class="logo" href="index.html"><span>@</span>iamjerryhu</a>
         <div class="nav-links">
             <div class="nav-indicator" aria-hidden="true"></div>
             <a href="index.html" data-page="home" class="active">Home</a>
@@ -59,22 +59,43 @@
             </div>
 
             <div class="bento-cell cell-hero">
-                <!-- PLACEHOLDER: hero photo, see assets/placeholder/MANIFEST.md -->
-                <img src="assets/placeholder/photos/hero.svg" alt="">
-                <div class="hero-quote fill-me">"[a short line — quote, motto, or personal tagline goes here]"</div>
+                <!-- PLACEHOLDER: hero photo, see assets/placeholder/MANIFEST.md.
+                     Swapped for a real photo from your Unsplash profile at runtime by
+                     assets/js/v2.js (initUnsplashHero) once UNSPLASH_CONFIG.accessKey
+                     is set at the top of that file — falls back to this placeholder
+                     otherwise. -->
+                <img src="assets/placeholder/photos/hero.svg" alt="" id="hero-photo">
+                <!-- Filled from a daily-cached random quote by initDailyQuote in v2.js;
+                     keeps this fallback text if the fetch ever fails. -->
+                <div class="hero-quote fill-me" id="hero-quote">"[a short line — quote, motto, or personal tagline goes here]"</div>
+                <div class="hero-credit" id="hero-credit" hidden>Photo by <a id="hero-credit-photographer" href="#" target="_blank" rel="noopener noreferrer">—</a> on <a href="https://unsplash.com/?utm_source=jerry-hu-portfolio&amp;utm_medium=referral" target="_blank" rel="noopener noreferrer">Unsplash</a></div>
             </div>
 
-            <div class="bento-cell cell-intro">
-                <div class="avatar">JH</div>
-                <h2>[Your Name]</h2>
-                <div class="role fill-me">[Your role — e.g. "Student, developer & builder"]</div>
-                <p class="fill-me">[One or two sentences about who you are and what you're working on right now.]</p>
-                <a class="projects-link" href="portfolio.html">See projects →</a>
-                <div class="social-row">
-                    <a href="https://github.com/AccessRetrieved" aria-label="GitHub">GH</a>
-                    <a href="https://www.linkedin.com/in/iamjerryhu/" aria-label="LinkedIn">in</a>
-                    <a href="https://x.com/i_am_jerry_huu" aria-label="X">X</a>
-                    <a href="https://instagram.com/i.am.jerry.hu" aria-label="Instagram">IG</a>
+            <div class="intro-stack">
+                <div class="cell-intro" style="padding: 11px;">
+                    <h2>Jerry Hu</h2>
+                    <div class="role">Founder and full-stack developer, studying ECE @ UIUC.</div>
+                    <a class="projects-link" href="portfolio.html">See projects →</a>
+                    <div class="social-row">
+                        <a href="https://github.com/AccessRetrieved" aria-label="GitHub">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                        </a>
+                        <a href="https://linkedin.com/in/iamjerryhu" aria-label="LinkedIn">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                        </a>
+                        <a href="https://instagram.com/i.am.jerry.hu" aria-label="Instagram">
+                            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.5" y2="6.5"/></svg>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bento-cell cell-spotlight">
+                    <div class="mini-card">
+                        <div class="post-meta">Nonprofit · Networking</div>
+                        <h3>Constellation Networking</h3>
+                        <p>Peer-to-peer networking platform for students.</p>
+                        <a href="https://constellationhub.org" class="post-arrow" aria-label="View project">↗</a>
+                    </div>
                 </div>
             </div>
 
@@ -91,7 +112,7 @@
         </main>
 
         <footer class="v2-footer">
-            <span>© <span id="v2-year"></span> [Your Name].</span>
+            <span>© <span id="v2-year"></span> Jerry Hu.</span>
             <div class="footer-links">
                 <a href="about.html">About</a>
                 <a href="rss.xml">RSS</a>
@@ -101,10 +122,11 @@
 
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+    <script src="assets/js/firebase-config.js"></script>
     <script src="assets/js/v2.js"></script>
-<!-- impeccable-live-start -->
-<script src="http://localhost:8400/live.js?token=5354a896-2ffd-4865-8a14-1be3e97b1294"></script>
-<!-- impeccable-live-end -->
 </body>
 
 </html>

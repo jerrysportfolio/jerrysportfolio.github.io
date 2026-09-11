@@ -20,6 +20,15 @@
         ],
         "createdAt": "2026-09-11T19:47:43.352Z",
         "reason": "stack-col (Tech Stack grid variant) pads whichever edge actually carries a border in each media-query state (16px left on desktop, 16px top on mobile) via mutually-exclusive @media rules; the detector appears to statically combine both rules and see a zero-padding axis that never coexists with its matching border at runtime"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "gallery.html"
+        ],
+        "createdAt": "2026-09-11T21:15:09.677Z",
+        "reason": "lightbox-img is an empty <img> inside a hidden dialog template; openLightbox() in v2.js always sets a real src before removing [hidden], so it never renders empty"
       }
     ]
   }

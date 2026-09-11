@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[Your Name] — Gallery</title>
+    <title>Jerry Hu — Gallery</title>
     <!-- PLACEHOLDER: favicon, see assets/placeholder/MANIFEST.md -->
     <link rel="icon" href="assets/placeholder/logo/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,7 +16,7 @@
 <body class="v2" data-page="gallery">
 
     <nav class="navbar">
-        <a class="logo" href="index.html"><span>@</span>[HANDLE]</a>
+        <a class="logo" href="index.html"><span>@</span>iamjerryhu</a>
         <div class="nav-links">
             <div class="nav-indicator" aria-hidden="true"></div>
             <a href="index.html" data-page="home">Home</a>
@@ -47,16 +47,19 @@
         <div class="v2-section">
 
             <!--
-              Optional: wire this up to a real photo source (Unsplash API, a local
-              /assets/img/gallery folder, etc). Until then this is static placeholder markup.
+              Photos load automatically from your Unsplash profile (initGalleryPhotos
+              in v2.js) — the grid below is the fallback shown only if that fetch
+              fails or UNSPLASH_CONFIG isn't set. Clicking a loaded photo opens the
+              lightbox with metadata + a real Unsplash download. View/download
+              counts are separately backed by Firestore — see initGalleryStats.
             -->
-            <div class="gallery-stats fill-me">
-                <span>[0] views</span>
-                <span>[0] downloads</span>
-                <a href="#">More on Unsplash ↗</a>
+            <div class="gallery-stats">
+                <span id="gallery-views">— views</span>
+                <span id="gallery-downloads">— downloads</span>
+                <a href="https://unsplash.com/@iamjerryhu" target="_blank" rel="noopener noreferrer">More on Unsplash ↗</a>
             </div>
 
-            <div class="gallery-grid">
+            <div class="gallery-grid" id="gallery-grid">
                 <!-- PLACEHOLDER: gallery-01.svg, see assets/placeholder/MANIFEST.md -->
                 <div class="gallery-item"><img src="assets/placeholder/photos/gallery-01.svg" alt="" style="width:100%;height:100%;object-fit:cover;"></div>
                 <!-- PLACEHOLDER: gallery-02.svg, see assets/placeholder/MANIFEST.md -->
@@ -75,12 +78,34 @@
                 <div class="gallery-item"><img src="assets/placeholder/photos/gallery-08.svg" alt="" style="width:100%;height:100%;object-fit:cover;"></div>
             </div>
 
-            <button class="load-more">More photographs ↓</button>
+            <button class="load-more" id="gallery-load-more">More photographs ↓</button>
+        </div>
+
+        <!-- Photo lightbox: hidden until openLightbox() in v2.js fills it in and
+             un-hides it. Metadata panel sits to the right of the image, as requested. -->
+        <div class="lightbox" id="lightbox" hidden>
+            <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+            <div class="lightbox-frame">
+                <button class="lightbox-close" id="lightbox-close" aria-label="Close">✕</button>
+                <div class="lightbox-media">
+                    <img id="lightbox-img" src="" alt="">
+                </div>
+                <aside class="lightbox-panel">
+                    <h2 id="lightbox-title">—</h2>
+                    <p id="lightbox-desc"></p>
+                    <dl class="lightbox-meta">
+                        <div><dt>Dimensions</dt><dd id="lightbox-dims">—</dd></div>
+                        <div><dt>Published</dt><dd id="lightbox-date">—</dd></div>
+                        <div><dt>Likes</dt><dd id="lightbox-likes">—</dd></div>
+                    </dl>
+                    <a class="lightbox-download" id="lightbox-download" href="#" target="_blank" rel="noopener noreferrer">Download ↓</a>
+                </aside>
+            </div>
         </div>
         </main>
 
         <footer class="v2-footer">
-            <span>© <span id="v2-year"></span> [Your Name].</span>
+            <span>© <span id="v2-year"></span> Jerry Hu.</span>
             <div class="footer-links">
                 <a href="about.html">About</a>
                 <a href="rss.xml">RSS</a>
@@ -90,10 +115,11 @@
 
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+    <script src="assets/js/firebase-config.js"></script>
     <script src="assets/js/v2.js"></script>
-<!-- impeccable-live-start -->
-<script src="http://localhost:8400/live.js?token=5354a896-2ffd-4865-8a14-1be3e97b1294"></script>
-<!-- impeccable-live-end -->
 </body>
 
 </html>

@@ -160,15 +160,15 @@ body.v2{
     needs to properly MORPH — not just tint — so whatever's underneath
     (a photo, dense text) reads as a soft, moving wash of blurred color
     rather than a legible thing competing with the nav-item labels. Blur
-    radius jumps a lot here (44px vs 24px at rest), plus a touch of extra
+    radius jumps a lot here (72px vs 24px at rest), plus a touch of extra
     contrast/brightness for the "liquid" refractive look, while opacity
     only rises slightly — legibility comes from the blur itself, not from
     painting over the backdrop.
   */
   .v2 .navbar.scrolled::before{
     background:var(--glass-bg-scrolled);
-    -webkit-backdrop-filter:blur(44px) saturate(190%) contrast(1.08) brightness(1.03);
-    backdrop-filter:blur(44px) saturate(190%) contrast(1.08) brightness(1.03);
+    -webkit-backdrop-filter:blur(72px) saturate(200%) contrast(1.1) brightness(1.03);
+    backdrop-filter:blur(72px) saturate(200%) contrast(1.1) brightness(1.03);
     box-shadow:
       inset 0 1px 0 var(--glass-highlight),
       inset 0 -1px 0 rgba(0,0,0,.06),
@@ -285,6 +285,17 @@ body.v2{
 }
 .v2 .cell-latest{grid-area:latest; display:flex; flex-direction:column; gap:16px;}
 .v2 .cell-older{grid-area:older;}
+/*
+  intro + spotlight share one grid area (spanning both bento rows) as two
+  independently-sized cards in a flex column, rather than two separate grid
+  cells in different rows — that's what lets cell-intro shrink to its actual
+  content height while cell-spotlight's flex:1 genuinely absorbs the leftover
+  space, instead of each being stretched to match whatever unrelated content
+  sits in its own row.
+*/
+.v2 .intro-stack{grid-area:intro; display:flex; flex-direction:column; gap:20px;}
+.v2 .intro-stack .cell-intro{flex:0 0 auto;}
+.v2 .intro-stack .cell-spotlight{flex:1; display:flex; flex-direction:column;}
 .v2 .cell-hero{
   grid-area:hero; position:relative; border-radius:var(--radius-lg); overflow:hidden;
   min-height:420px; background:linear-gradient(160deg,var(--accent-soft),var(--accent-wash));
@@ -292,6 +303,11 @@ body.v2{
 }
 .v2 .cell-hero img{
   position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  transition:transform .45s cubic-bezier(.22,1,.36,1);
+}
+.v2 .cell-hero:hover img{transform:scale(1.06);}
+@media (prefers-reduced-motion: reduce){
+  .v2 .cell-hero img{transition:none;}
 }
 .v2 .cell-hero::after{
   content:""; position:absolute; inset:0;
@@ -301,16 +317,29 @@ body.v2{
   position:relative; z-index:1; padding:28px; color:#fff;
   font-family:var(--font-main); font-style:italic; font-weight:500; font-size:1.2rem; line-height:1.4;
 }
-.v2 .cell-intro{grid-area:intro; display:flex; flex-direction:column; gap:14px;}
-.v2 .cell-intro .avatar{
-  width:64px; height:64px; border-radius:50%; background:var(--accent-soft);
-  display:flex; align-items:center; justify-content:center; font-family:var(--font-display);
-  font-weight:600; color:var(--accent); font-size:1.3rem;
+/* Required attribution whenever a photo is pulled from the Unsplash API — see
+   initUnsplashHero in v2.js. Hidden until a real photo loads. */
+.v2 .cell-hero .hero-credit{
+  position:absolute; z-index:1; right:14px; bottom:14px;
+  font-family:var(--font-code); font-size:.7rem; color:rgba(255,255,255,.9);
+  background:rgba(0,0,0,.4); padding:5px 12px; border-radius:100px;
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
 }
-.v2 .cell-intro h2{font-family:var(--font-display); font-size:1.6rem; margin:0;}
+.v2 .cell-hero .hero-credit a{color:#fff; text-decoration:underline; text-underline-offset:2px;}
+.v2 .cell-intro{display:flex; flex-direction:column; gap:14px;}
+/*
+  With the avatar gone, the name itself is the card's identity mark — set in
+  the modern grotesque (--font-main) rather than the site's usual serif
+  --font-display, bold and tight, so it reads as a wordmark/lockup rather
+  than a plain heading among the rest of the page's headings.
+*/
+.v2 .cell-intro h2{
+  font-family:var(--font-main); font-size:2.15rem; font-weight:700;
+  letter-spacing:-.02em; line-height:1.05; margin:0;
+}
 .v2 .cell-intro .role{color:var(--ink-soft); font-size:.95rem;}
 .v2 .cell-intro p{margin:0; font-size:.95rem; color:var(--ink-soft);}
-.v2 .cell-intro .projects-link{
+.v2 .projects-link{
   font-weight:600; color:var(--accent); font-size:.92rem;
 }
 .v2 .social-row{display:flex; gap:12px; margin-top:4px;}
@@ -370,7 +399,7 @@ body.v2{
   padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius-sm);
   font-family:var(--font-code); font-size:.85rem; color:var(--ink-soft);
 }
-.v2 .gallery-stats a{color:var(--accent); font-weight:600;}
+.v2 .gallery-stats a{color:var(--accent); font-weight:600; margin-left:auto;}
 .v2 .gallery-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;}
 .v2 .gallery-item{
   aspect-ratio:4/5; border-radius:var(--radius-sm); background:var(--accent-wash);
@@ -385,6 +414,59 @@ body.v2{
   font-family:var(--font-main); font-size:.95rem; transition:all .2s;
 }
 .v2 .load-more:hover{border-color:var(--accent); color:var(--accent);}
+
+/* ---------- gallery lightbox: image + metadata panel on the right ---------- */
+.v2 .lightbox{position:fixed; inset:0; z-index:200; display:flex;}
+.v2 .lightbox[hidden]{display:none;}
+.v2 .lightbox-backdrop{
+  position:absolute; inset:0; background:rgba(10,10,12,.82);
+  -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+}
+.v2 .lightbox-frame{
+  position:relative; z-index:1; display:flex; width:100%; max-width:1400px;
+  margin:auto; max-height:92vh;
+}
+.v2 .lightbox-media{
+  flex:1; min-width:0; display:flex; align-items:center; justify-content:center; padding:32px;
+}
+.v2 .lightbox-media img{
+  max-width:100%; max-height:88vh; object-fit:contain;
+  border-radius:var(--radius-sm); box-shadow:0 20px 60px rgba(0,0,0,.5);
+}
+.v2 .lightbox-panel{
+  width:300px; flex:none; background:var(--paper-card); color:var(--ink);
+  padding:28px 24px; overflow-y:auto; border-radius:var(--radius-md);
+  display:flex; flex-direction:column; gap:16px;
+}
+.v2 .lightbox-panel h2{font-family:var(--font-display); font-size:1.2rem; margin:0;}
+.v2 .lightbox-panel p{margin:0; color:var(--ink-soft); font-size:.9rem;}
+.v2 .lightbox-panel p:empty{display:none;}
+.v2 .lightbox-meta{margin:0; display:flex; flex-direction:column; gap:10px;}
+.v2 .lightbox-meta > div{
+  display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+  font-size:.85rem;
+}
+.v2 .lightbox-meta > div:not(:first-child){border-top:1px solid var(--line); padding-top:14px;}
+.v2 .lightbox-meta dt{
+  margin:0; color:var(--ink-faint); font-family:var(--font-code); font-size:.72rem;
+  text-transform:uppercase; letter-spacing:.04em;
+}
+.v2 .lightbox-meta dd{margin:0; font-weight:600;}
+.v2 .lightbox-download{
+  margin-top:auto; text-align:center; padding:12px; border-radius:100px;
+  background:var(--accent); color:var(--on-accent); font-weight:600; transition:opacity .2s;
+}
+.v2 .lightbox-download:hover{opacity:.85;}
+.v2 .lightbox-close{
+  position:absolute; top:16px; right:16px; z-index:2; width:36px; height:36px;
+  border-radius:50%; background:rgba(0,0,0,.45); color:#fff; border:none; cursor:pointer;
+  font-size:1rem; display:flex; align-items:center; justify-content:center;
+}
+@media (max-width:760px){
+  .v2 .lightbox-frame{flex-direction:column; max-height:none; height:100%; margin:0;}
+  .v2 .lightbox-panel{width:100%; border-radius:0; max-height:38vh;}
+  .v2 .lightbox-media{padding:16px;}
+}
 
 /* ---------- about page ---------- */
 .v2 .about-grid{display:grid; grid-template-columns:300px 1fr; gap:40px;}
