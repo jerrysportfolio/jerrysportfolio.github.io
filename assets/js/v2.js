@@ -8,31 +8,29 @@
   var activePageKey = document.body.dataset.page || '';
   var navigating = false;
 
-  // ---------- Firebase: Analytics + Firestore-backed gallery counters ----------
+  // ---------- Firebase: Analytics (compat) + Firestore Lite (module) ----------
   // Config lives in assets/js/firebase-config.js (window.FIREBASE_CONFIG) — see
   // that file's comments for setup steps. Everything below no-ops safely if the
-  // config is still blank or the SDK failed to load (e.g. an ad blocker).
+  // config is still blank or a script failed to load (e.g. an ad blocker).
+  //
+  // Firestore itself is handled by assets/js/firestore-lite.js (a separate
+  // `type="module"` script — Lite is only published as an ES module) via
+  // window.__firestoreLite, not the compat SDK: the full Firestore client
+  // always opens a persistent "Listen" WebChannel for its offline cache even
+  // for plain get()/set() calls, and that long-lived streaming connection is
+  // exactly what ad-block privacy lists target. This site never needs
+  // realtime listeners, so Lite's plain one-shot HTTPS requests sidestep the
+  // whole problem instead of fighting it.
   var fbAnalytics = null;
-  var fbDb = null;
 
   function initFirebase() {
-    if (fbDb || fbAnalytics) return; // already initialized
+    if (fbAnalytics) return; // already initialized
     if (typeof firebase === 'undefined') return; // SDK blocked/failed to load
     var config = window.FIREBASE_CONFIG;
-    if (!config || !config.apiKey || !config.projectId) return; // not configured yet
+    if (!config || !config.apiKey || !config.projectId || !config.measurementId) return;
     try {
       var app = firebase.apps && firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(config);
-      fbDb = firebase.firestore(app);
-      // Ad blockers / privacy extensions commonly kill Firestore's default
-      // streaming (WebChannel) connection outright (ERR_BLOCKED_BY_CLIENT in
-      // devtools) and gtag.js's own script tag (ERR_BLOCKED_BY_CONTENT_BLOCKER)
-      // — both are the extension refusing the request, not a bug here, and
-      // there's no code fix that makes a blocked request succeed. Forcing
-      // long-polling instead of streaming does measurably reduce how often
-      // this happens, since some blocklists specifically target the
-      // streaming endpoint pattern rather than Firestore's domain outright.
-      fbDb.settings({ experimentalAutoDetectLongPolling: true, merge: true });
-      if (config.measurementId) fbAnalytics = firebase.analytics(app);
+      fbAnalytics = firebase.analytics(app);
     } catch (e) { /* keep the site working even if Firebase throws */ }
   }
 
@@ -49,38 +47,43 @@
     } catch (e) { /* ignore */ }
   }
 
-  // Counts one gallery view per browser session (not per reload/back-nav) and
-  // reads back the live views/downloads totals. recordGalleryDownload() is
-  // exposed on window for whenever a real download control gets added later.
+  // Reads back the live views/downloads totals via Firestore Lite (see the
+  // note above initFirebase for why it's Lite and not the compat SDK). A
+  // "view" means a photo was actually opened (see recordGalleryView, called
+  // from openLightbox) — landing on the gallery index doesn't count on its
+  // own, only opening one of the photos does.
   function initGalleryStats(root) {
     var viewsEl = root.querySelector('#gallery-views');
     var downloadsEl = root.querySelector('#gallery-downloads');
-    if (!viewsEl || !downloadsEl || !fbDb) return;
+    if (!viewsEl || !downloadsEl || !window.__firestoreLite) return;
 
-    var statsRef = fbDb.collection('stats').doc('gallery');
-    var alreadyCounted = false;
-    try { alreadyCounted = sessionStorage.getItem('gallery-view-counted') === '1'; } catch (e) { /* ignore */ }
+    var render = function (data) {
+      data = data || {};
+      viewsEl.textContent = (data.views || 0).toLocaleString() + ' views';
+      downloadsEl.textContent = (data.downloads || 0).toLocaleString() + ' downloads';
+    };
 
-    var recordView = alreadyCounted ? Promise.resolve() : statsRef.set(
-      { views: firebase.firestore.FieldValue.increment(1) }, { merge: true }
-    ).then(function () {
-      try { sessionStorage.setItem('gallery-view-counted', '1'); } catch (e) { /* ignore */ }
-    }).catch(function () { /* keep dashes on failure */ });
-
-    recordView.then(function () { return statsRef.get(); })
-      .then(function (doc) {
-        var data = doc.exists ? doc.data() : {};
-        viewsEl.textContent = (data.views || 0).toLocaleString() + ' views';
-        downloadsEl.textContent = (data.downloads || 0).toLocaleString() + ' downloads';
-      })
-      .catch(function () { /* leave the "—" placeholders */ });
+    window.__firestoreLite.getGalleryStats().then(render).catch(function () { /* leave the "—" placeholders */ });
   }
 
+  // Called once per photo-open (from openLightbox) — every click counts, no
+  // once-per-session cap, since each open is a distinct, deliberate view of
+  // that photo rather than an incidental page load.
+  window.recordGalleryView = function () {
+    if (!window.__firestoreLite) return;
+    window.__firestoreLite.incrementGalleryViews().then(function () {
+      // Refresh the on-page counter too, in case the lightbox is still open
+      // over the gallery grid, so the number doesn't look stale.
+      return window.__firestoreLite.getGalleryStats();
+    }).then(function (data) {
+      var viewsEl = document.getElementById('gallery-views');
+      if (viewsEl && data) viewsEl.textContent = (data.views || 0).toLocaleString() + ' views';
+    }).catch(function () { /* ignore */ });
+  };
+
   window.recordGalleryDownload = function () {
-    if (!fbDb) return;
-    fbDb.collection('stats').doc('gallery').set(
-      { downloads: firebase.firestore.FieldValue.increment(1) }, { merge: true }
-    ).catch(function () { /* ignore */ });
+    if (!window.__firestoreLite) return;
+    window.__firestoreLite.incrementGalleryDownloads();
   };
 
   // Answers "how many visits clicked my resume": logs GA4's own recommended
@@ -170,12 +173,21 @@
     var loadMoreBtn = root.querySelector('#gallery-load-more');
     if (!grid) return;
     if (!UNSPLASH_CONFIG.accessKey || !UNSPLASH_CONFIG.username) return;
+    // Guards against a second, independent instance of this whole state
+    // machine (page/loading/exhausted/observer) getting attached to the same
+    // grid — which would make two competing fetch sequences fight over the
+    // same button's text and hidden state, with one able to look "stuck" if
+    // the other's fetch takes longer.
+    if (grid.dataset.galleryBound) return;
+    grid.dataset.galleryBound = '1';
 
-    var cacheKey = 'unsplash-gallery:' + UNSPLASH_CONFIG.username;
+    var PAGE_SIZE = 8;
+    var page = 1;
+    var loading = false;
+    var exhausted = false;
+    var observer = null;
 
-    var render = function (photos) {
-      if (!photos || !photos.length) return;
-      grid.innerHTML = '';
+    var appendPhotos = function (photos) {
       photos.forEach(function (p) {
         var item = document.createElement('div');
         item.className = 'gallery-item';
@@ -183,6 +195,10 @@
         item.setAttribute('tabindex', '0');
         item.setAttribute('aria-label', p.alt_description || 'Open photo');
 
+        // loading="lazy" means the browser itself won't fetch the image
+        // bytes until the item is near the viewport — combined with paging
+        // the API calls below, nothing (metadata or pixels) for a photo the
+        // visitor hasn't scrolled to yet gets pulled over the network.
         var img = document.createElement('img');
         img.src = p.urls.small;
         img.alt = p.alt_description || '';
@@ -199,27 +215,74 @@
         });
         grid.appendChild(item);
       });
-      // One fetch covers the whole library at this photo count; hide rather
-      // than wire up real pagination until there are enough photos to need it.
-      if (loadMoreBtn) loadMoreBtn.hidden = true;
     };
 
-    var cached = null;
-    try { cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); } catch (e) { /* ignore */ }
-    if (cached && (Date.now() - cached.ts < UNSPLASH_CACHE_MS)) {
-      render(cached.photos);
-      return;
+    var setButtonState = function () {
+      if (!loadMoreBtn) return;
+      if (exhausted) { loadMoreBtn.hidden = true; return; }
+      loadMoreBtn.hidden = false;
+      loadMoreBtn.disabled = loading;
+      loadMoreBtn.textContent = loading ? 'Loading…' : 'More photographs ↓';
+    };
+
+    var loadNextPage = function () {
+      if (loading || exhausted) return;
+      loading = true;
+      setButtonState();
+
+      // AbortController timeout: a hung request (dropped connection, a
+      // blocker that stalls rather than rejects, etc.) must not leave the
+      // button reading "Loading…" forever with no way out.
+      var controller = ('AbortController' in window) ? new AbortController() : null;
+      var timeoutId = controller ? setTimeout(function () { controller.abort(); }, 10000) : null;
+
+      fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) +
+        '/photos?per_page=' + PAGE_SIZE + '&page=' + page + '&order_by=latest', {
+        headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey },
+        signal: controller ? controller.signal : undefined
+      })
+        .then(function (res) { if (!res.ok) throw new Error('Unsplash gallery request failed'); return res.json(); })
+        .then(function (photos) {
+          clearTimeout(timeoutId);
+          if (page === 1) grid.innerHTML = ''; // clear the fallback placeholders once real data arrives
+          appendPhotos(photos);
+          page += 1;
+          if (!photos.length || photos.length < PAGE_SIZE) {
+            exhausted = true;
+            if (observer) observer.disconnect();
+          }
+          loading = false;
+          setButtonState();
+        })
+        .catch(function () {
+          clearTimeout(timeoutId);
+          loading = false;
+          // Don't keep retrying a broken config/offline state on every
+          // scroll tick; leave whatever's already rendered (placeholders,
+          // if this was the very first page).
+          exhausted = true;
+          setButtonState();
+        });
+    };
+
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', loadNextPage);
+
+      // Auto-load the next page once the button scrolls near the viewport,
+      // so browsing feels like infinite scroll; the button stays visible as
+      // a keyboard-accessible manual trigger and as the fallback for
+      // browsers without IntersectionObserver.
+      if ('IntersectionObserver' in window) {
+        observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) loadNextPage();
+          });
+        }, { rootMargin: '600px' });
+        observer.observe(loadMoreBtn);
+      }
     }
 
-    fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) + '/photos?per_page=30&order_by=latest', {
-      headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey }
-    })
-      .then(function (res) { if (!res.ok) throw new Error('Unsplash gallery request failed'); return res.json(); })
-      .then(function (photos) {
-        try { sessionStorage.setItem(cacheKey, JSON.stringify({ photos: photos, ts: Date.now() })); } catch (e) { /* ignore */ }
-        render(photos);
-      })
-      .catch(function () { /* keep the placeholder grid */ });
+    loadNextPage();
 
     var lb = root.querySelector('#lightbox');
     if (lb && !lb.dataset.bound) {
@@ -231,14 +294,42 @@
     }
   }
 
+  // Most of these photos never got a real title (alt_description/description
+  // both null) — the Unsplash *list* endpoint doesn't include location data
+  // at all, only the single-photo detail endpoint does, so an untitled photo
+  // fetches its own detail once (cached per photo id) to show "shot in
+  // <location>" instead of a bare "Untitled".
+  function fetchPhotoLocation(photoId) {
+    var cacheKey = 'unsplash-location:' + photoId;
+    var cached = null;
+    try { cached = sessionStorage.getItem(cacheKey); } catch (e) { /* ignore */ }
+    if (cached !== null) return Promise.resolve(cached || null); // cached '' = "checked, no location"
+
+    return fetch('https://api.unsplash.com/photos/' + photoId, {
+      headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey }
+    })
+      .then(function (res) { if (!res.ok) throw new Error('photo detail request failed'); return res.json(); })
+      .then(function (data) {
+        var name = (data && data.location && data.location.name) || '';
+        try { sessionStorage.setItem(cacheKey, name); } catch (e) { /* ignore */ }
+        return name || null;
+      })
+      .catch(function () { return null; });
+  }
+
   function openLightbox(photo) {
     var lb = document.getElementById('lightbox');
     if (!lb) return;
 
+    if (window.recordGalleryView) window.recordGalleryView();
+
     var img = document.getElementById('lightbox-img');
     img.src = photo.urls.regular;
     img.alt = photo.alt_description || '';
-    document.getElementById('lightbox-title').textContent = photo.alt_description || photo.description || 'Untitled';
+
+    var titleEl = document.getElementById('lightbox-title');
+    var hasTitle = !!(photo.alt_description || photo.description);
+    titleEl.textContent = hasTitle ? (photo.alt_description || photo.description) : '—';
     document.getElementById('lightbox-desc').textContent =
       (photo.description && photo.description !== photo.alt_description) ? photo.description : '';
     document.getElementById('lightbox-dims').textContent = photo.width + ' × ' + photo.height;
@@ -246,6 +337,14 @@
       ? new Date(photo.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
       : '—';
     document.getElementById('lightbox-likes').textContent = (photo.likes || 0).toLocaleString();
+
+    if (!hasTitle) {
+      fetchPhotoLocation(photo.id).then(function (locationName) {
+        // Bail if the lightbox has since moved on to a different photo.
+        if (document.getElementById('lightbox-img').src !== photo.urls.regular) return;
+        titleEl.textContent = locationName || 'Untitled';
+      });
+    }
 
     var dl = document.getElementById('lightbox-download');
     dl.href = photo.links.download;
@@ -261,13 +360,27 @@
 
     lb.hidden = false;
     document.body.style.overflow = 'hidden';
+    // Two rAFs: the first lets the browser paint the [hidden]-removed state,
+    // the second then adds the class that actually triggers the transition —
+    // adding it in the same frame as un-hiding would just skip straight to
+    // the end state with no visible animation.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { lb.classList.add('open'); });
+    });
   }
 
   function closeLightbox() {
     var lb = document.getElementById('lightbox');
     if (!lb || lb.hidden) return;
-    lb.hidden = true;
     document.body.style.overflow = '';
+    lb.classList.remove('open');
+    var finish = function () {
+      lb.hidden = true;
+      lb.removeEventListener('transitionend', finish);
+    };
+    lb.addEventListener('transitionend', finish);
+    // Fallback in case transitionend never fires (reduced motion, etc.).
+    setTimeout(function () { if (!lb.hidden) finish(); }, 350);
   }
 
   // ---------- home hero quote, a random quote cached per calendar day ----------
@@ -433,14 +546,6 @@
         });
       });
       if (searchInput) searchInput.addEventListener('input', applyFilters);
-    }
-
-    // Gallery: placeholder "load more" — replace with a real Unsplash fetch later
-    var loadMoreBtn = root.querySelector('.load-more');
-    if (loadMoreBtn) {
-      loadMoreBtn.addEventListener('click', function () {
-        loadMoreBtn.textContent = 'Wire this up to the Unsplash API — see comment in gallery.html';
-      });
     }
   }
 

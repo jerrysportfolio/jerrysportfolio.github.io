@@ -39,19 +39,23 @@
 
         <main class="page-content" id="page-content">
         <div class="page-header">
-            <span class="eyebrow">Through my lens</span>
+            <span class="eyebrow">Follow my memory trails</span>
             <h1 class="page-title">Gallery</h1>
-            <p class="page-sub fill-me">[One-line subhead — e.g. "Photos I've taken, mostly street and travel."]</p>
+            <p class="page-sub">through my lens.</p>
         </div>
 
         <div class="v2-section">
 
             <!--
-              Photos load automatically from your Unsplash profile (initGalleryPhotos
-              in v2.js) — the grid below is the fallback shown only if that fetch
-              fails or UNSPLASH_CONFIG isn't set. Clicking a loaded photo opens the
-              lightbox with metadata + a real Unsplash download. View/download
-              counts are separately backed by Firestore — see initGalleryStats.
+              Photos load automatically from your Unsplash profile, 8 at a time
+              (initGalleryPhotos in v2.js) — the grid below is the fallback shown
+              only if the first page fails or UNSPLASH_CONFIG isn't set. The
+              "More photographs" button both loads the next page on click and
+              auto-triggers once it scrolls near the viewport (infinite scroll),
+              and each <img> uses loading="lazy" so nothing off-screen downloads
+              until needed. Clicking a loaded photo opens the lightbox with
+              metadata + a real Unsplash download. View/download counts are
+              separately backed by Firestore — see initGalleryStats.
             -->
             <div class="gallery-stats">
                 <span id="gallery-views">— views</span>
@@ -117,7 +121,7 @@
 
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js"></script>
+    <script type="module" src="assets/js/firestore-lite.js"></script>
     <script src="assets/js/firebase-config.js"></script>
     <script src="assets/js/v2.js"></script>
 </body>
