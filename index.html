@@ -11,20 +11,21 @@
     <meta property="og:image" content="assets/placeholder/og-social.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Serif+4:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;1,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/v2.css">
 </head>
 
-<body class="v2">
+<body class="v2" data-page="home">
 
     <nav class="navbar">
         <a class="logo" href="index.html"><span>@</span>[HANDLE]</a>
         <div class="nav-links">
-            <a href="index.html" class="active">Home</a>
-            <a href="portfolio.html">Portfolio</a>
-            <a href="gallery.html">Gallery</a>
-            <a href="blog.html">Blog</a>
-            <a href="about.html">About</a>
+            <div class="nav-indicator" aria-hidden="true"></div>
+            <a href="index.html" data-page="home" class="active">Home</a>
+            <a href="portfolio.html" data-page="portfolio">Portfolio</a>
+            <a href="gallery.html" data-page="gallery">Gallery</a>
+            <a href="blog.html" data-page="blog">Blog</a>
+            <a href="about.html" data-page="about">About</a>
         </div>
         <a class="contact-link" href="mailto:[your@email.com]">Get in touch</a>
         <button class="nav-toggle" aria-label="Open menu">
@@ -38,19 +39,22 @@
 
     <div class="v2-wrap">
 
-        <!-- Bento grid: intro / latest posts / older post / hero photo -->
+        <main class="page-content" id="page-content">
+        <!-- Bento grid: intro / featured projects / hero photo -->
         <div class="bento">
 
             <div class="bento-cell cell-latest">
-                <div class="post-card">
-                    <div class="post-meta">Tech · [Month Year]</div>
-                    <h3 class="fill-me">[Latest post title — placeholder]</h3>
-                    <a href="blog-post.html" class="post-arrow" aria-label="Read post">↗</a>
+                <div class="mini-card">
+                    <div class="post-meta">Hackathon · MLH Hacks for Hackers 2025</div>
+                    <h3>CodeGPT</h3>
+                    <p>Best Hack for Hackers winner.</p>
+                    <a href="https://github.com/AccessRetrieved/codegpt" class="post-arrow" aria-label="View project">↗</a>
                 </div>
-                <div class="post-card">
-                    <div class="post-meta">Life · [Month Year]</div>
-                    <h3 class="fill-me">[Second latest post title — placeholder]</h3>
-                    <a href="blog-post.html" class="post-arrow" aria-label="Read post">↗</a>
+                <div class="mini-card">
+                    <div class="post-meta">Nonprofit · Education</div>
+                    <h3>Millennium STEM BC</h3>
+                    <p>STEM education initiative for BC students.</p>
+                    <a href="https://millennium-stem-bc.github.io/" class="post-arrow" aria-label="View project">↗</a>
                 </div>
             </div>
 
@@ -75,14 +79,16 @@
             </div>
 
             <div class="bento-cell cell-older">
-                <div class="post-card">
-                    <div class="post-meta">Misc · [Month Year]</div>
-                    <h3 class="fill-me">[Older post title — placeholder]</h3>
-                    <a href="blog-post.html" class="post-arrow" aria-label="Read post">↗</a>
+                <div class="mini-card">
+                    <div class="post-meta">Web app · GPT-powered</div>
+                    <h3>GPTNotes</h3>
+                    <p>AI-assisted note-taking tool.</p>
+                    <a href="https://gptnotes.iamjerryhu.org" class="post-arrow" aria-label="View project">↗</a>
                 </div>
             </div>
 
         </div>
+        </main>
 
         <footer class="v2-footer">
             <span>© <span id="v2-year"></span> [Your Name].</span>
@@ -96,7 +102,9 @@
     </div>
 
     <script src="assets/js/v2.js"></script>
-    <script>document.getElementById('v2-year').textContent = new Date().getFullYear();</script>
+<!-- impeccable-live-start -->
+<script src="http://localhost:8400/live.js?token=5354a896-2ffd-4865-8a14-1be3e97b1294"></script>
+<!-- impeccable-live-end -->
 </body>
 
 </html>

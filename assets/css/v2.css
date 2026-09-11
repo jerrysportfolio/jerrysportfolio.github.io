@@ -5,17 +5,18 @@
    ========================================================================== */
 
 :root{
-  --paper:#f6f2ea;
+  --paper:#f8f7fb;
   --paper-card:#ffffff;
-  --ink:#1c1a16;
-  --ink-soft:#5c574a;
-  --ink-faint:#948c78;
-  --line:#e6ddc8;
-  --accent:#a1682e;
-  --accent-soft:#ecdcc4;
-  --accent-wash:#f6ede0;
-  --code-bg:#211f1a;
-  --code-ink:#e9e4d6;
+  --ink:#131418;
+  --ink-soft:#54575f;
+  --ink-faint:#9a9da5;
+  --line:#e1e2e6;
+  --accent:#131418;
+  --accent-soft:#e4e5e8;
+  --accent-wash:#f1f1f3;
+  --on-accent:#ffffff;
+  --code-bg:#16171c;
+  --code-ink:#e7e9ee;
 
   --radius-lg:32px;
   --radius-md:20px;
@@ -25,50 +26,69 @@
   --shadow-md:0 8px 24px #0000000f;
   --shadow-hover:0 12px 28px #00000014;
 
-  --font-main:'Inter', system-ui, -apple-system, sans-serif;
+  --font-main:'Hanken Grotesk', system-ui, -apple-system, sans-serif;
   --font-post:'Source Serif 4', Georgia, serif;
-  --font-display:'Fraunces', Georgia, serif;
+  --font-display:'Newsreader', Georgia, serif;
   --font-code:'JetBrains Mono', ui-monospace, monospace;
-  --font-accent:'Caveat', cursive;
+
+  --glass-bg:rgba(255,255,255,0.55);
+  --glass-bg-scrolled:rgba(255,255,255,0.7);
+  --glass-border:rgba(255,255,255,0.7);
+  --glass-highlight:rgba(255,255,255,0.85);
+  --glass-shadow:0 8px 32px rgba(18,19,22,0.12);
+  --glass-shadow-hover:0 12px 40px rgba(18,19,22,0.16);
+  --glass-shine:rgba(255,255,255,0.55);
 }
 
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --paper:#16150f;
-    --paper-card:#1e1c16;
-    --ink:#efe9db;
-    --ink-soft:#b3ac99;
-    --ink-faint:#7d786a;
-    --line:#332f24;
-    --accent:#d99a5c;
-    --accent-soft:#3a2e1e;
-    --accent-wash:#241d14;
-    --code-bg:#0e0d0a;
-    --code-ink:#d9d3c1;
+    --paper:#101114;
+    --paper-card:#1a1b1f;
+    --ink:#eceded;
+    --ink-soft:#a3a6ad;
+    --ink-faint:#8a8d96;
+    --line:#2a2c31;
+    --accent:#eceded;
+    --accent-soft:#2a2c31;
+    --accent-wash:#1d1f24;
+    --on-accent:#131418;
+    --code-bg:#0c0d10;
+    --code-ink:#e7e9ee;
     --shadow-sm:0 4px 12px #00000020;
     --shadow-md:0 8px 24px #00000030;
     --shadow-hover:0 12px 28px #00000040;
+    --glass-bg:rgba(26,27,31,0.55);
+    --glass-bg-scrolled:rgba(26,27,31,0.72);
+    --glass-border:rgba(255,255,255,0.1);
+    --glass-highlight:rgba(255,255,255,0.16);
+    --glass-shadow:0 8px 32px rgba(0,0,0,0.45);
+    --glass-shadow-hover:0 12px 40px rgba(0,0,0,0.55);
+    --glass-shine:rgba(255,255,255,0.14);
   }
 }
 :root[data-theme="dark"]{
-  --paper:#16150f;
-  --paper-card:#1e1c16;
-  --ink:#efe9db;
-  --ink-soft:#b3ac99;
-  --ink-faint:#7d786a;
-  --line:#332f24;
-  --accent:#d99a5c;
-  --accent-soft:#3a2e1e;
-  --accent-wash:#241d14;
-  --code-bg:#0e0d0a;
-  --code-ink:#d9d3c1;
+  --paper:#101114;
+  --paper-card:#1a1b1f;
+  --ink:#eceded;
+  --ink-soft:#a3a6ad;
+  --ink-faint:#8a8d96;
+  --line:#2a2c31;
+  --accent:#eceded;
+  --accent-soft:#2a2c31;
+  --accent-wash:#1d1f24;
+  --on-accent:#131418;
+  --code-bg:#0c0d10;
+  --code-ink:#e7e9ee;
   --shadow-sm:0 4px 12px #00000020;
   --shadow-md:0 8px 24px #00000030;
   --shadow-hover:0 12px 28px #00000040;
 }
 
 *{box-sizing:border-box;}
-html{color-scheme:light dark;}
+/* Reserve scrollbar space on every page regardless of content height, so the
+   sticky navbar's centered width (100% minus the scrollbar) doesn't shift
+   horizontally when navigating between a tall page and a short one. */
+html{color-scheme:light dark; scrollbar-gutter:stable;}
 body.v2{
   margin:0;
   background:var(--paper);
@@ -85,30 +105,133 @@ body.v2{
 
 .v2-wrap{max-width:1180px; margin:0 auto; padding:0 24px;}
 
-/* ---------- navbar ---------- */
+/* ---------- navbar (liquid glass) ---------- */
+/*
+  Approach: layered backdrop-filter blur+saturate with a specular inset
+  highlight, plus a cheap pointer-following highlight gradient — chosen over
+  SVG feDisplacementMap refraction or WebGL shader approaches (both looked
+  more "liquid" but are Chrome-only / GPU-heavy and either break or fall
+  back to nothing in Safari & Firefox). This degrades to a plain translucent
+  bar anywhere backdrop-filter isn't supported, via @supports below.
+
+  The glass surface lives on ::before (not directly on .navbar) so that
+  backdrop-filter's containing-block side effect doesn't trap the mobile
+  nav-links panel, which relies on position:fixed to cover the viewport.
+*/
 .v2 .navbar{
+  position:sticky; top:16px; z-index:50;
   display:flex; align-items:center; justify-content:space-between;
-  padding:28px 24px; max-width:1180px; margin:0 auto;
+  width:min(1180px, 100% - 48px);
+  margin:16px auto 0;
+  padding:17px 26px;
   gap:16px;
+  border-radius:100px;
+  transition:transform .25s cubic-bezier(.25,.8,.25,1);
+}
+.v2 .navbar::before{
+  content:"";
+  position:absolute; inset:0; z-index:-1;
+  border-radius:inherit;
+  background:var(--paper-card);
+  box-shadow:var(--glass-shadow);
+  transition:box-shadow .3s ease, background .3s ease;
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  .v2 .navbar::before{
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    -webkit-backdrop-filter:blur(24px) saturate(180%);
+    backdrop-filter:blur(24px) saturate(180%);
+    box-shadow:
+      inset 0 1px 0 var(--glass-highlight),
+      inset 0 -1px 0 rgba(0,0,0,.04),
+      var(--glass-shadow);
+  }
+  .v2 .navbar:hover::before{
+    -webkit-backdrop-filter:blur(30px) saturate(200%);
+    backdrop-filter:blur(30px) saturate(200%);
+    box-shadow:
+      inset 0 1px 0 var(--glass-highlight),
+      inset 0 -1px 0 rgba(0,0,0,.04),
+      var(--glass-shadow-hover);
+  }
+  /*
+    Once page content is scrolled up behind the sticky navbar, the backdrop
+    needs to properly MORPH — not just tint — so whatever's underneath
+    (a photo, dense text) reads as a soft, moving wash of blurred color
+    rather than a legible thing competing with the nav-item labels. Blur
+    radius jumps a lot here (44px vs 24px at rest), plus a touch of extra
+    contrast/brightness for the "liquid" refractive look, while opacity
+    only rises slightly — legibility comes from the blur itself, not from
+    painting over the backdrop.
+  */
+  .v2 .navbar.scrolled::before{
+    background:var(--glass-bg-scrolled);
+    -webkit-backdrop-filter:blur(44px) saturate(190%) contrast(1.08) brightness(1.03);
+    backdrop-filter:blur(44px) saturate(190%) contrast(1.08) brightness(1.03);
+    box-shadow:
+      inset 0 1px 0 var(--glass-highlight),
+      inset 0 -1px 0 rgba(0,0,0,.06),
+      var(--glass-shadow-hover);
+  }
+}
+.v2 .navbar::after{
+  content:"";
+  position:absolute; inset:0; z-index:-1;
+  border-radius:inherit;
+  background:radial-gradient(180px circle at var(--glow-x,50%) var(--glow-y,0%), var(--glass-shine), transparent 65%);
+  opacity:0; transition:opacity .4s ease;
+  pointer-events:none; mix-blend-mode:overlay;
+}
+.v2 .navbar.glow-active::after{opacity:1;}
+@media (prefers-reduced-motion: reduce){
+  .v2 .navbar::after{display:none;}
 }
 .v2 .navbar .logo{
   font-family:var(--font-display); font-weight:600; font-size:1.2rem;
 }
 .v2 .navbar .logo span{color:var(--accent);}
 .v2 .nav-links{
-  display:flex; gap:28px; font-size:.95rem; font-weight:500;
+  position:relative;
+  display:flex; gap:4px; font-size:.95rem; font-weight:500;
 }
+/*
+  One capsule does two jobs: it previews under whichever tab the pointer is
+  over, and it is the thing that slides between tabs on navigation (the
+  "liquid glass moving from tab to tab" effect) — so hover-preview and the
+  active-page indicator never fight each other over two different elements.
+  Position/size are set inline by v2.js (offsetLeft/offsetWidth of the
+  target link); only the transition lives in CSS.
+*/
+.v2 .nav-indicator{
+  position:absolute; top:0; left:0; height:100%; width:0;
+  border-radius:100px; z-index:0; pointer-events:none; opacity:0;
+  background:var(--paper-card);
+  box-shadow:0 1px 2px rgba(0,0,0,.06), 0 3px 10px rgba(0,0,0,.08), inset 0 1px 0 var(--glass-highlight);
+  transform:translateX(0);
+  transition:transform .38s cubic-bezier(.22,1,.36,1), width .38s cubic-bezier(.22,1,.36,1), opacity .25s ease;
+}
+.v2 .nav-indicator.positioned{opacity:1;}
+@media (max-width:760px){ .v2 .nav-indicator{display:none;} }
+@media (prefers-reduced-motion: reduce){ .v2 .nav-indicator{transition:opacity .2s ease;} }
 .v2 .nav-links a{
-  color:var(--ink-soft); transition:color .2s cubic-bezier(.25,.8,.25,1);
+  position:relative; z-index:1;
+  color:var(--ink-soft); padding:7px 14px; border-radius:100px;
+  transition:color .2s cubic-bezier(.25,.8,.25,1);
 }
-.v2 .nav-links a:hover, .v2 .nav-links a.active{color:var(--accent);}
+.v2 .nav-links a:hover{color:var(--accent);}
+.v2 .nav-links a.active{color:var(--accent); font-weight:700;}
 .v2 .contact-link{
   border:1px solid var(--line); border-radius:100px; padding:8px 18px;
   font-size:.9rem; font-weight:600; transition:all .2s cubic-bezier(.25,.8,.25,1);
 }
-.v2 .contact-link:hover{border-color:var(--accent); color:var(--accent); background:var(--accent-wash);}
+.v2 .contact-link:hover{
+  border-color:var(--accent); color:var(--on-accent); background:var(--accent);
+  transform:translateY(-1px); box-shadow:var(--shadow-hover);
+}
 .v2 .nav-toggle{display:none; background:none; border:none; cursor:pointer; padding:6px;}
 .v2 .nav-toggle svg{display:block;}
+.v2 .nav-close{display:none;}
 
 @media (max-width:760px){
   .v2 .nav-links{
@@ -123,8 +246,20 @@ body.v2{
   .v2 .nav-links.open ~ .nav-close, .v2 .nav-links.open + .nav-close{display:block;}
 }
 
+/* ---------- page content (AJAX-swapped by v2.js router) ---------- */
+.v2 main.page-content{
+  display:block;
+  transition:opacity .22s ease, transform .22s ease;
+}
+.v2 main.page-content.is-transitioning{
+  opacity:0; transform:translateY(8px);
+}
+@media (prefers-reduced-motion: reduce){
+  .v2 main.page-content{transition:none;}
+}
+
 /* ---------- page header ---------- */
-.v2 .page-header{padding:20px 0 48px; max-width:1180px; margin:0 auto;}
+.v2 .page-header{padding:40px 0 48px; max-width:1180px; margin:0 auto;}
 .v2 .eyebrow{
   font-family:var(--font-code); font-size:.8rem; letter-spacing:.09em; text-transform:uppercase;
   color:var(--accent); font-weight:600; display:block; margin-bottom:10px;
@@ -137,7 +272,7 @@ body.v2{
 
 /* ---------- bento home ---------- */
 .v2 .bento{
-  display:grid; gap:20px; max-width:1180px; margin:0 auto 80px;
+  display:grid; gap:20px; max-width:1180px; margin:40px auto 80px;
   grid-template-columns:280px 1fr 320px;
   grid-template-areas:"latest hero intro" "older hero intro";
 }
@@ -164,7 +299,7 @@ body.v2{
 }
 .v2 .cell-hero .hero-quote{
   position:relative; z-index:1; padding:28px; color:#fff;
-  font-family:var(--font-accent); font-size:1.4rem; line-height:1.35;
+  font-family:var(--font-main); font-style:italic; font-weight:500; font-size:1.2rem; line-height:1.4;
 }
 .v2 .cell-intro{grid-area:intro; display:flex; flex-direction:column; gap:14px;}
 .v2 .cell-intro .avatar{
@@ -172,7 +307,7 @@ body.v2{
   display:flex; align-items:center; justify-content:center; font-family:var(--font-display);
   font-weight:600; color:var(--accent); font-size:1.3rem;
 }
-.v2 .cell-intro h2{font-family:var(--font-display); font-size:1.3rem; margin:0;}
+.v2 .cell-intro h2{font-family:var(--font-display); font-size:1.6rem; margin:0;}
 .v2 .cell-intro .role{color:var(--ink-soft); font-size:.95rem;}
 .v2 .cell-intro p{margin:0; font-size:.95rem; color:var(--ink-soft);}
 .v2 .cell-intro .projects-link{
@@ -185,25 +320,26 @@ body.v2{
 }
 .v2 .social-row a:hover{border-color:var(--accent); color:var(--accent);}
 
-/* post card (used in bento + blog index) */
-.v2 .post-card{
+/* mini card — used for bento project highlights + blog index post cards */
+.v2 .post-card, .v2 .mini-card{
   position:relative; padding:14px 0; border-top:1px solid var(--line);
 }
-.v2 .post-card:first-child{border-top:none; padding-top:0;}
+.v2 .post-card:first-child, .v2 .mini-card:first-child{border-top:none; padding-top:0;}
 .v2 .post-meta{
   font-family:var(--font-code); font-size:.75rem; color:var(--ink-faint);
-  text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px;
+  letter-spacing:.03em; margin-bottom:6px;
 }
-.v2 .post-card h3{
+.v2 .post-card h3, .v2 .mini-card h3{
   font-family:var(--font-display); font-size:1.05rem; font-weight:600; margin:0;
   padding-right:36px;
 }
+.v2 .mini-card p{margin:6px 36px 0 0; font-size:.85rem; color:var(--ink-soft);}
 .v2 .post-arrow{
   position:absolute; right:0; top:14px; width:30px; height:30px; border-radius:50%;
   border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
   transition:all .2s cubic-bezier(.25,.8,.25,1);
 }
-.v2 .post-card:hover .post-arrow{background:var(--accent); border-color:var(--accent); color:#fff; transform:rotate(45deg);}
+.v2 .post-card:hover .post-arrow, .v2 .mini-card:hover .post-arrow{background:var(--accent); border-color:var(--accent); color:var(--on-accent); transform:rotate(45deg);}
 
 /* ---------- section shells ---------- */
 .v2 section.v2-section{max-width:1180px; margin:0 auto 80px;}
@@ -225,12 +361,13 @@ body.v2{
   letter-spacing:.05em; background:var(--accent-wash); color:var(--accent); padding:3px 10px;
   border-radius:100px; margin-bottom:10px; font-weight:600;
 }
-.v2 .proj-card h3{font-family:var(--font-display); font-size:1.1rem; margin:0 0 8px;}
+.v2 .proj-card h2{font-family:var(--font-display); font-size:1.1rem; margin:0 0 8px;}
 .v2 .proj-card p{margin:0; color:var(--ink-soft); font-size:.92rem;}
 .v2 .proj-stats{display:flex; gap:14px; margin-bottom:10px; font-family:var(--font-code); font-size:.78rem; color:var(--ink-faint);}
 
 .v2 .gallery-stats{
   display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; margin-bottom:24px;
+  padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius-sm);
   font-family:var(--font-code); font-size:.85rem; color:var(--ink-soft);
 }
 .v2 .gallery-stats a{color:var(--accent); font-weight:600;}
@@ -261,7 +398,7 @@ body.v2{
   display:flex; align-items:center; justify-content:center; font-family:var(--font-display);
   font-size:1.5rem; font-weight:600; margin-bottom:14px;
 }
-.v2 .info-card h2{font-family:var(--font-display); font-size:1.3rem; margin:0 0 4px;}
+.v2 .info-card h2{font-family:var(--font-display); font-size:1.6rem; margin:0 0 4px;}
 .v2 .info-card .role{color:var(--ink-soft); font-size:.9rem; margin-bottom:18px;}
 .v2 .info-row{
   display:flex; gap:10px; font-size:.88rem; padding:9px 0; border-top:1px solid var(--line); color:var(--ink-soft);
@@ -304,11 +441,11 @@ body.v2{
 .v2 .blog-row:first-of-type{border-top:none;}
 .v2 .blog-thumb{
   width:88px; height:64px; flex:none; border-radius:var(--radius-sm); background:var(--accent-wash);
-  display:flex; align-items:center; justify-content:center; color:var(--ink-faint); font-family:var(--font-code); font-size:.65rem;
+  display:flex; align-items:center; justify-content:center; color:var(--ink-faint); font-family:var(--font-code); font-size:.72rem;
 }
 .v2 .blog-row .b-body{flex:1; min-width:0;}
 .v2 .blog-row .b-date{font-family:var(--font-code); font-size:.75rem; color:var(--ink-faint); margin-bottom:4px;}
-.v2 .blog-row h3{font-family:var(--font-display); font-size:1.08rem; margin:0 0 4px;}
+.v2 .blog-row h2{font-family:var(--font-display); font-size:1.08rem; margin:0 0 4px;}
 .v2 .blog-row p{margin:0; color:var(--ink-soft); font-size:.9rem;}
 .v2 .b-tag{
   font-family:var(--font-code); font-size:.72rem; text-transform:uppercase; color:var(--accent);
@@ -330,8 +467,9 @@ body.v2{
 }
 .v2 article.markdown-body code{font-family:var(--font-code); background:var(--accent-wash); padding:.1em .4em; border-radius:5px;}
 .v2 .license-block{
-  margin-top:50px; padding:16px 20px; border-left:3px solid var(--accent); background:var(--accent-wash);
-  border-radius:0 var(--radius-sm) var(--radius-sm) 0; font-size:.85rem; color:var(--ink-soft);
+  margin-top:50px; padding:16px 20px; background:var(--accent-wash);
+  border:1px solid var(--line); border-radius:var(--radius-sm);
+  font-size:.85rem; color:var(--ink-soft);
 }
 .v2 .related{margin-top:44px;}
 .v2 .related h3{font-family:var(--font-display); font-size:1.15rem; margin-bottom:14px;}

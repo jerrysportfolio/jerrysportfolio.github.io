@@ -9,20 +9,21 @@
     <link rel="icon" href="assets/placeholder/logo/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Source+Serif+4:ital,wght@0,400;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Caveat:wght@600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;1,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/v2.css">
 </head>
 
-<body class="v2">
+<body class="v2" data-page="portfolio">
 
     <nav class="navbar">
         <a class="logo" href="index.html"><span>@</span>[HANDLE]</a>
         <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="portfolio.html" class="active">Portfolio</a>
-            <a href="gallery.html">Gallery</a>
-            <a href="blog.html">Blog</a>
-            <a href="about.html">About</a>
+            <div class="nav-indicator" aria-hidden="true"></div>
+            <a href="index.html" data-page="home">Home</a>
+            <a href="portfolio.html" data-page="portfolio" class="active">Portfolio</a>
+            <a href="gallery.html" data-page="gallery">Gallery</a>
+            <a href="blog.html" data-page="blog">Blog</a>
+            <a href="about.html" data-page="about">About</a>
         </div>
         <a class="contact-link" href="mailto:[your@email.com]">Get in touch</a>
         <button class="nav-toggle" aria-label="Open menu">
@@ -36,6 +37,7 @@
 
     <div class="v2-wrap">
 
+        <main class="page-content" id="page-content">
         <div class="page-header">
             <span class="eyebrow">Made with curiosity</span>
             <h1 class="page-title">Projects</h1>
@@ -52,7 +54,7 @@
                     <div class="proj-body">
                         <span class="proj-chip">Hackathon</span>
                         <div class="proj-stats fill-me">★ [0] &nbsp;·&nbsp; ⑂ [0]</div>
-                        <h3 class="fill-me">[Project name]</h3>
+                        <h2 class="fill-me">[Project name]</h2>
                         <p class="fill-me">[One-sentence description of what it does and why it's interesting.]</p>
                     </div>
                 </a>
@@ -62,7 +64,7 @@
                     <div class="proj-cover"><img src="assets/placeholder/photos/project-cover-02.svg" alt=""></div>
                     <div class="proj-body">
                         <span class="proj-chip">Website</span>
-                        <h3 class="fill-me">[Project name]</h3>
+                        <h2 class="fill-me">[Project name]</h2>
                         <p class="fill-me">[One-sentence description.]</p>
                     </div>
                 </a>
@@ -72,7 +74,7 @@
                     <div class="proj-cover"><img src="assets/placeholder/photos/project-cover-03.svg" alt=""></div>
                     <div class="proj-body">
                         <span class="proj-chip">iOS App</span>
-                        <h3 class="fill-me">[Project name]</h3>
+                        <h2 class="fill-me">[Project name]</h2>
                         <p class="fill-me">[One-sentence description.]</p>
                     </div>
                 </a>
@@ -82,13 +84,14 @@
                     <div class="proj-cover"><img src="assets/placeholder/photos/project-cover-04.svg" alt=""></div>
                     <div class="proj-body">
                         <span class="proj-chip">Open Source</span>
-                        <h3 class="fill-me">[Project name]</h3>
+                        <h2 class="fill-me">[Project name]</h2>
                         <p class="fill-me">[One-sentence description.]</p>
                     </div>
                 </a>
 
             </div>
         </div>
+        </main>
 
         <footer class="v2-footer">
             <span>© <span id="v2-year"></span> [Your Name].</span>
@@ -102,7 +105,9 @@
     </div>
 
     <script src="assets/js/v2.js"></script>
-    <script>document.getElementById('v2-year').textContent = new Date().getFullYear();</script>
+<!-- impeccable-live-start -->
+<script src="http://localhost:8400/live.js?token=5354a896-2ffd-4865-8a14-1be3e97b1294"></script>
+<!-- impeccable-live-end -->
 </body>
 
 </html>
