@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1067" viewBox="0 0 1600 1067">
+  <defs>
+    <pattern id="diag" width="14" height="14" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+      <rect width="14" height="14" fill="#f6ede0"/>
+      <line x1="0" y1="0" x2="0" y2="14" stroke="#e6ddc8" stroke-width="6"/>
+    </pattern>
+  </defs>
+  <rect width="1600" height="1067" fill="url(#diag)"/>
+  <rect x="1" y="1" width="1598" height="1065" fill="none" stroke="#a1682e" stroke-width="2" stroke-dasharray="6 6"/>
+  <text x="50%" y="46%" text-anchor="middle" font-family="monospace" font-size="76" fill="#1c1a16">PLACEHOLDER: hero.svg</text>
+  <text x="50%" y="56%" text-anchor="middle" font-family="monospace" font-size="53" fill="#5c574a">swap for a 3:2+ landscape photo, >=1600px wide</text>
+</svg>

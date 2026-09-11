@@ -1,0 +1,9 @@
+.DS_Store
+
+# Impeccable local/session state — machine-specific, not project source.
+# .impeccable/live/config.json is intentionally NOT ignored (portable project config).
+.impeccable/hook.cache.json
+.impeccable/live/roots.json
+.impeccable/live/sessions/
+.impeccable/live/inject-journal.json
+.impeccable/config.local.json
