@@ -125,7 +125,9 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
 .image-list-copy{font-family:var(--font-code); font-size:.72rem; color:var(--ink-faint); word-break:break-all;}
 
 .save-bar{display:flex; gap:12px; justify-content:flex-end; margin-top:28px; align-items:center;}
-.save-status{font-size:.85rem; color:var(--ink-faint); margin-right:auto; transition:color .2s;}
+.save-status{font-size:.85rem; color:var(--ink-faint); transition:color .2s;}
+.navbar .save-status{position:absolute; left:50%; transform:translateX(-50%); white-space:nowrap;}
+@media (max-width:640px){.navbar .save-status{display:none;}}
 .save-status-dirty{color:#a06a10;}
 .save-status-saving{color:var(--ink-soft);}
 .save-status-saved{color:#1e7a34;}
