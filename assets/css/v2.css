@@ -373,7 +373,7 @@ body.v2{
 /* ---------- section shells ---------- */
 .v2 section.v2-section{max-width:1180px; margin:0 auto 80px;}
 
-/* ---------- grids: portfolio / gallery ---------- */
+/* ---------- grids: projects / gallery ---------- */
 .v2 .grid-cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px;}
 .v2 .proj-card{
   background:var(--paper-card); border:1px solid var(--line); border-radius:var(--radius-md);
