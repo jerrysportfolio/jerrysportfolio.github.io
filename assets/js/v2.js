@@ -293,6 +293,37 @@
     }
   }
 
+  // ---------- project cards with no cover photo of their own ----------
+  // Fills any <img data-unsplash-random> with a distinct random photo pulled
+  // from your Unsplash gallery. On failure (not configured, rate limited,
+  // offline) the placeholder images already in the markup stay put.
+  function initRandomProjectCovers(root) {
+    var imgs = root.querySelectorAll('img[data-unsplash-random]');
+    if (!imgs.length) return;
+    if (!UNSPLASH_CONFIG.accessKey || !UNSPLASH_CONFIG.username) return;
+
+    fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) +
+      '/photos?per_page=30&order_by=latest', {
+      headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey }
+    })
+      .then(function (res) { if (!res.ok) throw new Error('Unsplash request failed'); return res.json(); })
+      .then(function (photos) {
+        if (!photos || !photos.length) return;
+        // Shuffle so each matched image gets a different random photo.
+        var pool = photos.slice();
+        for (var i = pool.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+        }
+        imgs.forEach(function (img, idx) {
+          var photo = pool[idx % pool.length];
+          img.src = photo.urls.regular;
+          img.alt = photo.alt_description || '';
+        });
+      })
+      .catch(function () { /* keep the placeholder images */ });
+  }
+
   // Most of these photos never got a real title (alt_description/description
   // both null) — the Unsplash *list* endpoint doesn't include location data
   // at all, only the single-photo detail endpoint does, so an untitled photo
@@ -518,6 +549,7 @@
     initDailyQuote(root);
     initGalleryStats(root);
     initGalleryPhotos(root);
+    initRandomProjectCovers(root);
     initResumeTracking(root);
 
     // Blog index: category pills + live search
