@@ -14,10 +14,10 @@
 
     <div class="terminal-window">
         <div class="terminal-titlebar">
-            <span class="terminal-dot terminal-dot-red"></span>
-            <span class="terminal-dot terminal-dot-yellow"></span>
-            <span class="terminal-dot terminal-dot-green"></span>
-            <span class="terminal-titlebar-label">jerry@iamjerryhu: ~</span>
+            <button type="button" class="terminal-dot terminal-dot-red" id="terminal-dot-close" aria-label="Close"></button>
+            <button type="button" class="terminal-dot terminal-dot-yellow" id="terminal-dot-minimize" aria-label="Minimize" tabindex="-1"></button>
+            <button type="button" class="terminal-dot terminal-dot-green" id="terminal-dot-maximize" aria-label="Maximize"></button>
+            <span class="terminal-titlebar-label">bash</span>
         </div>
         <div class="terminal-body-inner" id="terminal-body-inner">
             <div class="terminal-log" id="terminal-log">

@@ -16,17 +16,34 @@ body.terminal-body {
   justify-content: center;
   padding: 24px;
   font-family: "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  transition: background .5s;
+  transition: background .5s, padding .4s cubic-bezier(.4, 0, .2, 1);
 }
+body.terminal-body.terminal-maximized { padding: 0; }
 
 .terminal-window {
   width: 100%;
   max-width: 640px;
+  max-height: 80vh;
   border-radius: 10px;
   overflow: hidden;
   background: #0f1210;
   box-shadow: 0 30px 80px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .06);
   animation: terminal-boot .35s cubic-bezier(.2, .8, .3, 1) both;
+  transition: max-width .4s cubic-bezier(.4, 0, .2, 1), max-height .4s cubic-bezier(.4, 0, .2, 1),
+    width .4s cubic-bezier(.4, 0, .2, 1), height .4s cubic-bezier(.4, 0, .2, 1), border-radius .4s;
+  display: flex;
+  flex-direction: column;
+}
+.terminal-window.terminal-maximized {
+  width: 100vw;
+  height: 100vh;
+  max-width: 100vw;
+  max-height: 100vh;
+  border-radius: 0;
+}
+.terminal-window.terminal-maximized .terminal-body-inner { flex: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .terminal-window { transition: none; }
 }
 
 @keyframes terminal-boot {
@@ -42,10 +59,15 @@ body.terminal-body {
   background: #1a1e1c;
   border-bottom: 1px solid rgba(255, 255, 255, .06);
 }
-.terminal-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
-.terminal-dot-red { background: #ff5f56; }
-.terminal-dot-yellow { background: #ffbd2e; }
-.terminal-dot-green { background: #27c93f; }
+/* macOS-style: dots stay a neutral gray until the whole titlebar is
+   hovered, only then do they reveal their real colors. */
+.terminal-dot {
+  width: 11px; height: 11px; border-radius: 50%; display: inline-block;
+  background: #4b524e; border: none; padding: 0; cursor: pointer; transition: background .12s;
+}
+.terminal-titlebar:hover .terminal-dot-red { background: #ff5f56; }
+.terminal-titlebar:hover .terminal-dot-yellow { background: #ffbd2e; }
+.terminal-titlebar:hover .terminal-dot-green { background: #27c93f; }
 .terminal-titlebar-label {
   margin: 0 auto;
   transform: translateX(-16px);
