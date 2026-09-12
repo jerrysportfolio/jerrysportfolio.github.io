@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     typedEl.textContent = '';
     inputEl.value = '';
     if (stage === 'email') {
-      promptEl.textContent = 'email:';
+      promptEl.textContent = "jerry@iamjerryhu's email:";
       inputEl.type = 'email';
       inputEl.autocomplete = 'username';
       inputEl.disabled = false;
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var value = inputEl.value.trim();
       if (!value) return;
       email = value;
-      appendLine('email: ' + email);
+      appendLine("jerry@iamjerryhu's email: " + email);
       setStage('password');
     } else if (stage === 'password') {
       var password = inputEl.value;
