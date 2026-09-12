@@ -9,10 +9,14 @@ web
 ## Stack
 
 Plain static HTML/CSS/JS, no build step, deployed to GitHub Pages (custom domain via
-`CNAME`). `.github/workflows` minifies/obfuscates JS+CSS and HTML on push to `main` and
-publishes to the `gh-pages` branch. The `v2` branch is an experimental rebuild intended
-to eventually replace `main`; it does not deploy on its own (workflow only triggers on
-`main`).
+`CNAME`, fronted by Cloudflare). `.github/workflows/deploy.yml` minifies/obfuscates
+JS+CSS and HTML on push to `main` and publishes the built output to the `gh-pages`
+branch; GitHub Pages is configured (repo Settings → Pages) to serve from `gh-pages`,
+**not** `main` — it was found misconfigured to serve raw `main` on 2026-09-12 (see
+`CLAUDE.md`), so re-check this setting if the live site ever looks stale, unminified,
+or unobfuscated.
+`main` is the sole long-lived branch (always prod-deployable); the old `v2` branch was
+retired once its work shipped. See `CLAUDE.md` for the current branching workflow.
 
 ## Users
 
