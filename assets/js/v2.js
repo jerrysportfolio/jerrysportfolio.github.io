@@ -37,14 +37,25 @@
   // The compat SDK's firebase.analytics() already logs the very first page_view
   // automatically; every subsequent AJAX route change needs a manual event,
   // since our router never does a real navigation for gtag/GA to observe.
-  function logPageView(pageKey) {
+  function logPageView(pageKey, pathOverride) {
     if (!fbAnalytics) return;
     try {
       fbAnalytics.logEvent('page_view', {
-        page_path: '/' + (pageKey === 'home' ? '' : (pageKey ? pageKey + '.html' : '')),
+        page_path: pathOverride || ('/' + (pageKey === 'home' ? '' : (pageKey ? pageKey + '.html' : ''))),
         page_title: document.title
       });
     } catch (e) { /* ignore */ }
+  }
+
+  // Per-post view counts via Firestore (parallel to the gallery views/downloads
+  // counters above) — feeds a future stats dashboard, since raw GA4 events
+  // aren't queryable from a static client-only site. Runs once per full page
+  // load; blog posts aren't in PAGES so they're never AJAX-routed, meaning
+  // this only ever needs to fire from the initial DOMContentLoaded pass.
+  function initBlogPostView() {
+    var slug = document.body.dataset.postSlug;
+    if (!slug || !window.__firestoreLite) return;
+    window.__firestoreLite.incrementPostViews(slug);
   }
 
   // Reads back the live views/downloads totals via Firestore Lite (see the
@@ -736,7 +747,8 @@
   document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('v2-year').textContent = new Date().getFullYear();
     initFirebase();
-    logPageView(activePageKey);
+    logPageView(activePageKey, location.pathname);
+    initBlogPostView();
     initChrome();
     initNavIndicator();
     initPageBehaviors(document);

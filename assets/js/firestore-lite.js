@@ -46,5 +46,18 @@ window.__firestoreLite = {
     if (!d) return Promise.resolve();
     return setDoc(doc(d, 'stats', 'gallery'), { downloads: increment(1) }, { merge: true })
       .catch(function () { /* ignore */ });
+  },
+  getPostStats: function (slug) {
+    var d = ensureDb();
+    if (!d || !slug) return Promise.resolve(null);
+    return getDoc(doc(d, 'blogStats', slug))
+      .then(function (snap) { return snap.exists() ? snap.data() : { views: 0 }; })
+      .catch(function () { return null; });
+  },
+  incrementPostViews: function (slug) {
+    var d = ensureDb();
+    if (!d || !slug) return Promise.resolve();
+    return setDoc(doc(d, 'blogStats', slug), { views: increment(1) }, { merge: true })
+      .catch(function () { /* ignore */ });
   }
 };
