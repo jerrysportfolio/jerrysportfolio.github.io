@@ -101,6 +101,15 @@
         ],
         "createdAt": "2026-09-12T04:33:36.225Z",
         "reason": "standard neutral-gray (var(--line)) 3px blockquote left-rule for markdown quotes, not an accent-colored card decoration — conventional markdown blockquote treatment (GitHub/Medium-style), not the AI-tell pattern this rule targets"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "admin/index.html"
+        ],
+        "createdAt": "2026-09-12T04:48:51.067Z",
+        "reason": "matches existing site-wide --ink-faint small-label pattern already used throughout v2.css and admin.css (.proj-meta, .b-date, .field label, etc.) — established design convention, not new"
       }
     ]
   }
