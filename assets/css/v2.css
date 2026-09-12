@@ -381,9 +381,10 @@ body.v2{
 }
 .v2 .proj-card:hover{box-shadow:var(--shadow-hover); transform:translateY(-3px);}
 .v2 .proj-cover{
-  aspect-ratio:16/10; background:var(--accent-wash); display:flex; align-items:center; justify-content:center;
+  background:var(--accent-wash); display:flex; align-items:center; justify-content:center;
   color:var(--ink-faint); font-family:var(--font-code); font-size:.8rem;
 }
+.v2 .proj-cover img{display:block; width:100%; height:auto; max-height:280px; object-fit:cover; object-position:center;}
 .v2 .proj-body{padding:22px 20px 26px;}
 .v2 .proj-chip{
   display:inline-block; font-family:var(--font-code); font-size:.72rem; text-transform:uppercase;
