@@ -817,6 +817,27 @@
     navigateTo(nextHref, true);
   });
 
+  // ---------- Down arrow: the hidden door to the dashboard sign-in ----------
+  // A real navigation (admin/index.html is a completely different page, not
+  // part of the #page-content AJAX system), so instead of reusing
+  // navigateTo() this plays a one-way "drop through a trapdoor" transition
+  // on the current page — sink/blur/fade, then a darkening overlay — before
+  // the actual navigation fires once it's had time to read.
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowDown') return;
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+    if (isTypingTarget(document.activeElement)) return;
+    if (navigating) return;
+    var lb = document.getElementById('lightbox');
+    if (lb && !lb.hidden) return;
+
+    e.preventDefault();
+    navigating = true;
+    document.body.classList.add('portal-down');
+    setTimeout(function () { document.body.classList.add('portal-fade'); }, 120);
+    setTimeout(function () { location.href = 'admin/index.html'; }, 520);
+  });
+
   document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('v2-year').textContent = new Date().getFullYear();
     initFirebase();

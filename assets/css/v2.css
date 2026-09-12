@@ -103,7 +103,21 @@ body.v2{
 .v2 a{color:inherit; text-decoration:none;}
 .v2 img{max-width:100%; display:block;}
 
-.v2-wrap{max-width:1180px; margin:0 auto; padding:0 24px;}
+.v2-wrap{max-width:1180px; margin:0 auto; padding:0 24px; transition:transform .45s cubic-bezier(.4,0,.2,1), opacity .4s, filter .45s;}
+/* The Down-arrow "hidden door" to the admin sign-in — the whole page sinks
+   and blurs away like dropping through a trapdoor, then the real navigation
+   happens once the animation has had time to read. */
+body.portal-down{overflow:hidden;}
+body.portal-down .v2-wrap{transform:translateY(70px) scale(.94); opacity:0; filter:blur(6px);}
+body.portal-down::before{
+  content:""; position:fixed; inset:0; z-index:40; background:var(--ink); opacity:0;
+  transition:opacity .45s; pointer-events:none;
+}
+body.portal-down.portal-fade::before{opacity:.9;}
+@media (prefers-reduced-motion: reduce){
+  .v2-wrap{transition:opacity .2s;}
+  body.portal-down .v2-wrap{transform:none; filter:none;}
+}
 
 /* ---------- navbar (liquid glass) ---------- */
 /*
