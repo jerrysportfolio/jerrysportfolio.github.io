@@ -110,6 +110,15 @@
         ],
         "createdAt": "2026-09-12T04:48:51.067Z",
         "reason": "matches existing site-wide --ink-faint small-label pattern already used throughout v2.css and admin.css (.proj-meta, .b-date, .field label, etc.) — established design convention, not new"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "admin/index.html"
+        ],
+        "createdAt": "2026-09-12T06:11:48.093Z",
+        "reason": "intentional success-state flash in the terminal login's access-granted animation, using the same green already established for the terminal prompt/success text — signals a real auth outcome, not decorative chrome; user explicitly requested animation/effects for this redesign"
       }
     ]
   }
