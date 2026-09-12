@@ -2,7 +2,7 @@
    shadows) via the shared stylesheet; this file only adds the components
    the public site doesn't need (forms, tables, toolbar, callouts preview). */
 
-.admin-body{min-height:100vh; display:flex; flex-direction:column; position:relative; overflow-x:hidden;}
+.admin-body{min-height:100vh; display:flex; flex-direction:column; position:relative;}
 /* The public navbar's glass effect is obvious over photos; over this page's
    flat --paper background a translucent-white blur has nothing to visibly
    distinguish, so it reads as invisible even though the CSS is identical.
@@ -11,7 +11,7 @@
    palette (no hue), so it doesn't clash with the rest of the design. */
 .admin-body::before{
   content:""; position:absolute; top:-120px; left:50%; transform:translateX(-50%);
-  width:900px; height:340px; z-index:-1; pointer-events:none;
+  width:min(900px, 100%); height:340px; z-index:-1; pointer-events:none;
   background:radial-gradient(closest-side, var(--ink) 0%, transparent 70%);
   opacity:.08; filter:blur(50px);
 }
