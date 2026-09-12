@@ -2,7 +2,7 @@
 // indicator, AJAX page routing (nav/footer persist, #page-content swaps), blog
 // filter/search, reading progress, gallery load-more.
 (function () {
-  var PAGES = ['index.html', 'about.html', 'projects.html', 'gallery.html', 'blog.html', 'blog-post.html'];
+  var PAGES = ['index.html', 'about.html', 'projects.html', 'gallery.html'];
   var TRANSITION_MS = 220;
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var activePageKey = document.body.dataset.page || '';
