@@ -603,9 +603,13 @@
     });
   }
 
+  var TAG_ORDER = ['music', 'tech', 'life', 'literature', 'misc'];
+
   function initDynamicBlogList(root) {
     var list = root.querySelector('#blog-list');
     if (!list || !window.__firestoreLite) return;
+    var pillGroup = root.querySelector('#blog-pill-group');
+    var searchInput = root.querySelector('.search-input');
 
     window.__firestoreLite.listPublishedPosts().then(function (posts) {
       if (!posts.length) {
@@ -627,36 +631,21 @@
           '<span class="b-tag">' + tagLabel + '</span>' +
           '</a>';
       }).join('');
-      if (window.__reapplyBlogFilters) window.__reapplyBlogFilters();
-    }).catch(function () {
-      list.innerHTML = '<p class="empty-state">Couldn\'t load posts right now.</p>';
-    });
-  }
 
-  // ---------- per-page behaviors (re-run after every content swap) ----------
+      // Only show a filter pill for a tag that at least one loaded post
+      // actually has — no point offering "Literature" if nothing's tagged
+      // that yet. "All" always shows.
+      if (pillGroup) {
+        var presentTags = TAG_ORDER.filter(function (tag) {
+          return posts.some(function (p) { return (p.tag || 'misc') === tag; });
+        });
+        pillGroup.innerHTML = '<button class="pill active" data-filter="all">All</button>' +
+          presentTags.map(function (tag) {
+            return '<button class="pill" data-filter="' + tag + '">' + (TAG_LABELS[tag] || tag) + '</button>';
+          }).join('');
+      }
 
-  function initPageBehaviors(root) {
-    root = root || document;
-
-    initUnsplashHero(root);
-    initDailyQuote(root);
-    initGalleryStats(root);
-    initGalleryPhotos(root);
-    initRandomProjectCovers(root);
-    initLightboxChrome(root);
-    initPostImageLightbox(root);
-    initResumeTracking(root);
-    initDynamicBlogList(root);
-
-    // Blog index: category pills + live search. Rows are queried fresh inside
-    // applyFilters (not cached at bind time) since blog.html's rows are now
-    // loaded asynchronously from Firestore, after this runs — a pill click or
-    // search keystroke always sees whatever rows exist at that moment, and
-    // newly-inserted rows are visible by default (no inline display style)
-    // without needing any re-init call.
-    var pills = root.querySelectorAll('.pill[data-filter]');
-    var searchInput = root.querySelector('.search-input');
-    if (pills.length) {
+      var pills = root.querySelectorAll('.pill[data-filter]');
       var activeCategory = 'all';
       var applyFilters = function () {
         var q = (searchInput && searchInput.value || '').trim().toLowerCase();
@@ -676,9 +665,30 @@
           applyFilters();
         });
       });
-      if (searchInput) searchInput.addEventListener('input', applyFilters);
-      window.__reapplyBlogFilters = applyFilters;
-    }
+      if (searchInput && !searchInput.dataset.blogSearchBound) {
+        searchInput.dataset.blogSearchBound = '1';
+        searchInput.addEventListener('input', function () { applyFilters(); });
+      }
+      applyFilters();
+    }).catch(function () {
+      list.innerHTML = '<p class="empty-state">Couldn\'t load posts right now.</p>';
+    });
+  }
+
+  // ---------- per-page behaviors (re-run after every content swap) ----------
+
+  function initPageBehaviors(root) {
+    root = root || document;
+
+    initUnsplashHero(root);
+    initDailyQuote(root);
+    initGalleryStats(root);
+    initGalleryPhotos(root);
+    initRandomProjectCovers(root);
+    initLightboxChrome(root);
+    initPostImageLightbox(root);
+    initResumeTracking(root);
+    initDynamicBlogList(root); // also generates + binds blog's filter pills and search, once posts are known
 
     // Projects page: live search by name, description, and type (chip)
     var projectSearch = root.querySelector('#project-search');
