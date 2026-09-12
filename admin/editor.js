@@ -392,12 +392,12 @@ function initEditor() {
   }
 
   // ---------- autosave ----------
-  // Every 20s, if there's something to save and nothing's in flight. Skipped
+  // Every 5s, if there's something to save and nothing's in flight. Skipped
   // entirely if the post doesn't yet have a title+body (nothing meaningful
   // to autosave), same bar as manual save's own validation.
   setInterval(function () {
     if (isDirty && !isSaving && !validationError()) performSave({ silent: true });
-  }, 20000);
+  }, 5000);
 
   // ---------- leaving the page with unsaved changes ----------
   // "Save and leave" / "Discard and leave" / "Stay" via two native confirms
