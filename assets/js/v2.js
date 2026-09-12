@@ -785,6 +785,38 @@
     if (e.key === 'Escape') closeLightbox();
   });
 
+  // ---------- Left/Right arrow keys cycle between nav tabs ----------
+  // Reuses navigateTo() — the same AJAX page-swap + nav-indicator slide used
+  // for a normal click — so this gets identical animation/effects for free.
+  function isTypingTarget(el) {
+    if (!el) return false;
+    var tag = el.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return; // don't hijack browser history shortcuts
+    if (isTypingTarget(document.activeElement)) return;
+    if (navigating) return;
+    var lb = document.getElementById('lightbox');
+    if (lb && !lb.hidden) return; // let the lightbox own arrow keys while a photo is open
+
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.nav-links a[data-page]'));
+    if (!tabs.length) return;
+    var currentIndex = tabs.findIndex(function (a) { return a.dataset.page === activePageKey; });
+    if (currentIndex === -1) return;
+
+    var nextIndex = e.key === 'ArrowRight'
+      ? (currentIndex + 1) % tabs.length
+      : (currentIndex - 1 + tabs.length) % tabs.length;
+    var nextHref = tabs[nextIndex].getAttribute('href');
+    if (!nextHref || PAGES.indexOf(nextHref.split('#')[0].split('?')[0]) === -1) return;
+
+    e.preventDefault();
+    navigateTo(nextHref, true);
+  });
+
   document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('v2-year').textContent = new Date().getFullYear();
     initFirebase();
