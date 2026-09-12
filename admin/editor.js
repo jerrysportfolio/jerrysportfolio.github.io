@@ -223,6 +223,11 @@ function initEditor() {
       if (!url) return;
       insertAtCursor('\n[[youtube:' + url.trim() + ']]\n');
     },
+    linkedin: function () {
+      var url = window.prompt('LinkedIn post URL (from the post\'s "Embed this post" menu, or just paste the share link):');
+      if (!url) return;
+      insertAtCursor('\n[[linkedin:' + url.trim() + ']]\n');
+    },
     'toolbar-image': function () { triggerUpload(true); }
   };
 
