@@ -104,17 +104,16 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
   font-family:inherit; font-size:.85rem; font-weight:600; color:var(--ink-soft);
 }
 .toolbar-btn:hover{background:var(--paper-card); border-color:var(--line); color:var(--ink);}
-.editor-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;}
+.editor-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; margin-top:8px;}
 @media (max-width:860px){.editor-grid{grid-template-columns:1fr;}}
+.editor-textarea, .editor-preview{
+  width:100%; min-height:480px; padding:16px; border:1px solid var(--line); border-radius:var(--radius-sm);
+  box-sizing:border-box;
+}
 .editor-textarea{
-  width:100%; min-height:480px; padding:16px; border:1px solid var(--line); border-radius:0 0 var(--radius-sm) var(--radius-sm);
   font-family:var(--font-code); font-size:.88rem; line-height:1.6; background:var(--paper); color:var(--ink); resize:vertical;
 }
-.editor-preview{
-  border:1px solid var(--line); border-radius:var(--radius-sm); padding:20px; min-height:480px; overflow:auto;
-  background:var(--paper-card);
-}
-.editor-preview-label{font-family:var(--font-code); font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint); margin-bottom:12px;}
+.editor-preview{overflow:auto; background:var(--paper-card);}
 
 .image-list{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;}
 .image-list-item{position:relative; width:100px; height:76px; border-radius:var(--radius-sm); overflow:hidden; border:1px solid var(--line);}
@@ -126,7 +125,11 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
 .image-list-copy{font-family:var(--font-code); font-size:.72rem; color:var(--ink-faint); word-break:break-all;}
 
 .save-bar{display:flex; gap:12px; justify-content:flex-end; margin-top:28px; align-items:center;}
-.save-status{font-size:.85rem; color:var(--ink-faint); margin-right:auto;}
+.save-status{font-size:.85rem; color:var(--ink-faint); margin-right:auto; transition:color .2s;}
+.save-status-dirty{color:#a06a10;}
+.save-status-saving{color:var(--ink-soft);}
+.save-status-saved{color:#1e7a34;}
+.save-status-error{color:#b3261e;}
 
 /* ---------- glass tag dropdown (same liquid-glass recipe as the navbar) ---------- */
 .glass-select{position:relative;}

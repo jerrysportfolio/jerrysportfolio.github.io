@@ -34,6 +34,21 @@ function initEditor() {
   var images = []; // array of {url}
   var slugManuallyEdited = false;
   var existingCreatedAt = null;
+  var isDirty = false;
+  var isSaving = false;
+  var postExistsRemotely = isEditMode; // becomes true after the first successful save of a new post
+  var suppressDirty = true; // true while we're populating fields programmatically (initial load)
+
+  function markDirty() {
+    if (suppressDirty) return;
+    isDirty = true;
+    setStatus('Unsaved changes', 'dirty');
+  }
+
+  function setStatus(text, kind) {
+    saveStatus.textContent = text;
+    saveStatus.className = 'save-status' + (kind ? ' save-status-' + kind : '');
+  }
 
   // ---------- tag glass-dropdown ----------
   var tagInput = document.getElementById('tag');
@@ -54,6 +69,7 @@ function initEditor() {
     li.addEventListener('click', function () {
       setTag(li.dataset.value, li.textContent);
       tagMenu.hidden = true;
+      markDirty();
     });
   });
   document.addEventListener('click', function () { tagMenu.hidden = true; });
@@ -66,7 +82,12 @@ function initEditor() {
       previewEl.innerHTML = window.renderPostMarkdown(markdownEl.value);
     }, 150);
   }
-  markdownEl.addEventListener('input', renderPreview);
+  markdownEl.addEventListener('input', function () { renderPreview(); markDirty(); });
+  titleEl.addEventListener('input', markDirty);
+  slugEl.addEventListener('input', markDirty);
+  dateEl.addEventListener('input', markDirty);
+  dekEl.addEventListener('input', markDirty);
+  publishedEl.addEventListener('change', markDirty);
 
   // ---------- image list ----------
   function renderImageList() {
@@ -79,6 +100,7 @@ function initEditor() {
       item.querySelector('button').addEventListener('click', function () {
         images.splice(idx, 1);
         renderImageList();
+        markDirty();
       });
       imageListEl.appendChild(item);
     });
@@ -97,18 +119,19 @@ function initEditor() {
     if (!url) return;
     images.push({ url: url.trim() });
     renderImageList();
+    markDirty();
   });
   fileInput.addEventListener('change', function () {
     var file = fileInput.files[0];
     if (!file) return;
-    saveStatus.textContent = 'Uploading image…';
+    setStatus('Uploading image…');
     window.__storageLite.uploadBlogImage(file).then(function (url) {
-      saveStatus.textContent = '';
       images.push({ url: url });
       renderImageList();
+      markDirty();
       if (pendingInsertInline) insertAtCursor('![' + file.name.replace(/\.[a-z0-9]+$/i, '') + '](' + url + ')\n');
     }).catch(function () {
-      saveStatus.textContent = 'Image upload failed.';
+      setStatus('Image upload failed.', 'error');
     });
   });
 
@@ -288,20 +311,37 @@ function initEditor() {
       setTag(post.tag || 'misc', tagLabel);
       renderImageList();
       renderPreview();
+      setStatus('All changes saved');
+      suppressDirty = false;
     });
   } else {
     setTag('misc', 'Misc');
     dateEl.value = new Date().toISOString().slice(0, 10);
+    setStatus('Not yet saved');
+    suppressDirty = false;
   }
 
-  // ---------- save / delete / cancel ----------
-  cancelBtn.addEventListener('click', function () { location.href = 'dashboard.html'; });
+  // ---------- save (shared by the Save button, autosave, and the leave-guard) ----------
+  var currentSlug = editingSlug; // locked in once a new post has been saved for the first time
 
-  saveBtn.addEventListener('click', function () {
-    var slug = isEditMode ? editingSlug : slugify(slugEl.value || titleEl.value);
-    if (!titleEl.value.trim()) { alert('Title is required.'); return; }
-    if (!slug) { alert('Slug is required.'); return; }
-    if (!markdownEl.value.trim()) { alert('Post body is required.'); return; }
+  function validationError() {
+    if (!titleEl.value.trim()) return 'Title is required.';
+    if (!(currentSlug || slugEl.value || titleEl.value).trim()) return 'Slug is required.';
+    if (!markdownEl.value.trim()) return 'Post body is required.';
+    return null;
+  }
+
+  // opts.silent: skip alerts and the new-slug overwrite confirm (used by
+  // autosave — a silent autosave should never interrupt with a dialog).
+  // opts.navigateAway: where to go after a successful save, if anywhere.
+  function performSave(opts) {
+    opts = opts || {};
+    var err = validationError();
+    if (err) {
+      if (!opts.silent) alert(err);
+      return Promise.reject(new Error(err));
+    }
+    var slug = currentSlug || slugify(slugEl.value || titleEl.value);
 
     var data = {
       title: titleEl.value.trim(),
@@ -314,38 +354,94 @@ function initEditor() {
       updatedAt: new Date().toISOString()
     };
 
-    var proceed = isEditMode
+    var proceed = postExistsRemotely || opts.silent
       ? Promise.resolve(true)
       : window.__firestoreLite.postExists(slug).then(function (exists) {
         if (!exists) return true;
         return window.confirm('A post with slug "' + slug + '" already exists. Overwrite it?');
       });
 
+    isSaving = true;
     saveBtn.disabled = true;
-    saveStatus.textContent = 'Saving…';
-    proceed.then(function (ok) {
-      if (!ok) { saveBtn.disabled = false; saveStatus.textContent = ''; return; }
-      data.createdAt = isEditMode ? (existingCreatedAt || data.updatedAt) : data.updatedAt;
-      return window.__firestoreLite.savePost(slug, data).then(function () {
-        location.href = 'dashboard.html';
-      });
-    }).catch(function (err) {
-      saveBtn.disabled = false;
-      saveStatus.textContent = 'Save failed — check the console.';
-      console.error(err);
-    });
-  });
+    setStatus('Saving…', 'saving');
 
-  if (isEditMode) {
-    deleteBtn.addEventListener('click', function () {
-      if (!window.confirm('Delete "' + (titleEl.value || editingSlug) + '"? This cannot be undone.')) return;
-      deleteBtn.disabled = true;
-      window.__firestoreLite.deletePost(editingSlug).then(function () {
-        location.href = 'dashboard.html';
-      }).catch(function () {
-        deleteBtn.disabled = false;
-        alert('Delete failed.');
+    return proceed.then(function (ok) {
+      if (!ok) { isSaving = false; saveBtn.disabled = false; setStatus('Unsaved changes', 'dirty'); return Promise.reject(new Error('cancelled')); }
+      data.createdAt = postExistsRemotely ? (existingCreatedAt || data.updatedAt) : data.updatedAt;
+      return window.__firestoreLite.savePost(slug, data).then(function () {
+        currentSlug = slug;
+        postExistsRemotely = true;
+        existingCreatedAt = data.createdAt;
+        slugEl.disabled = true;
+        deleteBtn.hidden = false;
+        isDirty = false;
+        isSaving = false;
+        saveBtn.disabled = false;
+        setStatus(opts.silent ? 'Autosaved just now' : 'All changes saved', 'saved');
+        if (opts.navigateAway) location.href = opts.navigateAway;
       });
+    }).catch(function (err2) {
+      isSaving = false;
+      saveBtn.disabled = false;
+      if (err2.message !== 'cancelled') {
+        setStatus('Save failed — check the console.', 'error');
+        console.error(err2);
+      }
+      throw err2;
     });
   }
+
+  // ---------- autosave ----------
+  // Every 20s, if there's something to save and nothing's in flight. Skipped
+  // entirely if the post doesn't yet have a title+body (nothing meaningful
+  // to autosave), same bar as manual save's own validation.
+  setInterval(function () {
+    if (isDirty && !isSaving && !validationError()) performSave({ silent: true });
+  }, 20000);
+
+  // ---------- leaving the page with unsaved changes ----------
+  // "Save and leave" / "Discard and leave" / "Stay" via two native confirms
+  // rather than a custom modal — consistent with the rest of this editor's
+  // prompt()-based UX (image URL, link URL, YouTube URL).
+  function confirmLeave(destination) {
+    if (!isDirty) { location.href = destination; return; }
+    if (window.confirm('You have unsaved changes. Save before leaving?')) {
+      performSave({}).then(function () { location.href = destination; }).catch(function () { /* stay so they can fix/retry */ });
+    } else if (window.confirm('Discard unsaved changes and leave?')) {
+      location.href = destination;
+    }
+  }
+
+  window.addEventListener('beforeunload', function (e) {
+    if (!isDirty) return;
+    e.preventDefault();
+    e.returnValue = '';
+  });
+
+  // ---------- save / delete / cancel ----------
+  var backLink = document.querySelector('.admin-topbar-actions a.contact-link');
+  if (backLink) {
+    backLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      confirmLeave(backLink.getAttribute('href'));
+    });
+  }
+
+  cancelBtn.addEventListener('click', function () { confirmLeave('dashboard.html'); });
+
+  saveBtn.addEventListener('click', function () {
+    performSave({ navigateAway: 'dashboard.html' }).catch(function () { /* error already shown */ });
+  });
+
+  deleteBtn.addEventListener('click', function () {
+    if (!window.confirm('Delete "' + (titleEl.value || currentSlug) + '"? This cannot be undone.')) return;
+    deleteBtn.disabled = true;
+    window.__firestoreLite.deletePost(currentSlug).then(function () {
+      isDirty = false; // it's gone; don't let beforeunload/back-link second-guess this
+      location.href = 'dashboard.html';
+    }).catch(function () {
+      deleteBtn.disabled = false;
+      alert('Delete failed.');
+    });
+  });
 }
