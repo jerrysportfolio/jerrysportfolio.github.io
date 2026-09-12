@@ -51,7 +51,8 @@
 
             <article class="markdown-body">
                 <p>Yesterday, I had the incredible opportunity to transform my two-years of planning and practice into a
-                    1.5-hour concert with my partner Yuko Xiao at Kay Meek Arts Centre. We had the privilege to
+                    1.5-hour concert with my partner <a href="https://www.linkedin.com/in/yuko-xiao-449b63348/">Yuko
+                        Xiao</a> at Kay Meek Arts Centre. We had the privilege to
                     fundraise over 3.7k for our school's Music Department. I am looking forward to what the future holds
                     for me as I wrap these two years of hard work into my memories. Whats 🔜?</p>
 
@@ -66,6 +67,28 @@
                     <img src="../assets/img/blogs/milestones_in_melody/8.jpeg" alt="Milestones in Melody concert photo 8">
                 </div>
             </article>
+
+            <!-- Photo lightbox: hidden until openLightbox() in v2.js fills it in and
+                 un-hides it. Metadata panel sits to the right of the image, as requested. -->
+            <div class="lightbox" id="lightbox" hidden>
+                <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+                <div class="lightbox-frame">
+                    <button class="lightbox-close" id="lightbox-close" aria-label="Close">✕</button>
+                    <div class="lightbox-media">
+                        <img id="lightbox-img" src="" alt="">
+                    </div>
+                    <aside class="lightbox-panel">
+                        <h2 id="lightbox-title">—</h2>
+                        <p id="lightbox-desc"></p>
+                        <dl class="lightbox-meta">
+                            <div><dt>Dimensions</dt><dd id="lightbox-dims">—</dd></div>
+                            <div id="lightbox-date-row"><dt>Published</dt><dd id="lightbox-date">—</dd></div>
+                            <div id="lightbox-likes-row"><dt>Likes</dt><dd id="lightbox-likes">—</dd></div>
+                        </dl>
+                        <a class="lightbox-download" id="lightbox-download" href="#" target="_blank" rel="noopener noreferrer">Download ↓</a>
+                    </aside>
+                </div>
+            </div>
 
         </main>
 

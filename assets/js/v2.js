@@ -282,15 +282,44 @@
     }
 
     loadNextPage();
+  }
 
+  // Binds the lightbox's close button/backdrop wherever #lightbox is present
+  // (gallery grid or a blog post's photo gallery) — independent of whichever
+  // feature actually calls openLightbox().
+  function initLightboxChrome(root) {
     var lb = root.querySelector('#lightbox');
-    if (lb && !lb.dataset.bound) {
-      lb.dataset.bound = '1';
-      var closeBtn = lb.querySelector('#lightbox-close');
-      var backdrop = lb.querySelector('#lightbox-backdrop');
-      if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
-      if (backdrop) backdrop.addEventListener('click', closeLightbox);
-    }
+    if (!lb || lb.dataset.bound) return;
+    lb.dataset.bound = '1';
+    var closeBtn = lb.querySelector('#lightbox-close');
+    var backdrop = lb.querySelector('#lightbox-backdrop');
+    if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+    if (backdrop) backdrop.addEventListener('click', closeLightbox);
+  }
+
+  // ---------- blog post inline photos open in the same lightbox as the gallery ----------
+  function initPostImageLightbox(root) {
+    var imgs = root.querySelectorAll('.post-gallery img, article.markdown-body > img');
+    if (!imgs.length) return;
+    imgs.forEach(function (img) {
+      if (img.dataset.lightboxBound) return;
+      img.dataset.lightboxBound = '1';
+      img.style.cursor = 'zoom-in';
+      img.setAttribute('role', 'button');
+      img.setAttribute('tabindex', '0');
+      var open = function () {
+        openLightbox({
+          urls: { regular: img.currentSrc || img.src },
+          alt_description: img.alt || null,
+          width: img.naturalWidth || null,
+          height: img.naturalHeight || null
+        });
+      };
+      img.addEventListener('click', open);
+      img.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      });
+    });
   }
 
   // ---------- project cards with no cover photo of their own ----------
@@ -347,11 +376,16 @@
       .catch(function () { return null; });
   }
 
+  // Shared by the Unsplash gallery and by plain post images (see
+  // initPostImageLightbox below) — a "photo" here only strictly needs
+  // urls.regular; every other field is optional and its row/behavior is
+  // skipped when absent, so a local image with no Unsplash metadata still
+  // opens cleanly instead of showing fake dates/likes/downloads.
   function openLightbox(photo) {
     var lb = document.getElementById('lightbox');
     if (!lb) return;
 
-    if (window.recordGalleryView) window.recordGalleryView();
+    if (photo.id && window.recordGalleryView) window.recordGalleryView();
 
     var img = document.getElementById('lightbox-img');
     img.src = photo.urls.regular;
@@ -362,13 +396,26 @@
     titleEl.textContent = hasTitle ? (photo.alt_description || photo.description) : '—';
     document.getElementById('lightbox-desc').textContent =
       (photo.description && photo.description !== photo.alt_description) ? photo.description : '';
-    document.getElementById('lightbox-dims').textContent = photo.width + ' × ' + photo.height;
-    document.getElementById('lightbox-date').textContent = photo.created_at
-      ? new Date(photo.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-      : '—';
-    document.getElementById('lightbox-likes').textContent = (photo.likes || 0).toLocaleString();
+    document.getElementById('lightbox-dims').textContent = (photo.width && photo.height)
+      ? (photo.width + ' × ' + photo.height) : '—';
 
-    if (!hasTitle) {
+    var dateRow = document.getElementById('lightbox-date-row');
+    if (dateRow) {
+      dateRow.hidden = !photo.created_at;
+      if (photo.created_at) {
+        document.getElementById('lightbox-date').textContent =
+          new Date(photo.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+    }
+    var likesRow = document.getElementById('lightbox-likes-row');
+    if (likesRow) {
+      likesRow.hidden = (typeof photo.likes !== 'number');
+      if (typeof photo.likes === 'number') {
+        document.getElementById('lightbox-likes').textContent = photo.likes.toLocaleString();
+      }
+    }
+
+    if (photo.id && !hasTitle) {
       fetchPhotoLocation(photo.id).then(function (locationName) {
         // Bail if the lightbox has since moved on to a different photo.
         if (document.getElementById('lightbox-img').src !== photo.urls.regular) return;
@@ -377,7 +424,7 @@
     }
 
     var dl = document.getElementById('lightbox-download');
-    dl.href = photo.links.download;
+    dl.href = (photo.links && photo.links.download) || photo.urls.regular;
     dl.onclick = function () {
       // Required by Unsplash's API guidelines: ping download_location whenever
       // the app triggers an actual download, separate from just displaying it.
@@ -385,7 +432,7 @@
         var sep = photo.links.download_location.indexOf('?') === -1 ? '?' : '&';
         fetch(photo.links.download_location + sep + 'client_id=' + UNSPLASH_CONFIG.accessKey).catch(function () { /* ignore */ });
       }
-      if (window.recordGalleryDownload) window.recordGalleryDownload();
+      if (photo.id && window.recordGalleryDownload) window.recordGalleryDownload();
     };
 
     lb.hidden = false;
@@ -550,6 +597,8 @@
     initGalleryStats(root);
     initGalleryPhotos(root);
     initRandomProjectCovers(root);
+    initLightboxChrome(root);
+    initPostImageLightbox(root);
     initResumeTracking(root);
 
     // Blog index: category pills + live search

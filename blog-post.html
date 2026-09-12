@@ -95,6 +95,28 @@ function placeholder() {
                 </div>
             </div>
 
+            <!-- Photo lightbox: hidden until openLightbox() in v2.js fills it in and
+                 un-hides it. Metadata panel sits to the right of the image, as requested. -->
+            <div class="lightbox" id="lightbox" hidden>
+                <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+                <div class="lightbox-frame">
+                    <button class="lightbox-close" id="lightbox-close" aria-label="Close">✕</button>
+                    <div class="lightbox-media">
+                        <img id="lightbox-img" src="" alt="">
+                    </div>
+                    <aside class="lightbox-panel">
+                        <h2 id="lightbox-title">—</h2>
+                        <p id="lightbox-desc"></p>
+                        <dl class="lightbox-meta">
+                            <div><dt>Dimensions</dt><dd id="lightbox-dims">—</dd></div>
+                            <div id="lightbox-date-row"><dt>Published</dt><dd id="lightbox-date">—</dd></div>
+                            <div id="lightbox-likes-row"><dt>Likes</dt><dd id="lightbox-likes">—</dd></div>
+                        </dl>
+                        <a class="lightbox-download" id="lightbox-download" href="#" target="_blank" rel="noopener noreferrer">Download ↓</a>
+                    </aside>
+                </div>
+            </div>
+
         </main>
 
         <footer class="v2-footer">
