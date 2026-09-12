@@ -1,0 +1,120 @@
+/* Terminal-styled sign-in — deliberately its own thing, not the v2 design
+   system or the liquid-glass dialogs used elsewhere in the dashboard. */
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+}
+
+body.terminal-body {
+  margin: 0;
+  min-height: 100vh;
+  background: #0b0d0c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  font-family: "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  transition: background .5s;
+}
+
+.terminal-window {
+  width: 100%;
+  max-width: 640px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #0f1210;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .06);
+  animation: terminal-boot .35s cubic-bezier(.2, .8, .3, 1) both;
+}
+
+@keyframes terminal-boot {
+  from { opacity: 0; transform: translateY(14px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.terminal-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #1a1e1c;
+  border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+.terminal-dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+.terminal-dot-red { background: #ff5f56; }
+.terminal-dot-yellow { background: #ffbd2e; }
+.terminal-dot-green { background: #27c93f; }
+.terminal-titlebar-label {
+  margin: 0 auto;
+  transform: translateX(-16px);
+  color: #6b7570;
+  font-size: .78rem;
+}
+
+.terminal-body-inner {
+  position: relative;
+  padding: 22px 24px 28px;
+  min-height: 260px;
+  color: #d7dbd8;
+  font-size: .92rem;
+  line-height: 1.7;
+  cursor: text;
+}
+
+.terminal-line { white-space: pre-wrap; word-break: break-word; }
+.terminal-current { display: flex; }
+
+.terminal-prompt { color: #4fd67a; margin-right: 8px; flex: none; }
+.terminal-typed { white-space: pre-wrap; word-break: break-all; }
+
+.terminal-cursor {
+  display: inline-block;
+  width: .55em;
+  height: 1.05em;
+  background: #d7dbd8;
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: terminal-blink 1s step-end infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .terminal-cursor { animation: none; opacity: .8; }
+}
+@keyframes terminal-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+.terminal-line.terminal-error { color: #ff6b6b; }
+.terminal-line.terminal-ok { color: #4fd67a; }
+.terminal-line.terminal-dim { color: #6b7570; }
+
+.terminal-hidden-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+}
+
+/* A brief flash + zoom on successful sign-in, before redirecting. */
+body.terminal-access-granted { background: #0d1a10; }
+body.terminal-access-granted .terminal-window {
+  animation: terminal-granted .5s cubic-bezier(.2, .8, .3, 1) forwards;
+}
+@keyframes terminal-granted {
+  0%   { box-shadow: 0 30px 80px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .06); }
+  40%  { box-shadow: 0 30px 80px rgba(79, 214, 122, .35), 0 0 0 1px rgba(79, 214, 122, .5); }
+  100% { opacity: 0; transform: scale(.97); box-shadow: 0 30px 80px rgba(79, 214, 122, .35), 0 0 0 1px rgba(79, 214, 122, .5); }
+}
+
+/* A sharp shake on a failed attempt. */
+.terminal-window.terminal-shake { animation: terminal-shake .32s linear; }
+@keyframes terminal-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(7px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .terminal-window.terminal-shake { animation: none; }
+}
