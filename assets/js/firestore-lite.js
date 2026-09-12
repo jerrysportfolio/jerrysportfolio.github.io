@@ -12,7 +12,10 @@
 // since this needs `type="module"` for the SDK's ES module imports but the
 // rest of the site intentionally stays on plain scripts.
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, increment } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-lite.js";
+import {
+  getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, increment,
+  collection, query, where, orderBy
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-lite.js";
 
 var db = null;
 
@@ -46,5 +49,65 @@ window.__firestoreLite = {
     if (!d) return Promise.resolve();
     return setDoc(doc(d, 'stats', 'gallery'), { downloads: increment(1) }, { merge: true })
       .catch(function () { /* ignore */ });
+  },
+  getPostStats: function (slug) {
+    var d = ensureDb();
+    if (!d || !slug) return Promise.resolve(null);
+    return getDoc(doc(d, 'blogStats', slug))
+      .then(function (snap) { return snap.exists() ? snap.data() : { views: 0 }; })
+      .catch(function () { return null; });
+  },
+  incrementPostViews: function (slug) {
+    var d = ensureDb();
+    if (!d || !slug) return Promise.resolve();
+    return setDoc(doc(d, 'blogStats', slug), { views: increment(1) }, { merge: true })
+      .catch(function () { /* ignore */ });
+  },
+
+  // ---------- blog posts (public site reads published only; admin dashboard
+  // reads/writes everything, gated by Firestore rules on the signed-in
+  // user's email, not by anything client-side) ----------
+  listPublishedPosts: function () {
+    var d = ensureDb();
+    if (!d) return Promise.resolve([]);
+    var q = query(collection(d, 'posts'), where('published', '==', true), orderBy('date', 'desc'));
+    return getDocs(q)
+      .then(function (snap) { return snap.docs.map(function (s) { return Object.assign({ slug: s.id }, s.data()); }); })
+      .catch(function () { return []; });
+  },
+  listAllPosts: function () {
+    var d = ensureDb();
+    if (!d) return Promise.resolve([]);
+    var q = query(collection(d, 'posts'), orderBy('date', 'desc'));
+    return getDocs(q)
+      .then(function (snap) { return snap.docs.map(function (s) { return Object.assign({ slug: s.id }, s.data()); }); });
+  },
+  getPost: function (slug) {
+    var d = ensureDb();
+    if (!d || !slug) return Promise.resolve(null);
+    return getDoc(doc(d, 'posts', slug))
+      .then(function (snap) { return snap.exists() ? Object.assign({ slug: snap.id }, snap.data()) : null; });
+  },
+  postExists: function (slug) {
+    var d = ensureDb();
+    if (!d || !slug) return Promise.resolve(false);
+    return getDoc(doc(d, 'posts', slug)).then(function (snap) { return snap.exists(); });
+  },
+  savePost: function (slug, data) {
+    var d = ensureDb();
+    if (!d || !slug) return Promise.reject(new Error('Firestore not configured'));
+    return setDoc(doc(d, 'posts', slug), data);
+  },
+  // Take a post down (or bring it back) without touching its content — the
+  // dashboard's per-row Publish/Unpublish action, distinct from Delete.
+  setPostPublished: function (slug, published) {
+    var d = ensureDb();
+    if (!d || !slug) return Promise.reject(new Error('Firestore not configured'));
+    return setDoc(doc(d, 'posts', slug), { published: !!published }, { merge: true });
+  },
+  deletePost: function (slug) {
+    var d = ensureDb();
+    if (!d || !slug) return Promise.reject(new Error('Firestore not configured'));
+    return deleteDoc(doc(d, 'posts', slug));
   }
 };

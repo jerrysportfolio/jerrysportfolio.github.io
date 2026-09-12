@@ -2,7 +2,7 @@
 // indicator, AJAX page routing (nav/footer persist, #page-content swaps), blog
 // filter/search, reading progress, gallery load-more.
 (function () {
-  var PAGES = ['index.html', 'about.html', 'projects.html', 'gallery.html'];
+  var PAGES = ['index.html', 'about.html', 'projects.html', 'gallery.html', 'blog.html'];
   var TRANSITION_MS = 220;
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var activePageKey = document.body.dataset.page || '';
@@ -37,11 +37,11 @@
   // The compat SDK's firebase.analytics() already logs the very first page_view
   // automatically; every subsequent AJAX route change needs a manual event,
   // since our router never does a real navigation for gtag/GA to observe.
-  function logPageView(pageKey) {
+  function logPageView(pageKey, pathOverride) {
     if (!fbAnalytics) return;
     try {
       fbAnalytics.logEvent('page_view', {
-        page_path: '/' + (pageKey === 'home' ? '' : (pageKey ? pageKey + '.html' : '')),
+        page_path: pathOverride || ('/' + (pageKey === 'home' ? '' : (pageKey ? pageKey + '.html' : ''))),
         page_title: document.title
       });
     } catch (e) { /* ignore */ }
@@ -282,15 +282,44 @@
     }
 
     loadNextPage();
+  }
 
+  // Binds the lightbox's close button/backdrop wherever #lightbox is present
+  // (gallery grid or a blog post's photo gallery) — independent of whichever
+  // feature actually calls openLightbox().
+  function initLightboxChrome(root) {
     var lb = root.querySelector('#lightbox');
-    if (lb && !lb.dataset.bound) {
-      lb.dataset.bound = '1';
-      var closeBtn = lb.querySelector('#lightbox-close');
-      var backdrop = lb.querySelector('#lightbox-backdrop');
-      if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
-      if (backdrop) backdrop.addEventListener('click', closeLightbox);
-    }
+    if (!lb || lb.dataset.bound) return;
+    lb.dataset.bound = '1';
+    var closeBtn = lb.querySelector('#lightbox-close');
+    var backdrop = lb.querySelector('#lightbox-backdrop');
+    if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
+    if (backdrop) backdrop.addEventListener('click', closeLightbox);
+  }
+
+  // ---------- blog post inline photos open in the same lightbox as the gallery ----------
+  function initPostImageLightbox(root) {
+    var imgs = root.querySelectorAll('.post-gallery img, article.markdown-body > img');
+    if (!imgs.length) return;
+    imgs.forEach(function (img) {
+      if (img.dataset.lightboxBound) return;
+      img.dataset.lightboxBound = '1';
+      img.style.cursor = 'zoom-in';
+      img.setAttribute('role', 'button');
+      img.setAttribute('tabindex', '0');
+      var open = function () {
+        openLightbox({
+          urls: { regular: img.currentSrc || img.src },
+          alt_description: img.alt || null,
+          width: img.naturalWidth || null,
+          height: img.naturalHeight || null
+        });
+      };
+      img.addEventListener('click', open);
+      img.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      });
+    });
   }
 
   // ---------- project cards with no cover photo of their own ----------
@@ -347,11 +376,16 @@
       .catch(function () { return null; });
   }
 
+  // Shared by the Unsplash gallery and by plain post images (see
+  // initPostImageLightbox below) — a "photo" here only strictly needs
+  // urls.regular; every other field is optional and its row/behavior is
+  // skipped when absent, so a local image with no Unsplash metadata still
+  // opens cleanly instead of showing fake dates/likes/downloads.
   function openLightbox(photo) {
     var lb = document.getElementById('lightbox');
     if (!lb) return;
 
-    if (window.recordGalleryView) window.recordGalleryView();
+    if (photo.id && window.recordGalleryView) window.recordGalleryView();
 
     var img = document.getElementById('lightbox-img');
     img.src = photo.urls.regular;
@@ -362,13 +396,26 @@
     titleEl.textContent = hasTitle ? (photo.alt_description || photo.description) : '—';
     document.getElementById('lightbox-desc').textContent =
       (photo.description && photo.description !== photo.alt_description) ? photo.description : '';
-    document.getElementById('lightbox-dims').textContent = photo.width + ' × ' + photo.height;
-    document.getElementById('lightbox-date').textContent = photo.created_at
-      ? new Date(photo.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
-      : '—';
-    document.getElementById('lightbox-likes').textContent = (photo.likes || 0).toLocaleString();
+    document.getElementById('lightbox-dims').textContent = (photo.width && photo.height)
+      ? (photo.width + ' × ' + photo.height) : '—';
 
-    if (!hasTitle) {
+    var dateRow = document.getElementById('lightbox-date-row');
+    if (dateRow) {
+      dateRow.hidden = !photo.created_at;
+      if (photo.created_at) {
+        document.getElementById('lightbox-date').textContent =
+          new Date(photo.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+      }
+    }
+    var likesRow = document.getElementById('lightbox-likes-row');
+    if (likesRow) {
+      likesRow.hidden = (typeof photo.likes !== 'number');
+      if (typeof photo.likes === 'number') {
+        document.getElementById('lightbox-likes').textContent = photo.likes.toLocaleString();
+      }
+    }
+
+    if (photo.id && !hasTitle) {
       fetchPhotoLocation(photo.id).then(function (locationName) {
         // Bail if the lightbox has since moved on to a different photo.
         if (document.getElementById('lightbox-img').src !== photo.urls.regular) return;
@@ -377,7 +424,7 @@
     }
 
     var dl = document.getElementById('lightbox-download');
-    dl.href = photo.links.download;
+    dl.href = (photo.links && photo.links.download) || photo.urls.regular;
     dl.onclick = function () {
       // Required by Unsplash's API guidelines: ping download_location whenever
       // the app triggers an actual download, separate from just displaying it.
@@ -385,7 +432,7 @@
         var sep = photo.links.download_location.indexOf('?') === -1 ? '?' : '&';
         fetch(photo.links.download_location + sep + 'client_id=' + UNSPLASH_CONFIG.accessKey).catch(function () { /* ignore */ });
       }
-      if (window.recordGalleryDownload) window.recordGalleryDownload();
+      if (photo.id && window.recordGalleryDownload) window.recordGalleryDownload();
     };
 
     lb.hidden = false;
@@ -540,6 +587,52 @@
     }
   }
 
+  // ---------- blog index: posts loaded live from Firestore ----------
+  function formatPostDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  var TAG_LABELS = { misc: 'Misc', tech: 'Tech', music: 'Music', life: 'Life', literature: 'Literature' };
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function initDynamicBlogList(root) {
+    var list = root.querySelector('#blog-list');
+    if (!list || !window.__firestoreLite) return;
+
+    window.__firestoreLite.listPublishedPosts().then(function (posts) {
+      if (!posts.length) {
+        list.innerHTML = '<p class="empty-state">No posts yet — check back soon.</p>';
+        return;
+      }
+      list.innerHTML = posts.map(function (post) {
+        var tagLabel = TAG_LABELS[post.tag] || post.tag || 'Misc';
+        var cover = (post.images && post.images[0])
+          ? '<img src="' + post.images[0] + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);">'
+          : '';
+        return '<a class="blog-row" data-category="' + (post.tag || 'misc') + '" href="post.html?slug=' + encodeURIComponent(post.slug) + '">' +
+          '<div class="blog-thumb">' + cover + '</div>' +
+          '<div class="b-body">' +
+          '<div class="b-date">' + formatPostDate(post.date) + '</div>' +
+          '<h2>' + escapeHtml(post.title) + '</h2>' +
+          '<p>' + escapeHtml(post.dek) + '</p>' +
+          '</div>' +
+          '<span class="b-tag">' + tagLabel + '</span>' +
+          '</a>';
+      }).join('');
+      if (window.__reapplyBlogFilters) window.__reapplyBlogFilters();
+    }).catch(function () {
+      list.innerHTML = '<p class="empty-state">Couldn\'t load posts right now.</p>';
+    });
+  }
+
   // ---------- per-page behaviors (re-run after every content swap) ----------
 
   function initPageBehaviors(root) {
@@ -550,17 +643,24 @@
     initGalleryStats(root);
     initGalleryPhotos(root);
     initRandomProjectCovers(root);
+    initLightboxChrome(root);
+    initPostImageLightbox(root);
     initResumeTracking(root);
+    initDynamicBlogList(root);
 
-    // Blog index: category pills + live search
+    // Blog index: category pills + live search. Rows are queried fresh inside
+    // applyFilters (not cached at bind time) since blog.html's rows are now
+    // loaded asynchronously from Firestore, after this runs — a pill click or
+    // search keystroke always sees whatever rows exist at that moment, and
+    // newly-inserted rows are visible by default (no inline display style)
+    // without needing any re-init call.
     var pills = root.querySelectorAll('.pill[data-filter]');
     var searchInput = root.querySelector('.search-input');
-    var rows = root.querySelectorAll('.blog-row[data-category]');
-    if (pills.length && rows.length) {
+    if (pills.length) {
       var activeCategory = 'all';
       var applyFilters = function () {
         var q = (searchInput && searchInput.value || '').trim().toLowerCase();
-        rows.forEach(function (row) {
+        root.querySelectorAll('.blog-row[data-category]').forEach(function (row) {
           var cat = row.dataset.category;
           var text = row.textContent.toLowerCase();
           var matchesCategory = activeCategory === 'all' || cat === activeCategory;
@@ -577,6 +677,7 @@
         });
       });
       if (searchInput) searchInput.addEventListener('input', applyFilters);
+      window.__reapplyBlogFilters = applyFilters;
     }
 
     // Projects page: live search by name, description, and type (chip)
@@ -687,9 +788,15 @@
   document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('v2-year').textContent = new Date().getFullYear();
     initFirebase();
-    logPageView(activePageKey);
+    logPageView(activePageKey, location.pathname);
     initChrome();
     initNavIndicator();
     initPageBehaviors(document);
   });
+
+  // post.js (the generic post.html template) fetches its post's content
+  // asynchronously, after this file's own DOMContentLoaded pass already ran
+  // — this lets it re-trigger the behaviors that depend on content which
+  // didn't exist yet (the lightbox-click binding on post-gallery images).
+  window.__reinitPostBehaviors = initPageBehaviors;
 })();

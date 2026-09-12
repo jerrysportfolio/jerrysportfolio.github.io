@@ -1,0 +1,48 @@
+rules_version = '2';
+
+// Deployed via `firebase deploy --only firestore:rules`, or paste into
+// Console -> Firestore Database -> Rules -> Publish.
+//
+// Admin identity is checked by email on the Firebase Auth token, not by
+// anything client-side — the admin dashboard's login screen is just UX,
+// this is the actual security boundary. Update ADMIN_EMAIL below (and
+// redeploy) if the dashboard login email ever changes.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'work.jerrywu@gmail.com';
+    }
+
+    // Blog posts: public can read only published posts; the admin dashboard
+    // (signed in) can read everything, including drafts, and is the only
+    // writer.
+    match /posts/{postId} {
+      allow read: if resource.data.published == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Gallery + blog view/download counters: low-stakes, publicly-incremented
+    // stats (same trust level as the working gallery counters already in
+    // prod) — anyone can bump them, but only with a plain numeric increment,
+    // never arbitrary fields.
+    match /stats/{statId} {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(['views', 'downloads'])
+        && request.resource.data.keys().size() > 0
+        && (!('views' in request.resource.data) || request.resource.data.views is int)
+        && (!('downloads' in request.resource.data) || request.resource.data.downloads is int);
+    }
+
+    match /blogStats/{slug} {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(['views'])
+        && request.resource.data.views is int;
+    }
+
+    // Everything else stays closed by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
