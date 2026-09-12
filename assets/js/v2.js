@@ -578,6 +578,19 @@
       });
       if (searchInput) searchInput.addEventListener('input', applyFilters);
     }
+
+    // Projects page: live search by name, description, and type (chip)
+    var projectSearch = root.querySelector('#project-search');
+    var projectCards = root.querySelectorAll('.grid-cards .proj-card');
+    if (projectSearch && projectCards.length) {
+      projectSearch.addEventListener('input', function () {
+        var q = projectSearch.value.trim().toLowerCase();
+        projectCards.forEach(function (card) {
+          var text = card.textContent.toLowerCase();
+          card.style.display = (!q || text.includes(q)) ? '' : 'none';
+        });
+      });
+    }
   }
 
   // Reading progress bar looks up its element live on every scroll instead of

@@ -269,6 +269,8 @@ body.v2{
   line-height:1.08; margin:0 0 12px; letter-spacing:-.01em;
 }
 .v2 .page-sub{color:var(--ink-soft); max-width:60ch; margin:0; font-size:1.05rem;}
+.v2 .page-header-row{display:flex; flex-wrap:wrap; gap:16px 24px; align-items:flex-end; justify-content:space-between;}
+.v2 .page-header-row .search-input{margin-left:0; flex:none;}
 
 /* ---------- bento home ---------- */
 .v2 .bento{
