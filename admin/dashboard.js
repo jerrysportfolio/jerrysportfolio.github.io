@@ -7,10 +7,12 @@ document.addEventListener('DOMContentLoaded', function () {
       var deleteBtn = e.target.closest('[data-delete-slug]');
       if (deleteBtn) {
         var slug = deleteBtn.dataset.deleteSlug;
-        if (!window.confirm('Delete "' + slug + '"? This cannot be undone.')) return;
-        deleteBtn.disabled = true;
-        window.__firestoreLite.deletePost(slug).then(function () { loadPosts(); loadStats(); })
-          .catch(function () { alert('Delete failed.'); deleteBtn.disabled = false; });
+        glassConfirm('Delete "' + slug + '"? This cannot be undone.', { okLabel: 'Delete', danger: true }).then(function (ok) {
+          if (!ok) return;
+          deleteBtn.disabled = true;
+          window.__firestoreLite.deletePost(slug).then(function () { loadPosts(); loadStats(); })
+            .catch(function () { glassAlert('Delete failed.'); deleteBtn.disabled = false; });
+        });
         return;
       }
 
@@ -20,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
         toggleBtn.disabled = true;
         window.__firestoreLite.setPostPublished(toggleBtn.dataset.toggleSlug, !currentlyPublished)
           .then(function () { loadPosts(); })
-          .catch(function () { alert('Failed to update publish status.'); toggleBtn.disabled = false; });
+          .catch(function () { glassAlert('Failed to update publish status.'); toggleBtn.disabled = false; });
       }
     });
   });

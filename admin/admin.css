@@ -170,3 +170,31 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
 }
 .glass-select-menu li{padding:8px 12px; border-radius:6px; cursor:pointer; font-size:.9rem; transition:background .15s;}
 .glass-select-menu li:hover, .glass-select-menu li.active{background:var(--accent-wash); color:var(--accent);}
+
+/* ---------- liquid-glass dialogs (replace window.alert/confirm/prompt) ---------- */
+.glass-dialog-backdrop{
+  position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.35); opacity:0; transition:opacity .2s; padding:24px;
+}
+.glass-dialog-backdrop[hidden]{display:none;}
+.glass-dialog-backdrop.open{opacity:1;}
+.glass-dialog{
+  width:100%; max-width:420px; border-radius:var(--radius-md); border:1px solid var(--glass-border);
+  background:var(--glass-bg-scrolled);
+  box-shadow:inset 0 1px 0 var(--glass-highlight), inset 0 -1px 0 rgba(0,0,0,.06), var(--glass-shadow-hover);
+  padding:24px; transform:scale(.95) translateY(8px); transition:transform .2s;
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))){
+  .glass-dialog{-webkit-backdrop-filter:blur(28px) saturate(180%); backdrop-filter:blur(28px) saturate(180%);}
+}
+.glass-dialog-backdrop.open .glass-dialog{transform:scale(1) translateY(0);}
+.glass-dialog-message{margin:0 0 18px; font-size:.95rem; line-height:1.5; color:var(--ink); white-space:pre-line;}
+.glass-dialog-input-wrap{margin-bottom:18px;}
+.glass-dialog-input{
+  width:100%; padding:10px 14px; border:1px solid var(--line); border-radius:var(--radius-sm);
+  background:var(--paper); color:var(--ink); font-family:inherit; font-size:.95rem;
+}
+.glass-dialog-actions{display:flex; justify-content:flex-end; gap:10px;}
+@media (prefers-reduced-motion: reduce){
+  .glass-dialog-backdrop, .glass-dialog{transition:none;}
+}

@@ -115,11 +115,12 @@ function initEditor() {
   }
   document.getElementById('upload-image-btn').addEventListener('click', function () { triggerUpload(false); });
   document.getElementById('add-image-url-btn').addEventListener('click', function () {
-    var url = window.prompt('Image URL or path (e.g. assets/img/blogs/my-post/1.jpeg):');
-    if (!url) return;
-    images.push({ url: url.trim() });
-    renderImageList();
-    markDirty();
+    glassPrompt('Image URL or path (e.g. assets/img/blogs/my-post/1.jpeg):').then(function (url) {
+      if (!url) return;
+      images.push({ url: url.trim() });
+      renderImageList();
+      markDirty();
+    });
   });
   fileInput.addEventListener('change', function () {
     var file = fileInput.files[0];
@@ -204,11 +205,12 @@ function initEditor() {
       insertBlock('```\n' + selected + '\n```\n', 4, selected.length);
     },
     link: function () {
-      var url = window.prompt('Link URL:', 'https://');
-      if (!url) return;
       var selected = markdownEl.value.slice(markdownEl.selectionStart, markdownEl.selectionEnd) || 'link text';
-      var text = '[' + selected + '](' + url + ')';
-      insertBlock(text, 1, selected.length);
+      glassPrompt('Link URL:', 'https://').then(function (url) {
+        if (!url) return;
+        var text = '[' + selected + '](' + url + ')';
+        insertBlock(text, 1, selected.length);
+      });
     },
     footnote: function () {
       var n = nextFootnoteNumber();
@@ -219,14 +221,16 @@ function initEditor() {
       renderPreview();
     },
     youtube: function () {
-      var url = window.prompt('YouTube video URL or ID:');
-      if (!url) return;
-      insertAtCursor('\n[[youtube:' + url.trim() + ']]\n');
+      glassPrompt('YouTube video URL or ID:').then(function (url) {
+        if (!url) return;
+        insertAtCursor('\n[[youtube:' + url.trim() + ']]\n');
+      });
     },
     linkedin: function () {
-      var url = window.prompt('LinkedIn post URL (from the post\'s "Embed this post" menu, or just paste the share link):');
-      if (!url) return;
-      insertAtCursor('\n[[linkedin:' + url.trim() + ']]\n');
+      glassPrompt('LinkedIn post URL (from the post\'s "Embed this post" menu, or just paste the share link):').then(function (url) {
+        if (!url) return;
+        insertAtCursor('\n[[linkedin:' + url.trim() + ']]\n');
+      });
     },
     'toolbar-image': function () { triggerUpload(true); }
   };
@@ -303,7 +307,7 @@ function initEditor() {
     slugEl.disabled = true;
     deleteBtn.hidden = false;
     window.__firestoreLite.getPost(editingSlug).then(function (post) {
-      if (!post) { alert('Post not found.'); location.href = 'dashboard.html'; return; }
+      if (!post) { glassAlert('Post not found.').then(function () { location.href = 'dashboard.html'; }); return; }
       titleEl.value = post.title || '';
       slugEl.value = post.slug;
       dateEl.value = post.date || '';
@@ -343,7 +347,7 @@ function initEditor() {
     opts = opts || {};
     var err = validationError();
     if (err) {
-      if (!opts.silent) alert(err);
+      if (!opts.silent) glassAlert(err);
       return Promise.reject(new Error(err));
     }
     var slug = currentSlug || slugify(slugEl.value || titleEl.value);
@@ -363,7 +367,7 @@ function initEditor() {
       ? Promise.resolve(true)
       : window.__firestoreLite.postExists(slug).then(function (exists) {
         if (!exists) return true;
-        return window.confirm('A post with slug "' + slug + '" already exists. Overwrite it?');
+        return glassConfirm('A post with slug "' + slug + '" already exists. Overwrite it?', { okLabel: 'Overwrite' });
       });
 
     isSaving = true;
@@ -405,16 +409,19 @@ function initEditor() {
   }, 5000);
 
   // ---------- leaving the page with unsaved changes ----------
-  // "Save and leave" / "Discard and leave" / "Stay" via two native confirms
-  // rather than a custom modal — consistent with the rest of this editor's
-  // prompt()-based UX (image URL, link URL, YouTube URL).
+  // "Save and leave" / "Discard and leave" / "Stay" via two chained glass
+  // confirms — consistent with the rest of this editor's dialog-based UX.
   function confirmLeave(destination) {
     if (!isDirty) { location.href = destination; return; }
-    if (window.confirm('You have unsaved changes. Save before leaving?')) {
-      performSave({}).then(function () { location.href = destination; }).catch(function () { /* stay so they can fix/retry */ });
-    } else if (window.confirm('Discard unsaved changes and leave?')) {
-      location.href = destination;
-    }
+    glassConfirm('You have unsaved changes. Save before leaving?', { okLabel: 'Save' }).then(function (saveFirst) {
+      if (saveFirst) {
+        performSave({}).then(function () { location.href = destination; }).catch(function () { /* stay so they can fix/retry */ });
+        return;
+      }
+      return glassConfirm('Discard unsaved changes and leave?', { okLabel: 'Discard', danger: true }).then(function (discard) {
+        if (discard) location.href = destination;
+      });
+    });
   }
 
   window.addEventListener('beforeunload', function (e) {
@@ -439,14 +446,16 @@ function initEditor() {
   });
 
   deleteBtn.addEventListener('click', function () {
-    if (!window.confirm('Delete "' + (titleEl.value || currentSlug) + '"? This cannot be undone.')) return;
-    deleteBtn.disabled = true;
-    window.__firestoreLite.deletePost(currentSlug).then(function () {
-      isDirty = false; // it's gone; don't let beforeunload/back-link second-guess this
-      location.href = 'dashboard.html';
-    }).catch(function () {
-      deleteBtn.disabled = false;
-      alert('Delete failed.');
+    glassConfirm('Delete "' + (titleEl.value || currentSlug) + '"? This cannot be undone.', { okLabel: 'Delete', danger: true }).then(function (ok) {
+      if (!ok) return;
+      deleteBtn.disabled = true;
+      window.__firestoreLite.deletePost(currentSlug).then(function () {
+        isDirty = false; // it's gone; don't let beforeunload/back-link second-guess this
+        location.href = 'dashboard.html';
+      }).catch(function () {
+        deleteBtn.disabled = false;
+        glassAlert('Delete failed.');
+      });
     });
   });
 }
