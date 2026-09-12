@@ -19,17 +19,53 @@ document.addEventListener('DOMContentLoaded', function () {
   function focusInput() { if (!inputEl.disabled) inputEl.focus(); }
   bodyInner.addEventListener('click', focusInput);
 
-  // Traffic lights: red closes back to the public site, green maximizes
-  // (toggles), yellow is inert — same as a real terminal's minimize doing
-  // nothing useful in a browser tab.
+  // Traffic lights: red closes back to the public site (with a shrink/fade
+  // first), green maximizes (toggles), yellow is inert — same as a real
+  // terminal's minimize doing nothing useful in a browser tab.
   document.getElementById('terminal-dot-close').addEventListener('click', function () {
-    location.href = '../index.html';
+    windowEl.classList.add('terminal-closing');
+    setTimeout(function () { location.href = '../index.html'; }, 300);
   });
-  document.getElementById('terminal-dot-maximize').addEventListener('click', function () {
+  document.getElementById('terminal-dot-maximize').addEventListener('click', toggleMaximize);
+  focusInput();
+
+  // FLIP animation (First-Last-Invert-Play): the maximized/restored state's
+  // real width/height/border-radius apply instantly (no layout-property
+  // transitions — that thrashes layout and looks janky), then a transform
+  // is set that visually undoes the jump back to where it started, and
+  // transitioning that transform to none is what the eye reads as a smooth
+  // resize. GPU-accelerated the whole way.
+  function toggleMaximize() {
+    var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var first = windowEl.getBoundingClientRect();
     windowEl.classList.toggle('terminal-maximized');
     document.body.classList.toggle('terminal-maximized');
-  });
-  focusInput();
+    if (reduceMotion) return;
+    var last = windowEl.getBoundingClientRect();
+
+    var scaleX = first.width / last.width;
+    var scaleY = first.height / last.height;
+    var translateX = first.left - last.left;
+    var translateY = first.top - last.top;
+
+    windowEl.style.transformOrigin = 'top left';
+    windowEl.style.transition = 'none';
+    windowEl.style.transform = 'translate(' + translateX + 'px,' + translateY + 'px) scale(' + scaleX + ',' + scaleY + ')';
+
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        windowEl.style.transition = 'transform .4s cubic-bezier(.4,0,.2,1)';
+        windowEl.style.transform = 'translate(0,0) scale(1,1)';
+      });
+    });
+
+    windowEl.addEventListener('transitionend', function cleanup() {
+      windowEl.style.transition = '';
+      windowEl.style.transform = '';
+      windowEl.style.transformOrigin = '';
+      windowEl.removeEventListener('transitionend', cleanup);
+    });
+  }
 
   function setStage(next) {
     stage = next;

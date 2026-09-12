@@ -16,7 +16,7 @@ body.terminal-body {
   justify-content: center;
   padding: 24px;
   font-family: "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  transition: background .5s, padding .4s cubic-bezier(.4, 0, .2, 1);
+  transition: background .5s;
 }
 body.terminal-body.terminal-maximized { padding: 0; }
 
@@ -29,11 +29,12 @@ body.terminal-body.terminal-maximized { padding: 0; }
   background: #0f1210;
   box-shadow: 0 30px 80px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .06);
   animation: terminal-boot .35s cubic-bezier(.2, .8, .3, 1) both;
-  transition: max-width .4s cubic-bezier(.4, 0, .2, 1), max-height .4s cubic-bezier(.4, 0, .2, 1),
-    width .4s cubic-bezier(.4, 0, .2, 1), height .4s cubic-bezier(.4, 0, .2, 1), border-radius .4s;
   display: flex;
   flex-direction: column;
 }
+/* The maximize toggle animates only `transform` (a FLIP animation driven
+   from terminal.js) — width/height/border-radius below change instantly,
+   the illusion of a smooth resize comes entirely from the transform. */
 .terminal-window.terminal-maximized {
   width: 100vw;
   height: 100vh;
@@ -42,9 +43,6 @@ body.terminal-body.terminal-maximized { padding: 0; }
   border-radius: 0;
 }
 .terminal-window.terminal-maximized .terminal-body-inner { flex: 1; }
-@media (prefers-reduced-motion: reduce) {
-  .terminal-window { transition: none; }
-}
 
 @keyframes terminal-boot {
   from { opacity: 0; transform: translateY(14px) scale(.98); }
@@ -126,6 +124,19 @@ body.terminal-access-granted .terminal-window {
   0%   { box-shadow: 0 30px 80px rgba(0, 0, 0, .55), 0 0 0 1px rgba(255, 255, 255, .06); }
   40%  { box-shadow: 0 30px 80px rgba(79, 214, 122, .35), 0 0 0 1px rgba(79, 214, 122, .5); }
   100% { opacity: 0; transform: scale(.97); box-shadow: 0 30px 80px rgba(79, 214, 122, .35), 0 0 0 1px rgba(79, 214, 122, .5); }
+}
+
+/* The red button's "close and go home" — window shrinks/fades away like a
+   real window close, then the actual navigation fires. transform+opacity
+   only, no layout properties. */
+.terminal-window.terminal-closing {
+  animation: terminal-closing .32s cubic-bezier(.4, 0, .8, .2) forwards;
+}
+@keyframes terminal-closing {
+  to { opacity: 0; transform: scale(.85) translateY(10px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .terminal-window.terminal-closing { animation: none; opacity: 0; }
 }
 
 /* A sharp shake on a failed attempt. */
