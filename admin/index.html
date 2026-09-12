@@ -7,68 +7,34 @@
     <meta name="robots" content="noindex, nofollow">
     <title>Sign in — Dashboard</title>
     <link rel="icon" href="../assets/placeholder/logo/favicon.svg" type="image/svg+xml">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:ital,wght@0,400;1,400&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../assets/css/v2.css">
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="terminal.css">
 </head>
 
-<body class="v2 admin-body">
+<body class="terminal-body">
 
-    <div class="login-wrap">
-        <div class="admin-card login-card">
-            <h1>Dashboard sign in</h1>
-            <form id="login-form">
-                <div class="field">
-                    <label for="email">Email</label>
-                    <input type="email" id="email" autocomplete="username" required>
-                </div>
-                <div class="field">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" autocomplete="current-password" required>
-                </div>
-                <button type="submit" class="btn btn-primary" id="login-submit" style="width:100%; justify-content:center;">Sign in</button>
-                <p class="login-error" id="login-error"></p>
-            </form>
+    <div class="terminal-window">
+        <div class="terminal-titlebar">
+            <span class="terminal-dot terminal-dot-red"></span>
+            <span class="terminal-dot terminal-dot-yellow"></span>
+            <span class="terminal-dot terminal-dot-green"></span>
+            <span class="terminal-titlebar-label">jerry@iamjerryhu: ~</span>
+        </div>
+        <div class="terminal-body-inner" id="terminal-body-inner">
+            <div class="terminal-log" id="terminal-log">
+                <div class="terminal-line">iamjerryhu dashboard — authorized access only.</div>
+                <div class="terminal-line">&nbsp;</div>
+            </div>
+            <div class="terminal-line terminal-current" id="terminal-current">
+                <span class="terminal-prompt" id="terminal-prompt">email:</span>
+                <span class="terminal-typed" id="terminal-typed"></span><span class="terminal-cursor" id="terminal-cursor"></span>
+            </div>
+            <input class="terminal-hidden-input" id="terminal-input" type="email" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false">
         </div>
     </div>
 
     <script type="module" src="../assets/js/auth-lite.js"></script>
     <script src="../assets/js/firebase-config.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Already signed in as the admin? skip straight to the dashboard.
-            var checked = false;
-            (function waitForAuth() {
-                if (!window.__authLite) { setTimeout(waitForAuth, 30); return; }
-                window.__authLite.onChange(function (user) {
-                    if (checked) return; // ignore later auth-state changes here; only care about the initial check
-                    checked = true;
-                    if (user) location.href = 'dashboard.html';
-                });
-            })();
-
-            var form = document.getElementById('login-form');
-            var errorEl = document.getElementById('login-error');
-            var submitBtn = document.getElementById('login-submit');
-            form.addEventListener('submit', function (e) {
-                e.preventDefault();
-                errorEl.textContent = '';
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'Signing in…';
-                var email = document.getElementById('email').value.trim();
-                var password = document.getElementById('password').value;
-                window.__authLite.signInWithEmail(email, password)
-                    .then(function () { location.href = 'dashboard.html'; })
-                    .catch(function (err) {
-                        errorEl.textContent = 'Sign-in failed — check your email and password.';
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Sign in';
-                    });
-            });
-        });
-    </script>
+    <script src="terminal.js"></script>
 </body>
 
 </html>
