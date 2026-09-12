@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if (signOutBtn) {
     signOutBtn.addEventListener('click', function () {
       waitForAdminLibs(function () {
-        window.__authLite.signOut().finally(function () { location.href = 'index.html'; });
+        window.__authLite.signOut().finally(function () { location.href = '/'; });
       });
     });
   }

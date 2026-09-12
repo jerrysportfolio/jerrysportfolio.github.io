@@ -18,6 +18,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function focusInput() { if (!inputEl.disabled) inputEl.focus(); }
   bodyInner.addEventListener('click', focusInput);
+
+  // Traffic lights: red closes back to the public site, green maximizes
+  // (toggles), yellow is inert — same as a real terminal's minimize doing
+  // nothing useful in a browser tab.
+  document.getElementById('terminal-dot-close').addEventListener('click', function () {
+    location.href = '../index.html';
+  });
+  document.getElementById('terminal-dot-maximize').addEventListener('click', function () {
+    windowEl.classList.toggle('terminal-maximized');
+    document.body.classList.toggle('terminal-maximized');
+  });
   focusInput();
 
   function setStage(next) {
@@ -31,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
       inputEl.disabled = false;
       focusInput();
     } else if (stage === 'password') {
-      promptEl.textContent = 'password:';
+      promptEl.textContent = 'jerry@iamjerryhu\'s password:';
       inputEl.type = 'password';
       inputEl.autocomplete = 'current-password';
       inputEl.disabled = false;

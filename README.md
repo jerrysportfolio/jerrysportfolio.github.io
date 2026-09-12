@@ -29,12 +29,3 @@ Merge `main` in occasionally (before a work session, or after landing something 
 git checkout feature/portfolio-blog
 git merge main
 ```
-
-### Shipping the portfolio/blog pages once they're ready
-
-```
-git checkout main
-git merge feature/portfolio-blog
-git push
-```
-This triggers the deploy workflow.
