@@ -24,7 +24,7 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
   font-weight:600; cursor:pointer; transition:all .2s; font-family:inherit;
 }
 .btn:hover{border-color:var(--accent); color:var(--accent); background:var(--accent-wash);}
-.btn-primary{background:var(--ink); color:var(--on-accent); border-color:var(--ink);}
+.btn.btn-primary{background:var(--ink); color:var(--on-accent); border-color:var(--ink);}
 /* --accent equals --ink in this grayscale palette, so swapping background
    to --accent on hover (the pattern .btn uses) would be invisible — lift +
    brighten instead, which reads clearly in both light and dark mode. */
