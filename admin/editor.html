@@ -16,13 +16,13 @@
 
 <body class="v2 admin-body">
 
-    <header class="admin-topbar">
-        <span class="logo"><span style="color:var(--accent)">@</span>iamjerryhu — Dashboard</span>
+    <nav class="navbar">
+        <span class="logo">Dashboard</span>
         <div class="admin-topbar-actions">
-            <a class="btn btn-sm" href="dashboard.html">← All posts</a>
-            <button class="btn btn-sm" id="sign-out">Sign out</button>
+            <a class="contact-link" href="dashboard.html">← All posts</a>
+            <button class="contact-link" id="sign-out">Sign out</button>
         </div>
-    </header>
+    </nav>
 
     <main class="admin-shell">
         <div class="editor-header">
@@ -66,8 +66,9 @@
                 <input type="hidden" id="tag" value="misc">
             </div>
             <div class="field" style="flex:2;">
-                <label for="dek">Dek (one-sentence summary, shown in the post list)</label>
+                <label for="dek">Dek</label>
                 <input type="text" id="dek" placeholder="A one-sentence summary of the post.">
+                <p class="field-hint">Shown as the summary line in the post list.</p>
             </div>
         </div>
 
@@ -106,7 +107,7 @@
             <textarea id="markdown" class="editor-textarea" placeholder="Write your post in Markdown…"></textarea>
             <div>
                 <div class="editor-preview-label">Live preview</div>
-                <div class="editor-preview article markdown-body" id="preview"></div>
+                <article class="editor-preview markdown-body" id="preview"></article>
             </div>
         </div>
 

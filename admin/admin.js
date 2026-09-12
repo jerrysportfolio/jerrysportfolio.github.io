@@ -31,7 +31,31 @@ function requireAdmin() {
   });
 }
 
+// Same pointer-glow + scroll-morph micro-interactions as the public navbar
+// (see initChrome() in v2.js) — ported directly rather than loading all of
+// v2.js here, since its router/page-behavior logic assumes the public site's
+// page structure and isn't relevant on admin pages.
+function initAdminNavbarGlow() {
+  var navbar = document.querySelector('.navbar');
+  if (!navbar) return;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion) {
+    navbar.addEventListener('pointermove', function (e) {
+      var rect = navbar.getBoundingClientRect();
+      navbar.style.setProperty('--glow-x', ((e.clientX - rect.left) / rect.width) * 100 + '%');
+      navbar.style.setProperty('--glow-y', ((e.clientY - rect.top) / rect.height) * 100 + '%');
+      navbar.classList.add('glow-active');
+    });
+    navbar.addEventListener('pointerleave', function () { navbar.classList.remove('glow-active'); });
+  }
+  var updateScrolled = function () { navbar.classList.toggle('scrolled', window.scrollY > 8); };
+  document.addEventListener('scroll', updateScrolled, { passive: true });
+  updateScrolled();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+  initAdminNavbarGlow();
+
   var signOutBtn = document.getElementById('sign-out');
   if (signOutBtn) {
     signOutBtn.addEventListener('click', function () {

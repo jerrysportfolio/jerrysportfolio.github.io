@@ -83,6 +83,24 @@
         ],
         "createdAt": "2026-09-12T04:28:37.747Z",
         "reason": "intentional: lightbox <img> is filled by openLightbox() in v2.js before being shown, matching the identical pattern already in gallery.html"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "admin/dashboard.html"
+        ],
+        "createdAt": "2026-09-12T04:33:36.205Z",
+        "reason": "badge padding (3px 10px) matches the existing site-wide .proj-chip pill pattern in v2.css — established convention, not new"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "assets/css/v2.css"
+        ],
+        "createdAt": "2026-09-12T04:33:36.225Z",
+        "reason": "standard neutral-gray (var(--line)) 3px blockquote left-rule for markdown quotes, not an accent-colored card decoration — conventional markdown blockquote treatment (GitHub/Medium-style), not the AI-tell pattern this rule targets"
       }
     ]
   }

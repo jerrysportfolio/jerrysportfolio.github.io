@@ -207,7 +207,60 @@ function initEditor() {
     var btn = e.target.closest('.toolbar-btn');
     if (!btn) return;
     var action = TOOLBAR_ACTIONS[btn.dataset.cmd];
-    if (action) action();
+    if (action) { pushUndo(); action(); }
+  });
+
+  // ---------- undo/redo + keyboard shortcuts (Cmd on Mac, Ctrl on Windows/Linux) ----------
+  // Toolbar actions and shortcuts below all mutate markdownEl.value directly
+  // (see wrapSelection/insertBlock/etc. above), which resets the browser's
+  // native per-keystroke undo history — so undo/redo here is a small stack
+  // of our own instead of relying on the browser's Cmd/Ctrl+Z.
+  var undoStack = [];
+  var redoStack = [];
+  var typingBurstTimer = null;
+
+  function snapshotState() {
+    return { value: markdownEl.value, start: markdownEl.selectionStart, end: markdownEl.selectionEnd };
+  }
+  function pushUndo() {
+    undoStack.push(snapshotState());
+    if (undoStack.length > 100) undoStack.shift();
+    redoStack.length = 0;
+  }
+  function restoreState(state) {
+    markdownEl.value = state.value;
+    markdownEl.focus();
+    markdownEl.setSelectionRange(state.start, state.end);
+    renderPreview();
+  }
+  function doUndo() {
+    if (!undoStack.length) return;
+    redoStack.push(snapshotState());
+    restoreState(undoStack.pop());
+  }
+  function doRedo() {
+    if (!redoStack.length) return;
+    undoStack.push(snapshotState());
+    restoreState(redoStack.pop());
+  }
+
+  markdownEl.addEventListener('keydown', function (e) {
+    var mod = e.metaKey || e.ctrlKey;
+    if (!mod) {
+      // Plain typing: snapshot once at the start of a burst (before this
+      // keystroke lands), so a whole word/sentence undoes in one step
+      // instead of one undo per character.
+      if (typingBurstTimer === null) pushUndo();
+      clearTimeout(typingBurstTimer);
+      typingBurstTimer = setTimeout(function () { typingBurstTimer = null; }, 700);
+      return;
+    }
+    var key = e.key.toLowerCase();
+    if (key === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(); return; }
+    if ((key === 'z' && e.shiftKey) || key === 'y') { e.preventDefault(); doRedo(); return; }
+    if (key === 'b') { e.preventDefault(); pushUndo(); TOOLBAR_ACTIONS.bold(); return; }
+    if (key === 'i') { e.preventDefault(); pushUndo(); TOOLBAR_ACTIONS.italic(); return; }
+    if (key === 'u') { e.preventDefault(); pushUndo(); TOOLBAR_ACTIONS.underline(); return; }
   });
 
   // ---------- slug auto-suggest ----------
