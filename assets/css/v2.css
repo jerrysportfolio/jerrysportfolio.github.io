@@ -605,6 +605,9 @@ body.v2{
   overflow-x:auto; font-family:var(--font-code); font-size:.88rem;
 }
 .v2 article.markdown-body code{font-family:var(--font-code); background:var(--accent-wash); padding:.1em .4em; border-radius:5px;}
+.v2 article.markdown-body img{width:100%; border-radius:var(--radius-md); display:block; margin:8px 0;}
+.v2 .post-gallery{display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin:28px 0;}
+.v2 .post-gallery img{width:100%; height:220px; object-fit:cover; border-radius:var(--radius-sm); margin:0;}
 .v2 .license-block{
   margin-top:50px; padding:16px 20px; background:var(--accent-wash);
   border:1px solid var(--line); border-radius:var(--radius-sm);
