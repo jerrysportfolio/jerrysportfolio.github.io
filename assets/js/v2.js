@@ -2,7 +2,7 @@
 // indicator, AJAX page routing (nav/footer persist, #page-content swaps), blog
 // filter/search, reading progress, gallery load-more.
 (function () {
-  var PAGES = ['index.html', 'about.html', 'projects.html', 'gallery.html', 'blog.html', 'blog-post.html'];
+  var PAGES = ['index.html', 'about.html', 'projects.html', 'gallery.html', 'blog.html'];
   var TRANSITION_MS = 220;
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var activePageKey = document.body.dataset.page || '';
@@ -45,17 +45,6 @@
         page_title: document.title
       });
     } catch (e) { /* ignore */ }
-  }
-
-  // Per-post view counts via Firestore (parallel to the gallery views/downloads
-  // counters above) — feeds a future stats dashboard, since raw GA4 events
-  // aren't queryable from a static client-only site. Runs once per full page
-  // load; blog posts aren't in PAGES so they're never AJAX-routed, meaning
-  // this only ever needs to fire from the initial DOMContentLoaded pass.
-  function initBlogPostView() {
-    var slug = document.body.dataset.postSlug;
-    if (!slug || !window.__firestoreLite) return;
-    window.__firestoreLite.incrementPostViews(slug);
   }
 
   // Reads back the live views/downloads totals via Firestore Lite (see the
@@ -598,6 +587,52 @@
     }
   }
 
+  // ---------- blog index: posts loaded live from Firestore ----------
+  function formatPostDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  var TAG_LABELS = { misc: 'Misc', tech: 'Tech', music: 'Music', life: 'Life', literature: 'Literature' };
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function initDynamicBlogList(root) {
+    var list = root.querySelector('#blog-list');
+    if (!list || !window.__firestoreLite) return;
+
+    window.__firestoreLite.listPublishedPosts().then(function (posts) {
+      if (!posts.length) {
+        list.innerHTML = '<p class="empty-state">No posts yet — check back soon.</p>';
+        return;
+      }
+      list.innerHTML = posts.map(function (post) {
+        var tagLabel = TAG_LABELS[post.tag] || post.tag || 'Misc';
+        var cover = (post.images && post.images[0])
+          ? '<img src="' + post.images[0] + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);">'
+          : '';
+        return '<a class="blog-row" data-category="' + (post.tag || 'misc') + '" href="post.html?slug=' + encodeURIComponent(post.slug) + '">' +
+          '<div class="blog-thumb">' + cover + '</div>' +
+          '<div class="b-body">' +
+          '<div class="b-date">' + formatPostDate(post.date) + '</div>' +
+          '<h2>' + escapeHtml(post.title) + '</h2>' +
+          '<p>' + escapeHtml(post.dek) + '</p>' +
+          '</div>' +
+          '<span class="b-tag">' + tagLabel + '</span>' +
+          '</a>';
+      }).join('');
+      if (window.__reapplyBlogFilters) window.__reapplyBlogFilters();
+    }).catch(function () {
+      list.innerHTML = '<p class="empty-state">Couldn\'t load posts right now.</p>';
+    });
+  }
+
   // ---------- per-page behaviors (re-run after every content swap) ----------
 
   function initPageBehaviors(root) {
@@ -611,16 +646,21 @@
     initLightboxChrome(root);
     initPostImageLightbox(root);
     initResumeTracking(root);
+    initDynamicBlogList(root);
 
-    // Blog index: category pills + live search
+    // Blog index: category pills + live search. Rows are queried fresh inside
+    // applyFilters (not cached at bind time) since blog.html's rows are now
+    // loaded asynchronously from Firestore, after this runs — a pill click or
+    // search keystroke always sees whatever rows exist at that moment, and
+    // newly-inserted rows are visible by default (no inline display style)
+    // without needing any re-init call.
     var pills = root.querySelectorAll('.pill[data-filter]');
     var searchInput = root.querySelector('.search-input');
-    var rows = root.querySelectorAll('.blog-row[data-category]');
-    if (pills.length && rows.length) {
+    if (pills.length) {
       var activeCategory = 'all';
       var applyFilters = function () {
         var q = (searchInput && searchInput.value || '').trim().toLowerCase();
-        rows.forEach(function (row) {
+        root.querySelectorAll('.blog-row[data-category]').forEach(function (row) {
           var cat = row.dataset.category;
           var text = row.textContent.toLowerCase();
           var matchesCategory = activeCategory === 'all' || cat === activeCategory;
@@ -637,6 +677,7 @@
         });
       });
       if (searchInput) searchInput.addEventListener('input', applyFilters);
+      window.__reapplyBlogFilters = applyFilters;
     }
 
     // Projects page: live search by name, description, and type (chip)
@@ -748,9 +789,14 @@
     document.getElementById('v2-year').textContent = new Date().getFullYear();
     initFirebase();
     logPageView(activePageKey, location.pathname);
-    initBlogPostView();
     initChrome();
     initNavIndicator();
     initPageBehaviors(document);
   });
+
+  // post.js (the generic post.html template) fetches its post's content
+  // asynchronously, after this file's own DOMContentLoaded pass already ran
+  // — this lets it re-trigger the behaviors that depend on content which
+  // didn't exist yet (the lightbox-click binding on post-gallery images).
+  window.__reinitPostBehaviors = initPageBehaviors;
 })();

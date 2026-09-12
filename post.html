@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[Post Title] — Jerry Hu</title>
+    <title>Jerry Hu — Writing</title>
     <!-- PLACEHOLDER: favicon, see assets/placeholder/MANIFEST.md -->
     <link rel="icon" href="assets/placeholder/logo/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,7 +13,7 @@
     <link rel="stylesheet" href="assets/css/v2.css">
 </head>
 
-<body class="v2" data-page="blog" data-post-slug="[post-slug — unique id for view-count tracking, e.g. the filename without .html]">
+<body class="v2" data-page="blog">
 
     <nav class="navbar">
         <a class="logo" href="index.html"><span>@</span>iamjerryhu</a>
@@ -41,58 +41,17 @@
 
             <a class="back-link" href="blog.html">← Back to writing</a>
 
-            <div class="post-meta">
-                <span class="fill-me">[Month Day, Year]</span> · <span class="b-tag" style="margin-left:4px;">Tech</span>
-            </div>
-            <h1 class="fill-me" style="font-family:var(--font-display); font-size:clamp(1.8rem,4vw,2.5rem); margin:14px 0 10px;">[Post title — placeholder]</h1>
-            <p class="page-sub fill-me" style="margin-bottom:36px;">[One or two sentence dek summarizing the post.]</p>
+            <div id="post-loading" class="empty-state">Loading…</div>
 
-            <article class="markdown-body">
-                <p class="fill-me">[Opening paragraph — replace all of this placeholder text with your actual post content. Write in Markdown-style structure: paragraphs, headings, lists, code blocks, and images with captions all render through the .markdown-body styles above.]</p>
-
-                <h2 class="fill-me">[A section heading]</h2>
-                <p class="fill-me">[More placeholder body text. This template supports inline <code>code</code> spans and fenced code blocks below.]</p>
-
-                <pre class="fill-me">// example code block
-function placeholder() {
-  return "replace me";
-}</pre>
-
-                <p class="fill-me">[Closing paragraph.]</p>
-            </article>
-
-            <div class="license-block fill-me">
-                Licensed under CC BY-SA 4.0. Attribution: Jerry Hu, [year]. [Adjust or remove this block as needed.]
-            </div>
-
-            <div class="related">
-                <h3>Keep exploring</h3>
-                <div class="blog-list">
-                    <a class="blog-row" href="blog-post.html">
-                        <div class="blog-thumb fill-me">[img]</div>
-                        <div class="b-body">
-                            <h2 class="fill-me">[Related post title]</h2>
-                            <p class="fill-me">[Dek.]</p>
-                        </div>
-                        <span class="b-tag">Tech</span>
-                    </a>
-                    <a class="blog-row" href="blog-post.html">
-                        <div class="blog-thumb fill-me">[img]</div>
-                        <div class="b-body">
-                            <h2 class="fill-me">[Related post title]</h2>
-                            <p class="fill-me">[Dek.]</p>
-                        </div>
-                        <span class="b-tag">Life</span>
-                    </a>
-                    <a class="blog-row" href="blog-post.html">
-                        <div class="blog-thumb fill-me">[img]</div>
-                        <div class="b-body">
-                            <h2 class="fill-me">[Related post title]</h2>
-                            <p class="fill-me">[Dek.]</p>
-                        </div>
-                        <span class="b-tag">Misc</span>
-                    </a>
+            <div id="post-content" hidden>
+                <div class="post-meta">
+                    <span id="post-date"></span> · <span class="b-tag" id="post-tag" style="margin-left:4px;"></span>
                 </div>
+                <h1 id="post-title" style="font-family:var(--font-display); font-size:clamp(1.8rem,4vw,2.5rem); margin:14px 0 10px;"></h1>
+
+                <article class="markdown-body" id="post-body"></article>
+
+                <div class="post-gallery" id="post-gallery"></div>
             </div>
 
             <!-- Photo lightbox: hidden until openLightbox() in v2.js fills it in and
@@ -129,11 +88,16 @@ function placeholder() {
 
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/lib/marked.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked-footnote@1.4.0/dist/index.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+    <script src="assets/js/markdown.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics-compat.js"></script>
     <script type="module" src="assets/js/firestore-lite.js"></script>
     <script src="assets/js/firebase-config.js"></script>
     <script src="assets/js/v2.js"></script>
+    <script src="post.js"></script>
 </body>
 
 </html>

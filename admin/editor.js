@@ -1,0 +1,298 @@
+document.addEventListener('DOMContentLoaded', function () {
+  requireAdmin().then(function () {
+    initEditor();
+  });
+});
+
+function slugify(s) {
+  return (s || '').toLowerCase().trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function initEditor() {
+  var params = new URLSearchParams(location.search);
+  var editingSlug = params.get('slug');
+  var isEditMode = !!editingSlug;
+
+  var titleEl = document.getElementById('title');
+  var slugEl = document.getElementById('slug');
+  var dateEl = document.getElementById('date');
+  var dekEl = document.getElementById('dek');
+  var publishedEl = document.getElementById('published');
+  var markdownEl = document.getElementById('markdown');
+  var previewEl = document.getElementById('preview');
+  var imageListEl = document.getElementById('image-list');
+  var saveBtn = document.getElementById('save-btn');
+  var deleteBtn = document.getElementById('delete-btn');
+  var cancelBtn = document.getElementById('cancel-btn');
+  var saveStatus = document.getElementById('save-status');
+  var heading = document.getElementById('editor-heading');
+
+  var images = []; // array of {url}
+  var slugManuallyEdited = false;
+  var existingCreatedAt = null;
+
+  // ---------- tag glass-dropdown ----------
+  var tagInput = document.getElementById('tag');
+  var tagTrigger = document.getElementById('tag-trigger');
+  var tagMenu = document.getElementById('tag-menu');
+  function setTag(value, label) {
+    tagInput.value = value;
+    tagTrigger.textContent = label;
+    tagMenu.querySelectorAll('li').forEach(function (li) {
+      li.classList.toggle('active', li.dataset.value === value);
+    });
+  }
+  tagTrigger.addEventListener('click', function (e) {
+    e.stopPropagation();
+    tagMenu.hidden = !tagMenu.hidden;
+  });
+  tagMenu.querySelectorAll('li').forEach(function (li) {
+    li.addEventListener('click', function () {
+      setTag(li.dataset.value, li.textContent);
+      tagMenu.hidden = true;
+    });
+  });
+  document.addEventListener('click', function () { tagMenu.hidden = true; });
+
+  // ---------- live preview ----------
+  var previewTimer = null;
+  function renderPreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(function () {
+      previewEl.innerHTML = window.renderPostMarkdown(markdownEl.value);
+    }, 150);
+  }
+  markdownEl.addEventListener('input', renderPreview);
+
+  // ---------- image list ----------
+  function renderImageList() {
+    imageListEl.innerHTML = '';
+    images.forEach(function (img, idx) {
+      var item = document.createElement('div');
+      item.className = 'image-list-item';
+      item.innerHTML = '<img src="' + img.url + '" alt="">' +
+        '<button type="button" aria-label="Remove image">✕</button>';
+      item.querySelector('button').addEventListener('click', function () {
+        images.splice(idx, 1);
+        renderImageList();
+      });
+      imageListEl.appendChild(item);
+    });
+  }
+
+  var fileInput = document.getElementById('image-file-input');
+  var pendingInsertInline = false;
+  function triggerUpload(insertInline) {
+    pendingInsertInline = insertInline;
+    fileInput.value = '';
+    fileInput.click();
+  }
+  document.getElementById('upload-image-btn').addEventListener('click', function () { triggerUpload(false); });
+  document.getElementById('add-image-url-btn').addEventListener('click', function () {
+    var url = window.prompt('Image URL or path (e.g. assets/img/blogs/my-post/1.jpeg):');
+    if (!url) return;
+    images.push({ url: url.trim() });
+    renderImageList();
+  });
+  fileInput.addEventListener('change', function () {
+    var file = fileInput.files[0];
+    if (!file) return;
+    saveStatus.textContent = 'Uploading image…';
+    window.__storageLite.uploadBlogImage(file).then(function (url) {
+      saveStatus.textContent = '';
+      images.push({ url: url });
+      renderImageList();
+      if (pendingInsertInline) insertAtCursor('![' + file.name.replace(/\.[a-z0-9]+$/i, '') + '](' + url + ')\n');
+    }).catch(function () {
+      saveStatus.textContent = 'Image upload failed.';
+    });
+  });
+
+  // ---------- toolbar ----------
+  function insertAtCursor(text) {
+    var start = markdownEl.selectionStart, end = markdownEl.selectionEnd;
+    var value = markdownEl.value;
+    markdownEl.value = value.slice(0, start) + text + value.slice(end);
+    var pos = start + text.length;
+    markdownEl.focus();
+    markdownEl.setSelectionRange(pos, pos);
+    renderPreview();
+  }
+
+  function wrapSelection(before, after) {
+    after = after == null ? before : after;
+    var start = markdownEl.selectionStart, end = markdownEl.selectionEnd;
+    var value = markdownEl.value;
+    var selected = value.slice(start, end);
+    markdownEl.value = value.slice(0, start) + before + selected + after + value.slice(end);
+    markdownEl.focus();
+    markdownEl.setSelectionRange(start + before.length, start + before.length + selected.length);
+    renderPreview();
+  }
+
+  function prefixLines(prefix) {
+    var start = markdownEl.selectionStart, end = markdownEl.selectionEnd;
+    var value = markdownEl.value;
+    var selected = value.slice(start, end) || 'Text';
+    var prefixed = selected.split('\n').map(function (line) { return prefix + line; }).join('\n');
+    markdownEl.value = value.slice(0, start) + prefixed + value.slice(end);
+    markdownEl.focus();
+    markdownEl.setSelectionRange(start, start + prefixed.length);
+    renderPreview();
+  }
+
+  function nextFootnoteNumber() {
+    var matches = markdownEl.value.match(/\[\^(\d+)\]/g) || [];
+    var max = 0;
+    matches.forEach(function (m) {
+      var n = parseInt(m.replace(/\D/g, ''), 10);
+      if (n > max) max = n;
+    });
+    return max + 1;
+  }
+
+  function insertBlock(block, selectFrom, selectLen) {
+    var start = markdownEl.selectionStart, end = markdownEl.selectionEnd;
+    var value = markdownEl.value;
+    markdownEl.value = value.slice(0, start) + block + value.slice(end);
+    markdownEl.focus();
+    var from = start + (selectFrom || 0);
+    markdownEl.setSelectionRange(from, from + (selectLen || 0));
+    renderPreview();
+  }
+
+  var TOOLBAR_ACTIONS = {
+    bold: function () { wrapSelection('**'); },
+    italic: function () { wrapSelection('*'); },
+    underline: function () { wrapSelection('<u>', '</u>'); },
+    strike: function () { wrapSelection('~~'); },
+    quote: function () { prefixLines('> '); },
+    callout: function () {
+      var selected = markdownEl.value.slice(markdownEl.selectionStart, markdownEl.selectionEnd) || 'Callout text';
+      insertBlock('> [!NOTE]\n> ' + selected.split('\n').join('\n> ') + '\n');
+    },
+    code: function () { wrapSelection('`'); },
+    codeblock: function () {
+      var selected = markdownEl.value.slice(markdownEl.selectionStart, markdownEl.selectionEnd) || 'code here';
+      insertBlock('```\n' + selected + '\n```\n', 4, selected.length);
+    },
+    link: function () {
+      var url = window.prompt('Link URL:', 'https://');
+      if (!url) return;
+      var selected = markdownEl.value.slice(markdownEl.selectionStart, markdownEl.selectionEnd) || 'link text';
+      var text = '[' + selected + '](' + url + ')';
+      insertBlock(text, 1, selected.length);
+    },
+    footnote: function () {
+      var n = nextFootnoteNumber();
+      insertAtCursor('[^' + n + ']');
+      markdownEl.value += '\n\n[^' + n + ']: ';
+      markdownEl.focus();
+      markdownEl.setSelectionRange(markdownEl.value.length, markdownEl.value.length);
+      renderPreview();
+    },
+    youtube: function () {
+      var url = window.prompt('YouTube video URL or ID:');
+      if (!url) return;
+      insertAtCursor('\n[[youtube:' + url.trim() + ']]\n');
+    },
+    'toolbar-image': function () { triggerUpload(true); }
+  };
+
+  document.getElementById('editor-toolbar').addEventListener('click', function (e) {
+    var btn = e.target.closest('.toolbar-btn');
+    if (!btn) return;
+    var action = TOOLBAR_ACTIONS[btn.dataset.cmd];
+    if (action) action();
+  });
+
+  // ---------- slug auto-suggest ----------
+  titleEl.addEventListener('input', function () {
+    if (!isEditMode && !slugManuallyEdited) slugEl.value = slugify(titleEl.value);
+  });
+  slugEl.addEventListener('input', function () { slugManuallyEdited = true; });
+
+  // ---------- load existing post (edit mode) ----------
+  if (isEditMode) {
+    heading.textContent = 'Edit post';
+    slugEl.disabled = true;
+    deleteBtn.hidden = false;
+    window.__firestoreLite.getPost(editingSlug).then(function (post) {
+      if (!post) { alert('Post not found.'); location.href = 'dashboard.html'; return; }
+      titleEl.value = post.title || '';
+      slugEl.value = post.slug;
+      dateEl.value = post.date || '';
+      dekEl.value = post.dek || '';
+      publishedEl.checked = !!post.published;
+      markdownEl.value = post.markdown || '';
+      existingCreatedAt = post.createdAt || null;
+      images = (post.images || []).map(function (url) { return { url: url }; });
+      var tagLabel = { misc: 'Misc', tech: 'Tech', music: 'Music', life: 'Life', literature: 'Literature' }[post.tag] || post.tag || 'Misc';
+      setTag(post.tag || 'misc', tagLabel);
+      renderImageList();
+      renderPreview();
+    });
+  } else {
+    setTag('misc', 'Misc');
+    dateEl.value = new Date().toISOString().slice(0, 10);
+  }
+
+  // ---------- save / delete / cancel ----------
+  cancelBtn.addEventListener('click', function () { location.href = 'dashboard.html'; });
+
+  saveBtn.addEventListener('click', function () {
+    var slug = isEditMode ? editingSlug : slugify(slugEl.value || titleEl.value);
+    if (!titleEl.value.trim()) { alert('Title is required.'); return; }
+    if (!slug) { alert('Slug is required.'); return; }
+    if (!markdownEl.value.trim()) { alert('Post body is required.'); return; }
+
+    var data = {
+      title: titleEl.value.trim(),
+      tag: tagInput.value,
+      date: dateEl.value,
+      dek: dekEl.value.trim(),
+      published: publishedEl.checked,
+      images: images.map(function (i) { return i.url; }),
+      markdown: markdownEl.value,
+      updatedAt: new Date().toISOString()
+    };
+
+    var proceed = isEditMode
+      ? Promise.resolve(true)
+      : window.__firestoreLite.postExists(slug).then(function (exists) {
+        if (!exists) return true;
+        return window.confirm('A post with slug "' + slug + '" already exists. Overwrite it?');
+      });
+
+    saveBtn.disabled = true;
+    saveStatus.textContent = 'Saving…';
+    proceed.then(function (ok) {
+      if (!ok) { saveBtn.disabled = false; saveStatus.textContent = ''; return; }
+      data.createdAt = isEditMode ? (existingCreatedAt || data.updatedAt) : data.updatedAt;
+      return window.__firestoreLite.savePost(slug, data).then(function () {
+        location.href = 'dashboard.html';
+      });
+    }).catch(function (err) {
+      saveBtn.disabled = false;
+      saveStatus.textContent = 'Save failed — check the console.';
+      console.error(err);
+    });
+  });
+
+  if (isEditMode) {
+    deleteBtn.addEventListener('click', function () {
+      if (!window.confirm('Delete "' + (titleEl.value || editingSlug) + '"? This cannot be undone.')) return;
+      deleteBtn.disabled = true;
+      window.__firestoreLite.deletePost(editingSlug).then(function () {
+        location.href = 'dashboard.html';
+      }).catch(function () {
+        deleteBtn.disabled = false;
+        alert('Delete failed.');
+      });
+    });
+  }
+}

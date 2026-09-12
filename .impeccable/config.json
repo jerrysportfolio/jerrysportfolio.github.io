@@ -47,6 +47,42 @@
         ],
         "createdAt": "2026-09-12T04:03:06.218Z",
         "reason": "intentional: lightbox <img> is filled by openLightbox() in v2.js before being shown, matching the identical pattern already in gallery.html"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "admin/editor.html"
+        ],
+        "createdAt": "2026-09-12T04:21:12.094Z",
+        "reason": "matches existing site-wide --ink-faint small-label pattern already used throughout v2.css (.proj-meta, .b-date, .gallery-stats, etc.) — established design convention, not new"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "admin/editor.html"
+        ],
+        "createdAt": "2026-09-12T04:21:12.112Z",
+        "reason": "matches existing site-wide small-caps label scale (.72rem-.75rem) already used throughout v2.css for meta/date/chip labels — established design convention, not new"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "admin/dashboard.html"
+        ],
+        "createdAt": "2026-09-12T04:23:26.214Z",
+        "reason": "matches existing site-wide --ink-faint small-label pattern already used throughout v2.css (.proj-meta, .b-date, .gallery-stats, etc.) — established design convention, not new"
+      },
+      {
+        "rule": "broken-image",
+        "value": "*",
+        "files": [
+          "post.html"
+        ],
+        "createdAt": "2026-09-12T04:28:37.747Z",
+        "reason": "intentional: lightbox <img> is filled by openLightbox() in v2.js before being shown, matching the identical pattern already in gallery.html"
       }
     ]
   }
