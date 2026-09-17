@@ -612,6 +612,17 @@ body.portal-down.portal-fade::before{opacity:.9;}
   font-family:var(--font-code); font-size:.72rem; text-transform:uppercase; color:var(--accent);
   background:var(--accent-wash); padding:4px 10px; border-radius:100px; flex:none; font-weight:600;
 }
+/* Below ~760px the thumb (120px) + text + tag no longer fit on one line —
+   the text column gets squeezed to a sliver and wraps to many lines while
+   align-items:center vertically strands the thumb and tag in the middle of
+   that tall row. Wrapping the thumb onto its own full-width line above the
+   text fixes both: the row reads top-to-bottom like a card instead of a
+   cramped 3-column strip, and the tag naturally sits beside the text again. */
+@media (max-width:760px){
+  .v2 .blog-row{flex-wrap:wrap; align-items:flex-start;}
+  .v2 .blog-thumb{width:100%; height:auto; aspect-ratio:16/9;}
+  .v2 .search-input{margin-left:0; width:100%;}
+}
 
 /* ---------- blog post ---------- */
 .v2 .reading-progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); z-index:100; width:0%;}
