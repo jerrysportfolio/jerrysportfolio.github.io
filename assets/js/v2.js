@@ -646,21 +646,57 @@
   // blog's) clears whatever the previous page left running first.
   var blogThumbTimers = [];
 
-  function initDynamicBlogList(root) {
-    blogThumbTimers.forEach(clearInterval);
-    blogThumbTimers = [];
+  // Stale-while-revalidate cache for the post list: renders instantly from
+  // whatever was cached last visit while a fresh Firestore fetch runs in the
+  // background, then silently re-renders only if the fetch turns up changes
+  // (e.g. a new/edited post). Avoids the blank list while waiting on the
+  // network round trip that made the blog page feel slow to open.
+  var BLOG_POSTS_CACHE_KEY = 'blogPostsCacheV1';
 
+  function readBlogPostsCache() {
+    try {
+      var parsed = JSON.parse(localStorage.getItem(BLOG_POSTS_CACHE_KEY));
+      return (parsed && parsed.posts) || null;
+    } catch (e) { return null; }
+  }
+
+  function writeBlogPostsCache(posts) {
+    try {
+      localStorage.setItem(BLOG_POSTS_CACHE_KEY, JSON.stringify({ posts: posts, cachedAt: Date.now() }));
+    } catch (e) { /* storage full/unavailable — cache is best-effort */ }
+  }
+
+  function initDynamicBlogList(root) {
     var list = root.querySelector('#blog-list');
     if (!list || !window.__firestoreLite) return;
     var pillGroup = root.querySelector('#blog-pill-group');
     var searchInput = root.querySelector('.search-input');
 
+    var cached = readBlogPostsCache();
+    if (cached) {
+      renderBlogPosts(root, list, pillGroup, searchInput, cached);
+    } else {
+      list.innerHTML = '<p class="empty-state">Loading…</p>';
+    }
+
     window.__firestoreLite.listPublishedPosts().then(function (posts) {
-      if (!posts.length) {
-        list.innerHTML = '<p class="empty-state">No posts yet — check back soon.</p>';
-        return;
-      }
-      list.innerHTML = posts.map(function (post) {
+      writeBlogPostsCache(posts);
+      if (cached && JSON.stringify(cached) === JSON.stringify(posts)) return;
+      renderBlogPosts(root, list, pillGroup, searchInput, posts);
+    }).catch(function () {
+      if (!cached) list.innerHTML = '<p class="empty-state">Couldn\'t load posts right now.</p>';
+    });
+  }
+
+  function renderBlogPosts(root, list, pillGroup, searchInput, posts) {
+    blogThumbTimers.forEach(clearInterval);
+    blogThumbTimers = [];
+
+    if (!posts.length) {
+      list.innerHTML = '<p class="empty-state">No posts yet — check back soon.</p>';
+      return;
+    }
+    list.innerHTML = posts.map(function (post) {
         var tagLabel = TAG_LABELS[post.tag] || post.tag || 'Misc';
         var images = post.images || [];
         var cover = images.map(function (src, i) {
@@ -731,9 +767,6 @@
         searchInput.addEventListener('input', function () { applyFilters(); });
       }
       applyFilters();
-    }).catch(function () {
-      list.innerHTML = '<p class="empty-state">Couldn\'t load posts right now.</p>';
-    });
   }
 
   // ---------- per-page behaviors (re-run after every content swap) ----------
