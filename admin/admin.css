@@ -20,7 +20,7 @@
 }
 :root[data-theme="dark"] .admin-body::before{opacity:.14;}
 
-.admin-shell{max-width:1400px; margin:0 auto; padding:32px 20px 80px; width:100%;}
+.admin-shell{max-width:1400px; margin:0 auto; padding:32px 16px 80px; width:100%;}
 
 /* The topbar reuses the public site's .navbar component (liquid glass,
    sticky pill, hover glow — see v2.css and the pointermove/scroll wiring in
