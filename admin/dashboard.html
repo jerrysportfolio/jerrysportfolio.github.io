@@ -54,14 +54,18 @@
         </div>
 
         <div class="admin-card">
-            <table class="post-table">
+            <table class="post-table" id="post-table">
+                <colgroup>
+                    <col data-col="title" style="width:32%"><col data-col="tag" style="width:12%"><col data-col="date" style="width:14%">
+                    <col data-col="status" style="width:12%"><col data-col="views" style="width:10%"><col data-col="actions" style="width:20%">
+                </colgroup>
                 <thead>
                     <tr>
-                        <th>Title</th>
-                        <th>Tag</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                        <th>Views</th>
+                        <th>Title<span class="col-resize-handle"></span></th>
+                        <th>Tag<span class="col-resize-handle"></span></th>
+                        <th>Date<span class="col-resize-handle"></span></th>
+                        <th>Status<span class="col-resize-handle"></span></th>
+                        <th>Views<span class="col-resize-handle"></span></th>
                         <th></th>
                     </tr>
                 </thead>

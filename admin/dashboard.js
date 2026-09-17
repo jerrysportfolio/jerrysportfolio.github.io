@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
   requireAdmin().then(function () {
     loadStats();
     loadPosts();
+    initColumnResize();
 
     document.getElementById('post-table-body').addEventListener('click', function (e) {
       var deleteBtn = e.target.closest('[data-delete-slug]');
@@ -60,7 +61,7 @@ function loadPosts() {
       var tagLabel = { misc: 'Misc', tech: 'Tech', music: 'Music', life: 'Life', literature: 'Literature' }[post.tag] || post.tag || '—';
 
       tr.innerHTML =
-        '<td class="post-title-cell"><a href="editor.html?slug=' + encodeURIComponent(post.slug) + '">' +
+        '<td class="post-title-cell"><a href="../post.html?slug=' + encodeURIComponent(post.slug) + '" target="_blank" rel="noopener" title="View public post">' +
         escapeHtml(post.title || post.slug) + '</a></td>' +
         '<td>' + escapeHtml(tagLabel) + '</td>' +
         '<td>' + escapeHtml(post.date || '—') + '</td>' +
@@ -89,5 +90,65 @@ function loadPosts() {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+// Drag-to-resize table columns, widths memorized per-column in
+// localStorage so they persist across visits. Column widths live on
+// <col> elements (table-layout:fixed makes those authoritative), while
+// the drag handle sits on the header cell above each column.
+function initColumnResize() {
+  var table = document.getElementById('post-table');
+  if (!table) return;
+  var STORAGE_KEY = 'admin-post-table-col-widths';
+  var cols = Array.prototype.slice.call(table.querySelectorAll('colgroup col'));
+
+  function loadWidths() {
+    var saved;
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch (e) { saved = {}; }
+    cols.forEach(function (col) {
+      var px = saved[col.dataset.col];
+      if (px) col.style.width = px + 'px';
+    });
+  }
+
+  function saveWidths() {
+    var widths = {};
+    cols.forEach(function (col) {
+      var px = parseFloat(col.style.width);
+      if (px) widths[col.dataset.col] = px;
+    });
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(widths)); } catch (e) { /* ignore */ }
+  }
+
+  loadWidths();
+
+  var headers = table.querySelectorAll('thead th');
+  headers.forEach(function (th, index) {
+    var handle = th.querySelector('.col-resize-handle');
+    var col = cols[index];
+    if (!handle || !col) return;
+
+    handle.addEventListener('pointerdown', function (e) {
+      e.preventDefault();
+      var startX = e.clientX;
+      var startWidth = th.getBoundingClientRect().width;
+      handle.classList.add('resizing');
+      handle.setPointerCapture(e.pointerId);
+
+      function onMove(ev) {
+        var next = Math.max(60, startWidth + (ev.clientX - startX));
+        col.style.width = next + 'px';
+      }
+      function onUp(ev) {
+        handle.releasePointerCapture(ev.pointerId);
+        handle.classList.remove('resizing');
+        handle.removeEventListener('pointermove', onMove);
+        handle.removeEventListener('pointerup', onUp);
+        saveWidths();
+      }
+      handle.addEventListener('pointermove', onMove);
+      handle.addEventListener('pointerup', onUp);
+    });
   });
 }
