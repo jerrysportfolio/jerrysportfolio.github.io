@@ -192,9 +192,18 @@
     var loading = false;
     var exhausted = false;
     var observer = null;
+    // Unsplash's page-number pagination is offset-based against a live,
+    // latest-sorted list — querying pages back-to-back with no pacing
+    // (loadAllRemaining, below) can catch a photo shifting across a page
+    // boundary between requests and return it twice. Track ids already
+    // rendered and skip repeats regardless of why the API sent one again.
+    var seenIds = {};
 
     var appendPhotos = function (photos) {
       photos.forEach(function (p) {
+        if (seenIds[p.id]) return;
+        seenIds[p.id] = true;
+
         var item = document.createElement('div');
         item.className = 'gallery-item';
         item.setAttribute('role', 'button');
