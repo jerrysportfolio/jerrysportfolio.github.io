@@ -123,22 +123,34 @@ function initColumnResize() {
 
   loadWidths();
 
-  var headers = table.querySelectorAll('thead th');
+  var headers = Array.prototype.slice.call(table.querySelectorAll('thead th'));
   headers.forEach(function (th, index) {
     var handle = th.querySelector('.col-resize-handle');
     var col = cols[index];
-    if (!handle || !col) return;
+    var nextTh = headers[index + 1];
+    var nextCol = cols[index + 1];
+    if (!handle || !col || !nextTh || !nextCol) return;
 
+    // Resize by trading width with the immediate neighbor only, so the
+    // table's total width never changes. The table is width:100% with the
+    // other, untouched columns still in their original % units — if only
+    // the dragged column's width changed, the browser would have to
+    // renegotiate every other column to keep the total at 100%, which is
+    // exactly what made this jitter/fight the drag instead of resizing.
     handle.addEventListener('pointerdown', function (e) {
       e.preventDefault();
       var startX = e.clientX;
       var startWidth = th.getBoundingClientRect().width;
+      var startNextWidth = nextTh.getBoundingClientRect().width;
       handle.classList.add('resizing');
       handle.setPointerCapture(e.pointerId);
 
       function onMove(ev) {
-        var next = Math.max(60, startWidth + (ev.clientX - startX));
-        col.style.width = next + 'px';
+        var delta = ev.clientX - startX;
+        delta = Math.max(delta, 60 - startWidth); // don't shrink this column below 60px
+        delta = Math.min(delta, startNextWidth - 60); // don't shrink the neighbor below 60px
+        col.style.width = (startWidth + delta) + 'px';
+        nextCol.style.width = (startNextWidth - delta) + 'px';
       }
       function onUp(ev) {
         handle.releasePointerCapture(ev.pointerId);
