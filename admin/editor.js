@@ -83,6 +83,16 @@ function initEditor() {
     }, 150);
   }
   markdownEl.addEventListener('input', function () { renderPreview(); markDirty(); });
+
+  // Keep the preview pane's height matched to the textarea's, including
+  // when the user drags the textarea's native resize handle — so the two
+  // stay visually in sync, and the preview scrolls its own content instead
+  // of the whole page growing to fit a long post.
+  if (window.ResizeObserver) {
+    new ResizeObserver(function () {
+      previewEl.style.height = markdownEl.offsetHeight + 'px';
+    }).observe(markdownEl);
+  }
   titleEl.addEventListener('input', markDirty);
   slugEl.addEventListener('input', markDirty);
   dateEl.addEventListener('input', markDirty);
