@@ -99,19 +99,52 @@ function initEditor() {
   dekEl.addEventListener('input', markDirty);
   publishedEl.addEventListener('change', markDirty);
 
-  // ---------- image list ----------
+  // ---------- image list (drag to reorder — first image is the cover) ----------
+  var dragFromIndex = null;
+
   function renderImageList() {
     imageListEl.innerHTML = '';
     images.forEach(function (img, idx) {
       var item = document.createElement('div');
       item.className = 'image-list-item';
+      item.draggable = true;
+      item.dataset.index = idx;
       item.innerHTML = '<img src="' + img.url + '" alt="">' +
+        (idx === 0 ? '<span class="image-list-cover-badge">Cover</span>' : '') +
         '<button type="button" aria-label="Remove image">✕</button>';
       item.querySelector('button').addEventListener('click', function () {
         images.splice(idx, 1);
         renderImageList();
         markDirty();
       });
+
+      item.addEventListener('dragstart', function (e) {
+        dragFromIndex = idx;
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', String(idx)); } catch (err) { /* Firefox needs this set */ }
+      });
+      item.addEventListener('dragend', function () {
+        item.classList.remove('dragging');
+        imageListEl.querySelectorAll('.image-list-item').forEach(function (el) { el.classList.remove('drag-over'); });
+        dragFromIndex = null;
+      });
+      item.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        item.classList.add('drag-over');
+      });
+      item.addEventListener('dragleave', function () { item.classList.remove('drag-over'); });
+      item.addEventListener('drop', function (e) {
+        e.preventDefault();
+        item.classList.remove('drag-over');
+        if (dragFromIndex === null || dragFromIndex === idx) return;
+        var moved = images.splice(dragFromIndex, 1)[0];
+        images.splice(idx, 0, moved);
+        renderImageList();
+        markDirty();
+      });
+
       imageListEl.appendChild(item);
     });
   }
