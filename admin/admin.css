@@ -20,7 +20,7 @@
 }
 :root[data-theme="dark"] .admin-body::before{opacity:.14;}
 
-.admin-shell{max-width:1100px; margin:0 auto; padding:32px 24px 80px; width:100%;}
+.admin-shell{max-width:1400px; margin:0 auto; padding:32px 20px 80px; width:100%;}
 
 /* The topbar reuses the public site's .navbar component (liquid glass,
    sticky pill, hover glow — see v2.css and the pointermove/scroll wiring in
@@ -119,13 +119,13 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
 .editor-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; margin-top:8px;}
 @media (max-width:860px){.editor-grid{grid-template-columns:1fr;}}
 .editor-textarea, .editor-preview{
-  width:100%; min-height:480px; padding:16px; border:1px solid var(--line); border-radius:var(--radius-sm);
+  width:100%; height:480px; padding:16px; border:1px solid var(--line); border-radius:var(--radius-sm);
   box-sizing:border-box;
 }
 .editor-textarea{
   font-family:var(--font-code); font-size:.88rem; line-height:1.6; background:var(--paper); color:var(--ink); resize:vertical;
 }
-.editor-preview{overflow:auto; background:var(--paper-card);}
+.editor-preview{overflow-y:auto; background:var(--paper-card);}
 
 .image-list{display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;}
 .image-list-item{position:relative; width:100px; height:76px; border-radius:var(--radius-sm); overflow:hidden; border:1px solid var(--line);}
