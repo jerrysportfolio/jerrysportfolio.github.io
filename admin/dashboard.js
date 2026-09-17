@@ -257,9 +257,10 @@ function renderBarList(container, entries, emptyMessage) {
 }
 
 // A plain inline SVG bar chart — one hue (the site's own accent), recessive
-// gridlines, a native <title> per bar for a hover tooltip. No charting
-// library: daily counts over a 7-30 day window is well within what a
-// handful of <rect>s can render cleanly.
+// gridlines, a styled hover tooltip that follows the cursor (built here
+// rather than relying on the native <title>, which is slow to appear and
+// can't be styled). No charting library: daily counts over a 7-30 day
+// window is well within what a handful of <rect>s can render cleanly.
 function renderTrafficChart(container, points) {
   var w = Math.max(320, container.clientWidth || 600);
   var h = 180;
@@ -279,8 +280,9 @@ function renderTrafficChart(container, points) {
     var barH = maxVal ? Math.max(1, (p.count / maxVal) * innerH) : 1;
     var x = padSide + i * (barW + gap);
     var y = padTop + innerH - barH;
-    svg += '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + barH.toFixed(1) +
-      '" rx="2" style="fill:var(--accent)"><title>' + p.date + ': ' + p.count + ' view' + (p.count === 1 ? '' : 's') + '</title></rect>';
+    svg += '<rect class="chart-bar" data-date="' + p.date + '" data-count="' + p.count +
+      '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + barW.toFixed(1) + '" height="' + barH.toFixed(1) +
+      '" rx="2" style="fill:var(--accent); cursor:pointer" />';
   });
   var labelIdxs = points.length > 1 ? [0, Math.floor((points.length - 1) / 2), points.length - 1] : [0];
   labelIdxs.forEach(function (i) {
@@ -290,4 +292,44 @@ function renderTrafficChart(container, points) {
   });
   svg += '</svg>';
   container.innerHTML = svg;
+  bindChartTooltip(container);
+}
+
+// One shared floating tooltip element, reused across renders/charts —
+// positioned near the cursor while hovering any .chart-bar inside `container`.
+var chartTooltipEl = null;
+function ensureChartTooltip() {
+  if (chartTooltipEl) return chartTooltipEl;
+  chartTooltipEl = document.createElement('div');
+  chartTooltipEl.className = 'chart-tooltip';
+  chartTooltipEl.hidden = true;
+  document.body.appendChild(chartTooltipEl);
+  return chartTooltipEl;
+}
+
+function bindChartTooltip(container) {
+  var tooltip = ensureChartTooltip();
+  container.querySelectorAll('.chart-bar').forEach(function (bar) {
+    bar.addEventListener('mouseenter', function () {
+      var count = bar.dataset.count;
+      tooltip.innerHTML = '<strong>' + count + '</strong> view' + (count === '1' ? '' : 's') +
+        '<span class="chart-tooltip-date">' + formatChartDate(bar.dataset.date) + '</span>';
+      tooltip.hidden = false;
+      bar.classList.add('chart-bar-hover');
+    });
+    bar.addEventListener('mousemove', function (e) {
+      tooltip.style.left = (e.clientX + 14) + 'px';
+      tooltip.style.top = (e.clientY - 12) + 'px';
+    });
+    bar.addEventListener('mouseleave', function () {
+      tooltip.hidden = true;
+      bar.classList.remove('chart-bar-hover');
+    });
+  });
+}
+
+function formatChartDate(iso) {
+  var d = new Date(iso + 'T00:00:00');
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }

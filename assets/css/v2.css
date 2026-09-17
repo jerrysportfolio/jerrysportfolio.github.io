@@ -615,7 +615,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
 
 /* ---------- blog post ---------- */
 .v2 .reading-progress{position:fixed; top:0; left:0; height:3px; background:var(--accent); z-index:100; width:0%;}
-.v2 .post-wrap{max-width:700px; margin:0 auto; padding-top:56px;}
+.v2 .post-wrap{max-width:820px; margin:0 auto; padding-top:56px;}
 .v2 .back-link{font-family:var(--font-code); font-size:.85rem; color:var(--ink-soft); display:inline-block; margin-bottom:22px;}
 .v2 .back-link:hover{color:var(--accent);}
 .v2 article.markdown-body{font-family:var(--font-post); font-size:1.12rem; line-height:1.75;}
