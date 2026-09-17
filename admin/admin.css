@@ -93,7 +93,11 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
 /* Draggable column-width handle, sitting on the right edge of each
    resizable header — width is memorized per column in localStorage. */
 .col-resize-handle{
-  position:absolute; top:0; right:-4px; bottom:0; width:8px; cursor:col-resize; z-index:2; touch-action:none;
+  /* Stays fully inside its own <th> (no negative-offset overflow into the
+     next cell) — each th is position:relative, so an adjacent th later in
+     source order would otherwise paint/hit-test on top of the overflowing
+     sliver, making the handle visible but unclickable. */
+  position:absolute; top:0; right:0; bottom:0; width:8px; cursor:col-resize; z-index:2; touch-action:none;
 }
 .col-resize-handle:hover, .col-resize-handle.resizing{background:var(--accent-wash);}
 
