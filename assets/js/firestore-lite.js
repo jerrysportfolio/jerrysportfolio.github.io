@@ -13,7 +13,7 @@
 // rest of the site intentionally stays on plain scripts.
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {
-  getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, increment,
+  getFirestore, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, increment,
   collection, query, where, orderBy
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-lite.js";
 
@@ -109,5 +109,40 @@ window.__firestoreLite = {
     var d = ensureDb();
     if (!d || !slug) return Promise.reject(new Error('Firestore not configured'));
     return deleteDoc(doc(d, 'posts', slug));
+  },
+
+  // ---------- site-wide page-view events (dashboard traffic charts) ----------
+  // One doc per visit: {page, slug?, referrerHost, date: 'YYYY-MM-DD', createdAt}.
+  // `page` is a page key ('home','projects','gallery','blog','post'); `slug`
+  // is only set for page:'post'. Write-only from the public site's
+  // perspective — rules block reading these back except as the admin.
+  logPageViewEvent: function (page, slug) {
+    var d = ensureDb();
+    if (!d || !page) return Promise.resolve();
+    var referrerHost = 'direct';
+    try {
+      if (document.referrer) {
+        var refUrl = new URL(document.referrer);
+        if (refUrl.hostname && refUrl.hostname !== location.hostname) referrerHost = refUrl.hostname;
+      }
+    } catch (e) { /* keep 'direct' */ }
+    var now = new Date();
+    var data = {
+      page: page,
+      referrerHost: referrerHost,
+      date: now.toISOString().slice(0, 10),
+      createdAt: now.toISOString()
+    };
+    if (slug) data.slug = slug;
+    return addDoc(collection(d, 'pageViews'), data).catch(function () { /* ignore */ });
+  },
+  // sinceDate: 'YYYY-MM-DD' (inclusive). Admin-only per rules.
+  getPageViewEvents: function (sinceDate) {
+    var d = ensureDb();
+    if (!d) return Promise.resolve([]);
+    var q = query(collection(d, 'pageViews'), where('date', '>=', sinceDate), orderBy('date', 'asc'));
+    return getDocs(q)
+      .then(function (snap) { return snap.docs.map(function (s) { return s.data(); }); })
+      .catch(function () { return []; });
   }
 };

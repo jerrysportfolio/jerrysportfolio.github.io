@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.__reinitPostBehaviors) window.__reinitPostBehaviors(document);
 
     window.__firestoreLite.incrementPostViews(slug);
+    window.__firestoreLite.logPageViewEvent('post', slug);
   }).catch(function () {
     loadingEl.textContent = 'Couldn\'t load this post right now.';
   });

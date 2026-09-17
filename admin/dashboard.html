@@ -49,6 +49,31 @@
         </div>
 
         <div class="editor-header">
+            <h1 class="admin-title" style="margin-bottom:0;">Traffic</h1>
+            <div class="pill-group" id="traffic-range-group">
+                <button class="pill active" data-days="7">7 days</button>
+                <button class="pill" data-days="15">15 days</button>
+                <button class="pill" data-days="30">30 days</button>
+            </div>
+        </div>
+
+        <div class="admin-card chart-card">
+            <div class="chart-title">Views over time</div>
+            <div id="traffic-chart"><p class="empty-state">Loading…</p></div>
+        </div>
+
+        <div class="traffic-columns">
+            <div class="admin-card chart-card">
+                <div class="chart-title">Top pages</div>
+                <div id="traffic-top-posts" class="bar-list"></div>
+            </div>
+            <div class="admin-card chart-card">
+                <div class="chart-title">Traffic sources</div>
+                <div id="traffic-sources" class="bar-list"></div>
+            </div>
+        </div>
+
+        <div class="editor-header">
             <h1 class="admin-title" style="margin-bottom:0;">Blog posts</h1>
             <a class="btn btn-primary" href="editor.html">+ New post</a>
         </div>

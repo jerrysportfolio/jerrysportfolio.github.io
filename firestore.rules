@@ -40,6 +40,20 @@ service cloud.firestore {
         && request.resource.data.views is int;
     }
 
+    // Site-wide page-view events, one document per visit, powering the
+    // dashboard's time-windowed traffic charts. Anyone can log a view of a
+    // real page they're actually on; only the admin can read them back —
+    // visitors' browsing shouldn't be queryable by other visitors. No
+    // update/delete: each event is an immutable fact once logged.
+    match /pageViews/{eventId} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly(['page', 'slug', 'referrerHost', 'date', 'createdAt'])
+        && request.resource.data.page is string
+        && request.resource.data.date is string
+        && request.resource.data.date.size() == 10;
+      allow update, delete: if false;
+    }
+
     // Everything else stays closed by default.
     match /{document=**} {
       allow read, write: if false;

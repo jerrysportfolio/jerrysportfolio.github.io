@@ -65,6 +65,23 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
   animation:admin-fade-up .4s ease both;
 }
 .stat-tile:hover{box-shadow:var(--shadow-hover); transform:translateY(-3px);}
+
+/* ---------- traffic charts ---------- */
+.chart-card{padding:22px 24px; margin-bottom:24px;}
+.chart-title{
+  font-family:var(--font-code); font-size:.72rem; text-transform:uppercase; letter-spacing:.05em;
+  color:var(--ink-faint); margin-bottom:16px;
+}
+#traffic-chart svg rect{transition:opacity .15s;}
+#traffic-chart svg rect:hover{opacity:.7;}
+.traffic-columns{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:36px;}
+@media (max-width:760px){.traffic-columns{grid-template-columns:1fr;}}
+.bar-list{display:flex; flex-direction:column; gap:12px;}
+.bar-list-row{display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; font-size:.85rem;}
+.bar-list-label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px;}
+.bar-list-track{height:8px; border-radius:4px; background:var(--accent-wash); overflow:hidden;}
+.bar-list-fill{height:100%; background:var(--accent); border-radius:4px; transition:width .3s cubic-bezier(.4,0,.2,1);}
+.bar-list-value{text-align:right; font-family:var(--font-code); font-size:.78rem; color:var(--ink-faint); min-width:2.5em;}
 .stat-tile .stat-value{font-family:var(--font-display); font-size:1.7rem; font-weight:600;}
 .stat-tile .stat-label{font-family:var(--font-code); font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint);}
 

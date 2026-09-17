@@ -858,6 +858,13 @@
     document.getElementById('v2-year').textContent = new Date().getFullYear();
     initFirebase();
     logPageView(activePageKey, location.pathname);
+    // Firestore event feeding the dashboard's traffic charts — skipped on
+    // post.html, which logs its own more specific {page:'post', slug} event
+    // once it knows which post loaded (see post.js); logging both here and
+    // there would double-count that single visit.
+    if (window.__firestoreLite && !/(^|\/)post\.html$/.test(location.pathname)) {
+      window.__firestoreLite.logPageViewEvent(activePageKey || 'home');
+    }
     initChrome();
     initNavIndicator();
     initPageBehaviors(document);
