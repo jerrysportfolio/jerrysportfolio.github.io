@@ -112,13 +112,12 @@
   // 1. Create an app at https://unsplash.com/developers -> New Application.
   // 2. Paste its "Access Key" below and your Unsplash username.
   // 3. Leave accessKey empty to keep the static placeholder hero image.
-  // Demo apps are capped at 50 requests/hour; the sessionStorage cache below
-  // means that's one request per browser tab per hour, not per page view.
+  // Demo apps are capped at 50 requests/hour; the localStorage cache below
+  // means that's at most one request per calendar day, not per page view.
   var UNSPLASH_CONFIG = {
     accessKey: 'uJbarXLse8w2nE694yShEtjsQGM0uefOtQeSZ4oksgI',
     username: 'iamjerryhu'
   };
-  var UNSPLASH_CACHE_MS = 60 * 60 * 1000;
 
   function initUnsplashHero(root) {
     var img = root.querySelector('#hero-photo');
@@ -127,6 +126,10 @@
     if (!img || !credit || !creditLink) return;
     if (!UNSPLASH_CONFIG.accessKey || !UNSPLASH_CONFIG.username) return;
 
+    // A calendar-day key (UTC), not a rolling TTL — the photo changes once
+    // per day and then holds steady for that whole day, rather than
+    // re-rolling on every visit within an hour.
+    var today = new Date().toISOString().slice(0, 10);
     var cacheKey = 'unsplash-hero:' + UNSPLASH_CONFIG.username;
     var apply = function (photo) {
       img.src = photo.url;
@@ -137,27 +140,30 @@
     };
 
     var cached = null;
-    try { cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null'); } catch (e) { /* ignore */ }
-    if (cached && (Date.now() - cached.ts < UNSPLASH_CACHE_MS)) {
+    try { cached = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (e) { /* ignore */ }
+    if (cached && cached.day === today) {
       apply(cached);
       return;
     }
 
-    fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) + '/photos?order_by=latest&per_page=1', {
+    // order_by=latest&per_page=1 (the old query) always returned the exact
+    // same single "most recent upload" photo forever — never actually
+    // random. Pull a batch of recent uploads and pick one at random instead.
+    fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) + '/photos?order_by=latest&per_page=30', {
       headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey }
     })
       .then(function (res) { if (!res.ok) throw new Error('Unsplash request failed'); return res.json(); })
       .then(function (data) {
-        var p = data && data[0];
-        if (!p) return;
+        if (!data || !data.length) return;
+        var p = data[Math.floor(Math.random() * data.length)];
         var photo = {
           url: p.urls.regular,
           alt: p.alt_description || '',
           credit: p.user.name,
           creditUrl: p.user.links.html + '?utm_source=jerry-hu-portfolio&utm_medium=referral',
-          ts: Date.now()
+          day: today
         };
-        try { sessionStorage.setItem(cacheKey, JSON.stringify(photo)); } catch (e) { /* ignore */ }
+        try { localStorage.setItem(cacheKey, JSON.stringify(photo)); } catch (e) { /* ignore */ }
         apply(photo);
       })
       .catch(function () { /* keep the placeholder hero image */ });

@@ -245,11 +245,24 @@ function initEditor() {
     'toolbar-image': function () { triggerUpload(true); }
   };
 
+  // Every action below ends by calling markdownEl.focus(), which some
+  // browsers treat as "scroll this element into view" — on a long post
+  // that visibly yanks the pane down to wherever the caret landed instead
+  // of leaving the reader's current scroll position alone. Pin scrollTop
+  // across the call (sync + a rAF safety net for anything that scrolls on
+  // the next frame) so clicking a toolbar button never moves the viewport.
+  function runToolbarAction(action) {
+    var scrollTop = markdownEl.scrollTop;
+    action();
+    markdownEl.scrollTop = scrollTop;
+    requestAnimationFrame(function () { markdownEl.scrollTop = scrollTop; });
+  }
+
   document.getElementById('editor-toolbar').addEventListener('click', function (e) {
     var btn = e.target.closest('.toolbar-btn');
     if (!btn) return;
     var action = TOOLBAR_ACTIONS[btn.dataset.cmd];
-    if (action) { pushUndo(); action(); }
+    if (action) { pushUndo(); runToolbarAction(action); }
   });
 
   // ---------- undo/redo + keyboard shortcuts (Cmd on Mac, Ctrl on Windows/Linux) ----------
@@ -300,9 +313,9 @@ function initEditor() {
     var key = e.key.toLowerCase();
     if (key === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(); return; }
     if ((key === 'z' && e.shiftKey) || key === 'y') { e.preventDefault(); doRedo(); return; }
-    if (key === 'b') { e.preventDefault(); pushUndo(); TOOLBAR_ACTIONS.bold(); return; }
-    if (key === 'i') { e.preventDefault(); pushUndo(); TOOLBAR_ACTIONS.italic(); return; }
-    if (key === 'u') { e.preventDefault(); pushUndo(); TOOLBAR_ACTIONS.underline(); return; }
+    if (key === 'b') { e.preventDefault(); pushUndo(); runToolbarAction(TOOLBAR_ACTIONS.bold); return; }
+    if (key === 'i') { e.preventDefault(); pushUndo(); runToolbarAction(TOOLBAR_ACTIONS.italic); return; }
+    if (key === 'u') { e.preventDefault(); pushUndo(); runToolbarAction(TOOLBAR_ACTIONS.underline); return; }
   });
 
   // ---------- slug auto-suggest ----------

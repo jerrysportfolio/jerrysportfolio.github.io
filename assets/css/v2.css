@@ -682,6 +682,8 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 footer.v2-footer a{color:var(--ink-soft);}
 .v2 footer.v2-footer a:hover{color:var(--accent);}
 .v2 .footer-links{display:flex; gap:20px;}
+.v2 .footer-ai-note{flex-basis:100%; text-align:center; font-size:.68rem; opacity:.6; margin-top:6px;}
+.v2 .footer-ai-note a{color:inherit;}
 
 /* ---------- placeholder callouts ---------- */
 .v2 .fill-me{
