@@ -95,11 +95,18 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
 .col-resize-handle{
   /* Stays fully inside its own <th> (no negative-offset overflow into the
      next cell) — each th is position:relative, so an adjacent th later in
-     source order would otherwise paint/hit-test on top of the overflowing
-     sliver, making the handle visible but unclickable. */
-  position:absolute; top:0; right:0; bottom:0; width:8px; cursor:col-resize; z-index:2; touch-action:none;
+     source order would otherwise paint/hit-test on top of an overflowing
+     sliver, making the handle visible but unclickable (confirmed — this
+     bit us once already). Hit area (16px) is much wider than the visible
+     line (2px, via ::after) — a hit zone as thin as the visible notch is
+     too small to reliably land the cursor on. */
+  position:absolute; top:0; right:0; bottom:0; width:16px; cursor:col-resize; z-index:2; touch-action:none;
 }
-.col-resize-handle:hover, .col-resize-handle.resizing{background:var(--accent-wash);}
+.col-resize-handle::after{
+  content:""; position:absolute; top:15%; bottom:15%; right:5px; width:2px;
+  background:var(--line); transition:background .15s;
+}
+.col-resize-handle:hover::after, .col-resize-handle.resizing::after{background:var(--accent);}
 
 .badge{
   display:inline-block; font-family:var(--font-code); font-size:.7rem; text-transform:uppercase; letter-spacing:.04em;
