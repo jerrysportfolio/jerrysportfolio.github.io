@@ -99,19 +99,52 @@ function initEditor() {
   dekEl.addEventListener('input', markDirty);
   publishedEl.addEventListener('change', markDirty);
 
-  // ---------- image list ----------
+  // ---------- image list (drag to reorder — first image is the cover) ----------
+  var dragFromIndex = null;
+
   function renderImageList() {
     imageListEl.innerHTML = '';
     images.forEach(function (img, idx) {
       var item = document.createElement('div');
       item.className = 'image-list-item';
+      item.draggable = true;
+      item.dataset.index = idx;
       item.innerHTML = '<img src="' + img.url + '" alt="">' +
+        (idx === 0 ? '<span class="image-list-cover-badge">Cover</span>' : '') +
         '<button type="button" aria-label="Remove image">✕</button>';
       item.querySelector('button').addEventListener('click', function () {
         images.splice(idx, 1);
         renderImageList();
         markDirty();
       });
+
+      item.addEventListener('dragstart', function (e) {
+        dragFromIndex = idx;
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', String(idx)); } catch (err) { /* Firefox needs this set */ }
+      });
+      item.addEventListener('dragend', function () {
+        item.classList.remove('dragging');
+        imageListEl.querySelectorAll('.image-list-item').forEach(function (el) { el.classList.remove('drag-over'); });
+        dragFromIndex = null;
+      });
+      item.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        item.classList.add('drag-over');
+      });
+      item.addEventListener('dragleave', function () { item.classList.remove('drag-over'); });
+      item.addEventListener('drop', function (e) {
+        e.preventDefault();
+        item.classList.remove('drag-over');
+        if (dragFromIndex === null || dragFromIndex === idx) return;
+        var moved = images.splice(dragFromIndex, 1)[0];
+        images.splice(idx, 0, moved);
+        renderImageList();
+        markDirty();
+      });
+
       imageListEl.appendChild(item);
     });
   }
@@ -245,11 +278,24 @@ function initEditor() {
     'toolbar-image': function () { triggerUpload(true); }
   };
 
+  // Every action below ends by calling markdownEl.focus(), which some
+  // browsers treat as "scroll this element into view" — on a long post
+  // that visibly yanks the pane down to wherever the caret landed instead
+  // of leaving the reader's current scroll position alone. Pin scrollTop
+  // across the call (sync + a rAF safety net for anything that scrolls on
+  // the next frame) so clicking a toolbar button never moves the viewport.
+  function runToolbarAction(action) {
+    var scrollTop = markdownEl.scrollTop;
+    action();
+    markdownEl.scrollTop = scrollTop;
+    requestAnimationFrame(function () { markdownEl.scrollTop = scrollTop; });
+  }
+
   document.getElementById('editor-toolbar').addEventListener('click', function (e) {
     var btn = e.target.closest('.toolbar-btn');
     if (!btn) return;
     var action = TOOLBAR_ACTIONS[btn.dataset.cmd];
-    if (action) { pushUndo(); action(); }
+    if (action) { pushUndo(); runToolbarAction(action); }
   });
 
   // ---------- undo/redo + keyboard shortcuts (Cmd on Mac, Ctrl on Windows/Linux) ----------
@@ -300,9 +346,9 @@ function initEditor() {
     var key = e.key.toLowerCase();
     if (key === 'z' && !e.shiftKey) { e.preventDefault(); doUndo(); return; }
     if ((key === 'z' && e.shiftKey) || key === 'y') { e.preventDefault(); doRedo(); return; }
-    if (key === 'b') { e.preventDefault(); pushUndo(); TOOLBAR_ACTIONS.bold(); return; }
-    if (key === 'i') { e.preventDefault(); pushUndo(); TOOLBAR_ACTIONS.italic(); return; }
-    if (key === 'u') { e.preventDefault(); pushUndo(); TOOLBAR_ACTIONS.underline(); return; }
+    if (key === 'b') { e.preventDefault(); pushUndo(); runToolbarAction(TOOLBAR_ACTIONS.bold); return; }
+    if (key === 'i') { e.preventDefault(); pushUndo(); runToolbarAction(TOOLBAR_ACTIONS.italic); return; }
+    if (key === 'u') { e.preventDefault(); pushUndo(); runToolbarAction(TOOLBAR_ACTIONS.underline); return; }
   });
 
   // ---------- slug auto-suggest ----------

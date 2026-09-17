@@ -38,6 +38,17 @@ document.addEventListener('DOMContentLoaded', function () {
       gallery.appendChild(img);
     });
 
+    var photoCount = (post.images || []).length;
+    var nudge = document.getElementById('post-photo-nudge');
+    if (photoCount > 0) {
+      nudge.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 15-4.5-4.5a2 2 0 0 0-2.8 0L5 19"/></svg>' +
+        '<span>' + photoCount + ' photo' + (photoCount === 1 ? '' : 's') + ' in this post ↓</span>';
+      nudge.hidden = false;
+      nudge.addEventListener('click', function () {
+        gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
     loadingEl.hidden = true;
     contentEl.hidden = false;
 
@@ -48,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.__reinitPostBehaviors) window.__reinitPostBehaviors(document);
 
     window.__firestoreLite.incrementPostViews(slug);
+    window.__firestoreLite.logPageViewEvent('post', slug);
   }).catch(function () {
     loadingEl.textContent = 'Couldn\'t load this post right now.';
   });
