@@ -223,15 +223,19 @@
       });
     };
 
+    var loadingAll = false;
+
     var setButtonState = function () {
       if (!loadMoreBtn) return;
       loadMoreBtn.hidden = exhausted;
       loadMoreBtn.disabled = loading;
-      loadMoreBtn.textContent = loading ? 'Loading…' : 'More photographs ↓';
+      loadMoreBtn.textContent = loading ? (loadingAll ? 'Loading all photographs…' : 'Loading…') : 'More photographs ↓';
     };
 
+    // Returns a promise so loadAllRemaining (below) can chain pages without
+    // the button text flickering "More photographs" between each fetch.
     var loadNextPage = function () {
-      if (loading || exhausted) return;
+      if (loading || exhausted) return Promise.resolve();
       loading = true;
       setButtonState();
 
@@ -241,7 +245,7 @@
       var controller = ('AbortController' in window) ? new AbortController() : null;
       var timeoutId = controller ? setTimeout(function () { controller.abort(); }, 10000) : null;
 
-      fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) +
+      return fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) +
         '/photos?per_page=' + PAGE_SIZE + '&page=' + page + '&order_by=latest', {
         headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey },
         signal: controller ? controller.signal : undefined
@@ -270,13 +274,27 @@
         });
     };
 
-    if (loadMoreBtn) {
-      loadMoreBtn.addEventListener('click', loadNextPage);
+    // The button's own click loads every remaining page in one go — the
+    // point of clicking it at all is to stop having to click it again.
+    // Scroll-triggered auto-loads (below) still fetch one page at a time,
+    // for a lighter-weight infinite-scroll feel while just browsing.
+    var loadAllRemaining = function () {
+      if (exhausted) return;
+      loadingAll = true;
+      loadNextPage().then(function () {
+        if (!exhausted) return loadAllRemaining();
+        loadingAll = false;
+      });
+    };
 
-      // Auto-load the next page once the button scrolls near the viewport,
-      // so browsing feels like infinite scroll; the button stays visible as
-      // a keyboard-accessible manual trigger and as the fallback for
-      // browsers without IntersectionObserver.
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', loadAllRemaining);
+
+      // Auto-load the next single page once the button scrolls near the
+      // viewport, so browsing feels like infinite scroll; the button stays
+      // visible as a keyboard-accessible manual trigger (now a "load
+      // everything" trigger) and as the fallback for browsers without
+      // IntersectionObserver.
       if ('IntersectionObserver' in window) {
         observer = new IntersectionObserver(function (entries) {
           entries.forEach(function (entry) {
