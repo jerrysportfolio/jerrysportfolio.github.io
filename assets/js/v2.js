@@ -638,7 +638,18 @@
 
   var TAG_ORDER = ['music', 'tech', 'life', 'literature', 'misc'];
 
+  // Cover-carousel timers for the blog list's multi-image thumbs. Tracked
+  // here (rather than left to garbage collection) because the router swaps
+  // #page-content via innerHTML on navigation — a setInterval keeps firing
+  // against detached nodes forever unless something clears it, so every
+  // call into initDynamicBlogList (it runs on every page, not just the
+  // blog's) clears whatever the previous page left running first.
+  var blogThumbTimers = [];
+
   function initDynamicBlogList(root) {
+    blogThumbTimers.forEach(clearInterval);
+    blogThumbTimers = [];
+
     var list = root.querySelector('#blog-list');
     if (!list || !window.__firestoreLite) return;
     var pillGroup = root.querySelector('#blog-pill-group');
@@ -651,9 +662,10 @@
       }
       list.innerHTML = posts.map(function (post) {
         var tagLabel = TAG_LABELS[post.tag] || post.tag || 'Misc';
-        var cover = (post.images && post.images[0])
-          ? '<img src="' + post.images[0] + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:var(--radius-sm);">'
-          : '';
+        var images = post.images || [];
+        var cover = images.map(function (src, i) {
+          return '<img src="' + src + '" alt="" class="thumb-slide' + (i === 0 ? ' active' : '') + '">';
+        }).join('');
         return '<a class="blog-row" data-category="' + (post.tag || 'misc') + '" href="post.html?slug=' + encodeURIComponent(post.slug) + '">' +
           '<div class="blog-thumb">' + cover + '</div>' +
           '<div class="b-body">' +
@@ -664,6 +676,22 @@
           '<span class="b-tag">' + tagLabel + '</span>' +
           '</a>';
       }).join('');
+
+      // Cover carousel: posts with more than one image cross-fade to the
+      // next every few seconds instead of showing a single static photo.
+      // Skipped under prefers-reduced-motion, same as the rest of the site.
+      if (!reduceMotion) {
+        list.querySelectorAll('.blog-thumb').forEach(function (thumb) {
+          var slides = thumb.querySelectorAll('.thumb-slide');
+          if (slides.length < 2) return;
+          var idx = 0;
+          blogThumbTimers.push(setInterval(function () {
+            slides[idx].classList.remove('active');
+            idx = (idx + 1) % slides.length;
+            slides[idx].classList.add('active');
+          }, 3500));
+        });
+      }
 
       // Only show a filter pill for a tag that at least one loaded post
       // actually has — no point offering "Literature" if nothing's tagged
