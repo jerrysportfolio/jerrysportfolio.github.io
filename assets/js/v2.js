@@ -835,6 +835,7 @@
 
         var finish = function () {
           curMain.innerHTML = newMain.innerHTML;
+          curMain.className = newMain.className;
           document.title = newTitle;
           document.body.setAttribute('data-page', newPageKey);
           setActiveNav(newPageKey);
