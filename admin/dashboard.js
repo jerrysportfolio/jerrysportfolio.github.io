@@ -191,10 +191,16 @@ function dateStrDaysAgo(n) {
   return d.toISOString().slice(0, 10);
 }
 
+var DEVICE_LABELS = { desktop: 'Desktop', mobile: 'Mobile', tablet: 'Tablet' };
+
 function loadTraffic() {
   var chartEl = document.getElementById('traffic-chart');
   var topEl = document.getElementById('traffic-top-posts');
   var sourcesEl = document.getElementById('traffic-sources');
+  var countriesEl = document.getElementById('traffic-countries');
+  var devicesEl = document.getElementById('traffic-devices');
+  var osEl = document.getElementById('traffic-os');
+  var avgDurationEl = document.getElementById('traffic-avg-duration');
   if (!chartEl || !window.__firestoreLite) return;
   chartEl.innerHTML = '<p class="empty-state">Loading…</p>';
 
@@ -215,12 +221,20 @@ function loadTraffic() {
 
     var countsByPage = {};
     var countsBySource = {};
+    var countsByCountry = {};
+    var countsByDevice = {};
+    var countsByOS = {};
+    var durationTotal = 0, durationCount = 0;
     events.forEach(function (ev) {
       if (Object.prototype.hasOwnProperty.call(countsByDay, ev.date)) countsByDay[ev.date]++;
       var pageKey = ev.page === 'post' ? ('post:' + ev.slug) : ev.page;
       countsByPage[pageKey] = (countsByPage[pageKey] || 0) + 1;
       var source = ev.referrerHost || 'direct';
       countsBySource[source] = (countsBySource[source] || 0) + 1;
+      if (ev.country) countsByCountry[ev.country] = (countsByCountry[ev.country] || 0) + 1;
+      if (ev.deviceType) countsByDevice[ev.deviceType] = (countsByDevice[ev.deviceType] || 0) + 1;
+      if (ev.os) countsByOS[ev.os] = (countsByOS[ev.os] || 0) + 1;
+      if (typeof ev.durationSeconds === 'number') { durationTotal += ev.durationSeconds; durationCount++; }
     });
 
     renderTrafficChart(chartEl, days.map(function (d) { return { date: d, count: countsByDay[d] }; }));
@@ -237,9 +251,35 @@ function loadTraffic() {
       return { label: key, count: countsBySource[key] };
     }).sort(function (a, b) { return b.count - a.count; }).slice(0, 6);
     renderBarList(sourcesEl, sourceEntries, 'No traffic data yet in this range.');
+
+    var countryEntries = Object.keys(countsByCountry).map(function (key) {
+      return { label: key, count: countsByCountry[key] };
+    }).sort(function (a, b) { return b.count - a.count; }).slice(0, 6);
+    renderBarList(countriesEl, countryEntries, 'No location data yet in this range.');
+
+    var deviceEntries = Object.keys(countsByDevice).map(function (key) {
+      return { label: DEVICE_LABELS[key] || key, count: countsByDevice[key] };
+    }).sort(function (a, b) { return b.count - a.count; });
+    renderBarList(devicesEl, deviceEntries, 'No device data yet in this range.');
+
+    var osEntries = Object.keys(countsByOS).map(function (key) {
+      return { label: key, count: countsByOS[key] };
+    }).sort(function (a, b) { return b.count - a.count; });
+    renderBarList(osEl, osEntries, 'No device data yet in this range.');
+
+    if (avgDurationEl) {
+      avgDurationEl.textContent = durationCount ? '· avg. ' + formatDuration(Math.round(durationTotal / durationCount)) + ' on page' : '';
+    }
   }).catch(function () {
     chartEl.innerHTML = '<p class="empty-state">Couldn\'t load traffic data.</p>';
   });
+}
+
+function formatDuration(seconds) {
+  if (seconds < 60) return seconds + 's';
+  var m = Math.floor(seconds / 60);
+  var s = seconds % 60;
+  return m + 'm ' + s + 's';
 }
 
 function renderBarList(container, entries, emptyMessage) {
