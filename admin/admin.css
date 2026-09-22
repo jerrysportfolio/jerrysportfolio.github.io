@@ -94,8 +94,12 @@ button.contact-link{background:none; font-family:inherit; cursor:pointer; color:
 .bar-list{display:flex; flex-direction:column; gap:12px;}
 .bar-list-row{display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; font-size:.85rem;}
 .bar-list-label{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:160px;}
-.bar-list-track{height:8px; border-radius:4px; background:var(--accent-wash); overflow:hidden;}
-.bar-list-fill{height:100%; background:var(--accent); border-radius:4px; transition:width .3s cubic-bezier(.4,0,.2,1);}
+/* Fixed (not theme-linked) colors — these bars exist purely to show relative
+   magnitude within each list (no absolute scale), so they stay a plain black
+   bar on a light track in both light and dark mode instead of flipping to a
+   near-invisible white-on-dark bar via --accent. */
+.bar-list-track{display:block; height:8px; border-radius:4px; background:#e4e5e8; overflow:hidden;}
+.bar-list-fill{display:block; height:100%; background:#131418; border-radius:4px; transition:width .3s cubic-bezier(.4,0,.2,1);}
 .bar-list-value{text-align:right; font-family:var(--font-code); font-size:.78rem; color:var(--ink-faint); min-width:2.5em;}
 .stat-tile .stat-value{font-family:var(--font-display); font-size:1.7rem; font-weight:600;}
 .stat-tile .stat-label{font-family:var(--font-code); font-size:.75rem; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-faint);}
