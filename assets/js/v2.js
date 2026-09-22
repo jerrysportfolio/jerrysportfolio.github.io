@@ -47,6 +47,83 @@
     } catch (e) { /* ignore */ }
   }
 
+  // ---------- visitor profile: device/OS (sync, UA-sniffed) + country (async,
+  // geo-IP lookup) — feeds the dashboard's Devices/OS/Countries breakdowns ----------
+  var deviceMetaCache = null;
+  function getDeviceMeta() {
+    if (deviceMetaCache) return deviceMetaCache;
+    var ua = navigator.userAgent || '';
+    // iPadOS 13+ reports a plain Macintosh UA; the touch-point check below is
+    // the standard way to tell it apart from an actual Mac.
+    var isIpadOS = /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+    var isTablet = isIpadOS || /iPad|Tablet/i.test(ua) || (/Android/i.test(ua) && !/Mobile/i.test(ua));
+    var isMobile = !isTablet && /Mobi|iPhone|Android.*Mobile|Windows Phone/i.test(ua);
+    var deviceType = isTablet ? 'tablet' : (isMobile ? 'mobile' : 'desktop');
+
+    var os = 'Other';
+    if (isIpadOS) os = 'iOS';
+    else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+    else if (/Android/i.test(ua)) os = 'Android';
+    else if (/Windows/i.test(ua)) os = 'Windows';
+    else if (/Macintosh|Mac OS X/i.test(ua)) os = 'macOS';
+    else if (/Linux/i.test(ua)) os = 'Linux';
+
+    deviceMetaCache = { deviceType: deviceType, os: os };
+    return deviceMetaCache;
+  }
+
+  // One geo-IP lookup per tab, cached in sessionStorage (same pattern as the
+  // Unsplash integration) so repeat page views/route changes don't re-fetch.
+  var countryPromise = null;
+  function getVisitorCountry() {
+    if (countryPromise) return countryPromise;
+    try {
+      var cached = sessionStorage.getItem('visitorCountryV1');
+      if (cached) { countryPromise = Promise.resolve(cached); return countryPromise; }
+    } catch (e) { /* ignore */ }
+    countryPromise = fetch('https://ipapi.co/json/').then(function (res) {
+      if (!res.ok) throw new Error('geo lookup failed');
+      return res.json();
+    }).then(function (data) {
+      var country = (data && data.country_name) || 'Unknown';
+      try { sessionStorage.setItem('visitorCountryV1', country); } catch (e) { /* ignore */ }
+      return country;
+    }).catch(function () { return 'Unknown'; });
+    return countryPromise;
+  }
+
+  // ---------- page-view logging + time-on-page ----------
+  // One Firestore pageViews doc per page shown (full load or AJAX route swap).
+  // currentPageView tracks the doc just logged so its duration can be filled in
+  // once the visitor leaves it (a new page view starts, the tab is hidden, or
+  // the tab/window closes) — see finalizeCurrentPageView.
+  var currentPageView = null;
+
+  function finalizeCurrentPageView() {
+    if (!currentPageView || !window.__firestoreLite) { currentPageView = null; return; }
+    var seconds = Math.round((Date.now() - currentPageView.start) / 1000);
+    window.__firestoreLite.updatePageViewDuration(currentPageView.id, seconds);
+    currentPageView = null;
+  }
+
+  function recordPageView(pageKey, slug) {
+    finalizeCurrentPageView();
+    if (!window.__firestoreLite) return;
+    var meta = getDeviceMeta();
+    getVisitorCountry().then(function (country) {
+      var fullMeta = { country: country, deviceType: meta.deviceType, os: meta.os };
+      return window.__firestoreLite.logPageViewEvent(pageKey, slug, fullMeta);
+    }).then(function (id) {
+      if (id) currentPageView = { id: id, start: Date.now() };
+    });
+  }
+  window.__recordPageView = recordPageView;
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') finalizeCurrentPageView();
+  });
+  window.addEventListener('pagehide', finalizeCurrentPageView);
+
   // Reads back the live views/downloads totals via Firestore Lite (see the
   // note above initFirebase for why it's Lite and not the compat SDK). A
   // "view" means a photo was actually opened (see recordGalleryView, called
@@ -587,6 +664,7 @@
     });
     moveIndicatorTo(pageKey, true);
     logPageView(pageKey);
+    recordPageView(pageKey);
   }
 
   // ---------- mobile menu + liquid-glass pointer glow (bind once, nav persists) ----------
@@ -951,8 +1029,8 @@
     // post.html, which logs its own more specific {page:'post', slug} event
     // once it knows which post loaded (see post.js); logging both here and
     // there would double-count that single visit.
-    if (window.__firestoreLite && !/(^|\/)post\.html$/.test(location.pathname)) {
-      window.__firestoreLite.logPageViewEvent(activePageKey || 'home');
+    if (!/(^|\/)post\.html$/.test(location.pathname)) {
+      recordPageView(activePageKey || 'home');
     }
     initChrome();
     initNavIndicator();

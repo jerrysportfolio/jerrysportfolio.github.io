@@ -112,13 +112,18 @@ window.__firestoreLite = {
   },
 
   // ---------- site-wide page-view events (dashboard traffic charts) ----------
-  // One doc per visit: {page, slug?, referrerHost, date: 'YYYY-MM-DD', createdAt}.
-  // `page` is a page key ('home','projects','gallery','blog','post'); `slug`
-  // is only set for page:'post'. Write-only from the public site's
-  // perspective — rules block reading these back except as the admin.
-  logPageViewEvent: function (page, slug) {
+  // One doc per visit: {page, slug?, referrerHost, date: 'YYYY-MM-DD', createdAt,
+  // country?, deviceType?, os?, durationSeconds?}. `page` is a page key
+  // ('home','projects','gallery','blog','post'); `slug` is only set for
+  // page:'post'. `meta` (country/deviceType/os) is optional visitor-profile data
+  // computed client-side in v2.js. `durationSeconds` is filled in later, once the
+  // visitor leaves this page, via updatePageViewDuration. Write-only from the
+  // public site's perspective — rules block reading these back except as the admin.
+  // Resolves the new doc's id (or null on failure) so the caller can attach a
+  // duration update once the visit ends.
+  logPageViewEvent: function (page, slug, meta) {
     var d = ensureDb();
-    if (!d || !page) return Promise.resolve();
+    if (!d || !page) return Promise.resolve(null);
     var referrerHost = 'direct';
     try {
       if (document.referrer) {
@@ -134,7 +139,24 @@ window.__firestoreLite = {
       createdAt: now.toISOString()
     };
     if (slug) data.slug = slug;
-    return addDoc(collection(d, 'pageViews'), data).catch(function () { /* ignore */ });
+    if (meta) {
+      if (meta.country) data.country = meta.country;
+      if (meta.deviceType) data.deviceType = meta.deviceType;
+      if (meta.os) data.os = meta.os;
+    }
+    return addDoc(collection(d, 'pageViews'), data)
+      .then(function (ref) { return ref.id; })
+      .catch(function () { return null; });
+  },
+  // Merges a duration (in whole seconds) onto an already-logged pageViews doc,
+  // called once the visitor navigates away/closes the tab. Best-effort — a
+  // failed update just leaves that visit without a duration, same as before
+  // this field existed.
+  updatePageViewDuration: function (id, seconds) {
+    var d = ensureDb();
+    if (!d || !id || !(seconds >= 0)) return Promise.resolve();
+    return setDoc(doc(d, 'pageViews', id), { durationSeconds: seconds }, { merge: true })
+      .catch(function () { /* ignore */ });
   },
   // sinceDate: 'YYYY-MM-DD' (inclusive). Admin-only per rules.
   getPageViewEvents: function (sinceDate) {

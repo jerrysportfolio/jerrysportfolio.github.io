@@ -58,7 +58,7 @@
         </div>
 
         <div class="admin-card chart-card">
-            <div class="chart-title">Views over time</div>
+            <div class="chart-title">Views over time <span class="chart-subtitle" id="traffic-avg-duration"></span></div>
             <div id="traffic-chart"><p class="empty-state">Loading…</p></div>
         </div>
 
@@ -70,6 +70,21 @@
             <div class="admin-card chart-card">
                 <div class="chart-title">Traffic sources</div>
                 <div id="traffic-sources" class="bar-list"></div>
+            </div>
+        </div>
+
+        <div class="traffic-columns three-col">
+            <div class="admin-card chart-card">
+                <div class="chart-title">Top countries</div>
+                <div id="traffic-countries" class="bar-list"></div>
+            </div>
+            <div class="admin-card chart-card">
+                <div class="chart-title">Devices</div>
+                <div id="traffic-devices" class="bar-list"></div>
+            </div>
+            <div class="admin-card chart-card">
+                <div class="chart-title">Operating systems</div>
+                <div id="traffic-os" class="bar-list"></div>
             </div>
         </div>
 
