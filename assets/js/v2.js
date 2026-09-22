@@ -85,10 +85,19 @@
       if (!res.ok) throw new Error('geo lookup failed');
       return res.json();
     }).then(function (data) {
-      var country = (data && data.country_name) || 'Unknown';
-      try { sessionStorage.setItem('visitorCountryV1', country); } catch (e) { /* ignore */ }
-      return country;
-    }).catch(function () { return 'Unknown'; });
+      return (data && (data.country_name || data.ip)) || 'Unknown';
+    }).catch(function () {
+      // ipapi.co blocked/rate-limited (its demo tier is capped) — fall back to
+      // a plain IP-only lookup so the visit is still identifiable, just by
+      // address instead of country name.
+      return fetch('https://api.ipify.org?format=json')
+        .then(function (res) { return res.json(); })
+        .then(function (data) { return (data && data.ip) || 'Unknown'; })
+        .catch(function () { return 'Unknown'; });
+    }).then(function (result) {
+      try { sessionStorage.setItem('visitorCountryV1', result); } catch (e) { /* ignore */ }
+      return result;
+    });
     return countryPromise;
   }
 
