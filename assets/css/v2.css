@@ -341,8 +341,8 @@ body.portal-down.portal-fade::before{opacity:.9;}
 }
 .v2 .cell-hero.printing .polaroid,
 .v2 .cell-hero.printed .polaroid{visibility:visible;}
-.v2 .cell-hero.printing .polaroid{animation:polaroid-feed 1.6s linear backwards;}
-.v2 .cell-hero.printing .polaroid-photo img{animation:polaroid-develop 2s ease-out .9s backwards;}
+.v2 .cell-hero.printing .polaroid{animation:polaroid-feed 1s linear backwards;}
+.v2 .cell-hero.printing .polaroid-photo img{animation:polaroid-develop 1.2s ease-out .45s backwards;}
 .v2 .cell-hero.printed:hover .polaroid{
   transform:translate(-50%,-50%) rotate(0deg) scale(1.02); box-shadow:0 16px 36px #00000038, 0 1px 3px #00000030;
 }

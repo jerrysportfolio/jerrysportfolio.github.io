@@ -218,12 +218,15 @@
     var today = new Date().toISOString().slice(0, 10);
     var cacheKey = 'unsplash-hero:' + UNSPLASH_CONFIG.username;
     var card = img.closest('.cell-hero');
-    var apply = function (photo) {
+    var apply = function (photo, animate) {
       // Only start the polaroid print once the bytes are in, so the card
       // never shows a half-decoded or empty frame. onload is attached before
       // src is set so an already-cached image can't fire it too early.
       img.onload = function () {
         if (!card) return;
+        // Cached day-photo: no server wait to cover, so show the polaroid
+        // straight away. The print animation is only for the live Unsplash fetch.
+        if (!animate) { card.classList.add('printed'); credit.hidden = false; return; }
         card.classList.add('printing');
         var polaroid = card.querySelector('.polaroid');
         var done = function () { card.classList.remove('printing'); card.classList.add('printed'); credit.hidden = false; };
@@ -243,7 +246,7 @@
     var cached = null;
     try { cached = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (e) { /* ignore */ }
     if (cached && cached.day === today) {
-      apply(cached);
+      apply(cached, false);
       return;
     }
 
@@ -265,7 +268,7 @@
           day: today
         };
         try { localStorage.setItem(cacheKey, JSON.stringify(photo)); } catch (e) { /* ignore */ }
-        apply(photo);
+        apply(photo, true);
       })
       .catch(function () { /* card just stays blank */ });
   }
