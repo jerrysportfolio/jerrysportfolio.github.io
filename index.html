@@ -63,12 +63,12 @@
                 </div>
 
                 <div class="bento-cell cell-hero">
-                    <!-- PLACEHOLDER: hero photo, see assets/placeholder/MANIFEST.md.
-                     Swapped for a real photo from your Unsplash profile at runtime by
-                     assets/js/v2.js (initUnsplashHero) once UNSPLASH_CONFIG.accessKey
-                     is set at the top of that file — falls back to this placeholder
-                     otherwise. -->
-                    <img src="assets/placeholder/photos/hero.svg" alt="" id="hero-photo">
+                    <!-- Hero photo: no placeholder. The card stays blank (card colour) until
+                     initUnsplashHero in assets/js/v2.js has a photo and it has loaded, then the
+                     polaroid "prints" out of the slot at the top of the card. -->
+                    <div class="polaroid" id="hero-polaroid">
+                        <div class="polaroid-photo"><img alt="" id="hero-photo"></div>
+                    </div>
                     <!-- Filled from a daily-cached random quote by initDailyQuote in v2.js;
                      keeps this fallback text if the fetch ever fails. -->
                     <!-- Temporarily hidden per request; hero photo stays visible. Remove `hidden` to restore. -->

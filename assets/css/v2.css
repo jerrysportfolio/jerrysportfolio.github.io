@@ -314,20 +314,62 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .intro-stack .cell-spotlight{flex:1; display:flex; flex-direction:column;}
 .v2 .cell-hero{
   grid-area:hero; position:relative; border-radius:var(--radius-lg); overflow:hidden;
-  min-height:420px; background:linear-gradient(160deg,var(--accent-soft),var(--accent-wash));
+  min-height:420px; background:var(--paper-card);
   display:flex; align-items:flex-end; padding:0;
 }
-.v2 .cell-hero img{
-  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-  transition:transform .45s cubic-bezier(.22,1,.36,1);
+/* Polaroid print: the hero card is the "printer". Nothing shows until the
+   photo has loaded (v2.js adds .printing), then the frame feeds out of a slot
+   at the top in a few stuttering pulls and the photo "develops" from dark.
+   The resting transform below is the end state, so the animation only uses
+   fill-mode backwards and hands over cleanly when it finishes. */
+.v2 .cell-hero .polaroid{
+  position:absolute; left:50%; top:50%; z-index:1;
+  width:min(72%,340px); padding:5.5% 5.5% 0; box-sizing:border-box;
+  background:#fbfaf6; border-radius:4px; box-shadow:0 10px 28px #00000030, 0 1px 3px #00000030;
+  transform:translate(-50%,-50%) rotate(-2deg);
+  transition:transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s;
+  visibility:hidden;
 }
-.v2 .cell-hero:hover img{transform:scale(1.06);}
+.v2 .cell-hero .polaroid::after{ /* the wide bottom border of the frame */
+  content:""; display:block; aspect-ratio:100/24;
+}
+.v2 .cell-hero .polaroid-photo{
+  position:relative; aspect-ratio:1/1; background:#1b1b1b; overflow:hidden; border-radius:2px;
+}
+.v2 .cell-hero .polaroid-photo img{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
+}
+.v2 .cell-hero.printing .polaroid,
+.v2 .cell-hero.printed .polaroid{visibility:visible;}
+.v2 .cell-hero.printing .polaroid{animation:polaroid-feed 2.8s linear backwards;}
+.v2 .cell-hero.printing .polaroid-photo img{animation:polaroid-develop 3.6s ease-out 2.2s backwards;}
+.v2 .cell-hero.printed:hover .polaroid{
+  transform:translate(-50%,-50%) rotate(0deg) scale(1.02); box-shadow:0 16px 36px #00000038, 0 1px 3px #00000030;
+}
+@keyframes polaroid-feed{
+  0%   {transform:translate(-50%,-190%) rotate(-2deg); animation-timing-function:cubic-bezier(.4,0,.6,1);}
+  32%  {transform:translate(-50%,-128%) rotate(-2deg);}
+  42%  {transform:translate(-50%,-128%) rotate(-2deg); animation-timing-function:cubic-bezier(.4,0,.6,1);}
+  68%  {transform:translate(-50%,-82%)  rotate(-2deg);}
+  76%  {transform:translate(-50%,-82%)  rotate(-2deg); animation-timing-function:cubic-bezier(.3,0,.2,1);}
+  100% {transform:translate(-50%,-50%)  rotate(-2deg);}
+}
+@keyframes polaroid-develop{
+  0%   {filter:brightness(0) saturate(0); opacity:.0;}
+  25%  {filter:brightness(.35) saturate(0) blur(6px); opacity:1;}
+  60%  {filter:brightness(.8) saturate(.4) sepia(.5) blur(2px);}
+  100% {filter:none; opacity:1;}
+}
+/* Slot the frame feeds out of; only visible while printing. */
+.v2 .cell-hero::before{
+  content:""; position:absolute; z-index:2; top:0; left:14%; right:14%; height:7px;
+  background:#111; border-radius:0 0 8px 8px; opacity:0; transition:opacity .5s ease;
+}
+.v2 .cell-hero.printing::before{opacity:.8;}
 @media (prefers-reduced-motion: reduce){
-  .v2 .cell-hero img{transition:none;}
-}
-.v2 .cell-hero::after{
-  content:""; position:absolute; inset:0;
-  background:linear-gradient(0deg,#00000066,transparent 55%);
+  .v2 .cell-hero .polaroid{transition:none;}
+  .v2 .cell-hero.printing .polaroid,
+  .v2 .cell-hero.printing .polaroid-photo img{animation:none;}
 }
 .v2 .cell-hero .hero-quote{
   position:relative; z-index:1; padding:28px; color:#fff;

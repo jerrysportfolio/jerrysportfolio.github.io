@@ -217,12 +217,27 @@
     // re-rolling on every visit within an hour.
     var today = new Date().toISOString().slice(0, 10);
     var cacheKey = 'unsplash-hero:' + UNSPLASH_CONFIG.username;
+    var card = img.closest('.cell-hero');
     var apply = function (photo) {
+      // Only start the polaroid print once the bytes are in, so the card
+      // never shows a half-decoded or empty frame. onload is attached before
+      // src is set so an already-cached image can't fire it too early.
+      img.onload = function () {
+        if (!card) return;
+        card.classList.add('printing');
+        var polaroid = card.querySelector('.polaroid');
+        var done = function () { card.classList.remove('printing'); card.classList.add('printed'); credit.hidden = false; };
+        if (reduceMotion || !polaroid) { done(); return; }
+        polaroid.addEventListener('animationend', function onEnd(e) {
+          if (e.target !== polaroid) return;
+          polaroid.removeEventListener('animationend', onEnd);
+          done();
+        });
+      };
       img.src = photo.url;
       img.alt = photo.alt || '';
       creditLink.href = photo.creditUrl;
       creditLink.textContent = photo.credit;
-      credit.hidden = false;
     };
 
     var cached = null;
@@ -252,7 +267,7 @@
         try { localStorage.setItem(cacheKey, JSON.stringify(photo)); } catch (e) { /* ignore */ }
         apply(photo);
       })
-      .catch(function () { /* keep the placeholder hero image */ });
+      .catch(function () { /* card just stays blank */ });
   }
 
   // ---------- gallery grid, fetched live from your Unsplash photos ----------
