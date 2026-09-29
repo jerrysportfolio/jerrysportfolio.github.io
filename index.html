@@ -93,12 +93,7 @@
                             var u = window.__heroEarly, img = document.getElementById('hero-photo');
                             if (!u || !img) return;
                             var card = img.closest('.cell-hero');
-                            // Only short-circuit when it's effectively instant; a slower load is left to v2.js,
-                            // which shows the camera and prints the photo when it arrives.
-                            var t0 = Date.now();
-                            img.addEventListener('load', function () {
-                                if (Date.now() - t0 < 150) card.classList.add('printed');
-                            }, { once: true });
+                            img.addEventListener('load', function () { card.classList.add('printed'); }, { once: true });
                             img.src = u;
                         })();
                     </script>

@@ -327,8 +327,6 @@
       }).catch(function () { /* best effort */ });
     };
 
-    armCamera();
-
     var cached = readCache();
     var photo = null;
     if (cached && cached.day === today) {
@@ -338,10 +336,14 @@
       writeCache(photo);
     }
     if (photo) {
+      // Already cached: no server wait to cover, so no camera and no print —
+      // the polaroid simply appears whenever the (browser-cached) image is ready.
       apply(photo);
       return;
     }
 
+    // Nothing cached: this is the only case that gets the camera + print.
+    armCamera();
     fetchList()
       .then(function (data) {
         if (!data || !data.length) throw new Error('no photos');
