@@ -295,6 +295,12 @@ body.portal-down.portal-fade::before{opacity:.9;}
 @media (max-width:980px){
   .v2 .bento{grid-template-columns:1fr; grid-template-areas:"intro" "hero" "latest" "older";}
 }
+/* The hero card is a size container (cqw/cqh units size the polaroid). In the
+   single-column layout its height would otherwise come only from min-height,
+   which container units don't see (cqh resolves to 0), so pin it explicitly. */
+@media (max-width:980px){
+  .v2 .cell-hero{height:420px;}
+}
 .v2 .bento-cell{
   background:var(--paper-card); border:1px solid var(--line); border-radius:var(--radius-md);
   box-shadow:var(--shadow-sm); padding:22px;
@@ -316,6 +322,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
   grid-area:hero; position:relative; border-radius:var(--radius-lg); overflow:hidden;
   min-height:420px; background:var(--paper-card);
   display:flex; align-items:flex-end; padding:0;
+  container-type:size; --ar:1;
 }
 /* Polaroid print: the hero card is the "printer". Nothing shows until the
    photo has loaded (v2.js adds .printing), then the frame feeds out of a slot
@@ -323,18 +330,22 @@ body.portal-down.portal-fade::before{opacity:.9;}
    The resting transform below is the end state, so the animation only uses
    fill-mode backwards and hands over cleanly when it finishes. */
 .v2 .cell-hero .polaroid{
+  /* Film shape follows the photo: --ar (width/height) is set from the loaded
+     image. Frame: side/top border 5.5% of --pw, chin 21.4% of --pw; --pw is
+     capped so the whole frame (height = pw*(0.2686 + 0.89/ar)) fits the card, leaving room for the credit pill. */
+  --pw:min(72cqw, 340px, calc(80cqh / (0.2686 + 0.89 / var(--ar))));
   position:absolute; left:50%; top:50%; z-index:1;
-  width:min(72%,340px); padding:5.5% 5.5% 0; box-sizing:border-box;
+  width:var(--pw); padding:calc(var(--pw) * .055) calc(var(--pw) * .055) 0; box-sizing:border-box;
   background:#fbfaf6; border-radius:4px; box-shadow:0 10px 28px #00000030, 0 1px 3px #00000030;
   transform:translate(-50%,-50%) rotate(-2deg);
   transition:transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s;
   visibility:hidden;
 }
 .v2 .cell-hero .polaroid::after{ /* the wide bottom border of the frame */
-  content:""; display:block; aspect-ratio:100/24;
+  content:""; display:block; height:calc(var(--pw) * .2136);
 }
 .v2 .cell-hero .polaroid-photo{
-  position:relative; aspect-ratio:1/1; background:#1b1b1b; overflow:hidden; border-radius:2px;
+  position:relative; aspect-ratio:var(--ar); background:#1b1b1b; overflow:hidden; border-radius:2px;
 }
 .v2 .cell-hero .polaroid-photo img{
   position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block;
@@ -347,7 +358,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
   transform:translate(-50%,-50%) rotate(0deg) scale(1.02); box-shadow:0 16px 36px #00000038, 0 1px 3px #00000030;
 }
 @keyframes polaroid-feed{
-  0%   {transform:translate(-50%,-190%) rotate(-2deg); animation-timing-function:cubic-bezier(.4,0,.6,1);}
+  0%   {transform:translate(-50%,-220%) rotate(-2deg); animation-timing-function:cubic-bezier(.4,0,.6,1);}
   32%  {transform:translate(-50%,-128%) rotate(-2deg);}
   42%  {transform:translate(-50%,-128%) rotate(-2deg); animation-timing-function:cubic-bezier(.4,0,.6,1);}
   68%  {transform:translate(-50%,-82%)  rotate(-2deg);}

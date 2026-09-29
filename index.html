@@ -15,7 +15,7 @@
     <script>
         (function () {
             try {
-                var c = JSON.parse(localStorage.getItem('unsplash-hero:v2:iamjerryhu') || 'null');
+                var c = JSON.parse(localStorage.getItem('unsplash-hero:v3:iamjerryhu') || 'null');
                 var today = new Date().toISOString().slice(0, 10);
                 var url = c && (c.day === today ? c.url : (c.next && c.next.url));
                 if (!url) return;
@@ -93,7 +93,12 @@
                             var u = window.__heroEarly, img = document.getElementById('hero-photo');
                             if (!u || !img) return;
                             var card = img.closest('.cell-hero');
-                            img.addEventListener('load', function () { card.classList.add('printed'); }, { once: true });
+                            img.addEventListener('load', function () {
+                                if (img.naturalWidth && img.naturalHeight) {
+                                    card.style.setProperty('--ar', Math.min(1.6, Math.max(0.66, img.naturalWidth / img.naturalHeight)).toFixed(4));
+                                }
+                                card.classList.add('printed');
+                            }, { once: true });
                             img.src = u;
                         })();
                     </script>

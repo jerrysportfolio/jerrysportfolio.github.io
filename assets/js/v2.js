@@ -207,7 +207,7 @@
 
   // Kept in sync with the inline <head> script in index.html, which preloads
   // today's photo before this file even runs.
-  var HERO_CACHE_KEY = 'unsplash-hero:v2:' + UNSPLASH_CONFIG.username;
+  var HERO_CACHE_KEY = 'unsplash-hero:v3:' + UNSPLASH_CONFIG.username;
 
   function initUnsplashHero(root) {
     var img = root.querySelector('#hero-photo');
@@ -230,15 +230,14 @@
     var writeCache = function (photo) {
       try { localStorage.setItem(HERO_CACHE_KEY, JSON.stringify(photo)); } catch (e) { /* ignore */ }
     };
-    // The polaroid's photo area is square and ~300 CSS px wide, so ask
-    // Unsplash's image CDN for a 720px square crop (~1/5 the bytes of the
-    // 1080px-wide "regular" rendition) instead of downloading and cropping
-    // a full photo client-side.
+    // Ask Unsplash's image CDN for a 720px-wide rendition (a fraction of the
+    // bytes of the 1080px "regular" one). The polaroid film takes on the
+    // photo's own aspect ratio, so no square crop here.
     var toPhoto = function (p) {
       var raw = p.urls.raw;
       return {
         id: p.id,
-        url: raw + (raw.indexOf('?') > -1 ? '&' : '?') + 'w=720&h=720&fit=crop&crop=entropy&q=75&fm=jpg',
+        url: raw + (raw.indexOf('?') > -1 ? '&' : '?') + 'w=720&q=75&fm=jpg',
         alt: p.alt_description || '',
         credit: p.user.name,
         creditUrl: p.user.links.html + '?utm_source=jerry-hu-portfolio&utm_medium=referral'
@@ -261,6 +260,13 @@
     var CAMERA_MIN_MS = 600;     // once it appears, let it read as intentional
     var camTimer = null, waitingSince = 0, settled = false;
 
+    // Film shape follows the photo (clamped so extreme panoramas/strips stay sane;
+    // object-fit:cover crops the remainder). CSS reads --ar on the card.
+    var setRatio = function () {
+      if (!img.naturalWidth || !img.naturalHeight) return;
+      var ar = Math.min(1.6, Math.max(0.66, img.naturalWidth / img.naturalHeight));
+      card.style.setProperty('--ar', ar.toFixed(4));
+    };
     var showDirect = function () {
       card.classList.remove('waiting');
       card.classList.add('printed');
@@ -290,6 +296,7 @@
       if (settled) return;
       settled = true;
       if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+      setRatio();
       if (current) topUp(current);
       if (!card.classList.contains('waiting')) { showDirect(); return; }
       setTimeout(print, Math.max(0, CAMERA_MIN_MS - (Date.now() - waitingSince)));
