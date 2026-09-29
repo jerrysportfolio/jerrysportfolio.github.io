@@ -363,6 +363,36 @@
       .catch(onFail);
   }
 
+  // ---------- hero polaroid: tap to play with it ----------
+  // Once the photo has printed (card gets .printed), each tap plays the next
+  // effect (lift -> shake -> flip) and swings the tilt to the other side.
+  function initPolaroidTap(root) {
+    var pol = root.querySelector('#hero-polaroid');
+    var card = pol && pol.closest('.cell-hero');
+    if (!pol || !card) return;
+    var FX = ['lift', 'shake', 'flip'], ALL = ['tap-fx', 'fx-lift', 'fx-shake', 'fx-flip'];
+    var n = 0;
+    var fire = function () {
+      if (!card.classList.contains('printed')) return;
+      var from = parseFloat(getComputedStyle(pol).getPropertyValue('--tilt')) || -2;
+      pol.style.setProperty('--tilt-from', from + 'deg');
+      pol.style.setProperty('--tilt', (n % 2 === 0 ? 2.4 : -2.2) + 'deg');
+      if (reduceMotion) { n++; return; }
+      ALL.forEach(function (c) { pol.classList.remove(c); });
+      void pol.offsetWidth; // restart the animation if it is already playing
+      pol.classList.add('tap-fx', 'fx-' + FX[n % FX.length]);
+      n++;
+    };
+    pol.addEventListener('click', fire);
+    pol.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); }
+    });
+    pol.addEventListener('animationend', function (e) {
+      if (e.target !== pol) return;
+      ALL.forEach(function (c) { pol.classList.remove(c); });
+    });
+  }
+
   // ---------- gallery grid, fetched live from your Unsplash photos ----------
   // Reuses UNSPLASH_CONFIG above. Renders your real photos over the fallback
   // placeholder grid already in gallery.html; on failure (not configured, rate
@@ -786,12 +816,24 @@
 
   // ---------- mobile menu + liquid-glass pointer glow (bind once, nav persists) ----------
 
+  var menuCloser = null;
+
   function initChrome() {
     var toggle = document.querySelector('.nav-toggle');
     var close = document.querySelector('.nav-close');
     var links = document.querySelector('.nav-links');
-    if (toggle && links) toggle.addEventListener('click', function () { links.classList.add('open'); });
-    if (close && links) close.addEventListener('click', function () { links.classList.remove('open'); });
+    // Opening the menu also freezes the page behind it (html.menu-open sets
+    // overflow:hidden in CSS), so it can't be scrolled underneath the overlay.
+    var setMenu = function (open) {
+      if (!links) return;
+      links.classList.toggle('open', open);
+      document.documentElement.classList.toggle('menu-open', open);
+    };
+    menuCloser = function () { setMenu(false); };
+    if (toggle && links) toggle.addEventListener('click', function () { setMenu(true); });
+    if (close && links) close.addEventListener('click', function () { setMenu(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setMenu(false); });
+    window.addEventListener('resize', function () { if (window.innerWidth > 760) setMenu(false); });
 
     var navbar = document.querySelector('.navbar');
     if (navbar && !reduceMotion) {
@@ -970,6 +1012,7 @@
     root = root || document;
 
     initUnsplashHero(root);
+    initPolaroidTap(root);
     initDailyQuote(root);
     initGalleryStats(root);
     initGalleryPhotos(root);
@@ -1062,7 +1105,7 @@
     var tappedLink = e.target.closest('a');
     if (tappedLink) {
       var openNav = tappedLink.closest('.nav-links.open');
-      if (openNav) openNav.classList.remove('open');
+      if (openNav && menuCloser) menuCloser();
     }
 
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;

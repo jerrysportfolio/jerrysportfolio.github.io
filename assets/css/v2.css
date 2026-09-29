@@ -243,21 +243,41 @@ body.portal-down.portal-fade::before{opacity:.9;}
   border-color:var(--accent); color:var(--on-accent); background:var(--accent);
   transform:translateY(-1px); box-shadow:var(--shadow-hover);
 }
-.v2 .nav-toggle{display:none; background:none; border:none; cursor:pointer; padding:6px;}
+.v2 .nav-toggle{display:none; background:none; border:none; cursor:pointer; padding:6px; color:var(--ink); -webkit-tap-highlight-color:transparent;}
 .v2 .nav-toggle svg{display:block;}
 .v2 .nav-close{display:none;}
 
 @media (max-width:760px){
+  .v2 .navbar{padding:12px 18px; gap:10px;}
+  .v2 .navbar .logo{font-size:1.1rem;}
+  /* was wrapping onto two lines and dominating the bar */
+  .v2 .contact-link{padding:6px 13px; font-size:.78rem; white-space:nowrap; margin-left:auto;}
+  .v2 .nav-toggle{display:flex; align-items:center; justify-content:center; width:40px; height:40px; padding:0; margin-right:-6px;}
   .v2 .nav-links{
     position:fixed; inset:0; top:0; z-index:60;
     background:var(--paper); flex-direction:column; justify-content:center; align-items:center;
     gap:26px; font-size:1.4rem;
-    transform:translateX(100%); transition:transform .35s cubic-bezier(.25,.8,.25,1);
+    transform:translateX(100%); visibility:hidden;
+    transition:transform .35s cubic-bezier(.25,.8,.25,1), visibility 0s linear .35s;
+    overscroll-behavior:contain;
   }
-  .v2 .nav-links.open{transform:translateX(0);}
-  .v2 .nav-toggle{display:block;}
-  .v2 .nav-close{display:none; position:fixed; top:28px; right:24px; z-index:61; background:none; border:none; cursor:pointer;}
+  .v2 .nav-links.open{transform:translateX(0); visibility:visible; transition:transform .35s cubic-bezier(.25,.8,.25,1), visibility 0s;}
+  /* Close "X": drawn with two bars in the same weight as the hamburger, sized as a real tap target. */
+  .v2 .nav-close{
+    display:none; position:fixed; top:20px; right:18px; z-index:61;
+    width:48px; height:48px; padding:0; font-size:0; line-height:0;
+    background:none; border:none; cursor:pointer; color:var(--ink); -webkit-tap-highlight-color:transparent;
+  }
+  .v2 .nav-close::before, .v2 .nav-close::after{
+    content:""; position:absolute; left:50%; top:50%; width:26px; height:2.6px; border-radius:2px;
+    background:currentColor;
+  }
+  .v2 .nav-close::before{transform:translate(-50%,-50%) rotate(45deg);}
+  .v2 .nav-close::after{transform:translate(-50%,-50%) rotate(-45deg);}
   .v2 .nav-links.open ~ .nav-close, .v2 .nav-links.open + .nav-close{display:block;}
+  /* Menu open: freeze the page underneath (see setMenu in v2.js). */
+  html.menu-open, html.menu-open body{overflow:hidden; overscroll-behavior:none;}
+  html.menu-open .reading-progress{display:none;}
 }
 
 /* ---------- page content (AJAX-swapped by v2.js router) ---------- */
@@ -337,9 +357,10 @@ body.portal-down.portal-fade::before{opacity:.9;}
   position:absolute; left:50%; top:50%; z-index:1;
   width:var(--pw); padding:calc(var(--pw) * .055) calc(var(--pw) * .055) 0; box-sizing:border-box;
   background:#fbfaf6; border-radius:4px; box-shadow:0 10px 28px #00000030, 0 1px 3px #00000030;
-  transform:translate(-50%,-50%) rotate(-2deg);
+  --tilt:-2deg; --tilt-from:-2deg;
+  transform:translate(-50%,-50%) rotate(var(--tilt));
   transition:transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s;
-  visibility:hidden;
+  visibility:hidden; -webkit-tap-highlight-color:transparent;
 }
 .v2 .cell-hero .polaroid::after{ /* the wide bottom border of the frame */
   content:""; display:block; height:calc(var(--pw) * .2136);
@@ -354,8 +375,55 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .cell-hero.printed .polaroid{visibility:visible;}
 .v2 .cell-hero.printing .polaroid{animation:polaroid-feed 1s linear .3s backwards;}
 .v2 .cell-hero.printing .polaroid-photo img{animation:polaroid-develop 1.2s ease-out .75s backwards;}
-.v2 .cell-hero.printed:hover .polaroid{
-  transform:translate(-50%,-50%) rotate(0deg) scale(1.02); box-shadow:0 16px 36px #00000038, 0 1px 3px #00000030;
+.v2 .cell-hero.printed .polaroid{cursor:pointer;}
+.v2 .cell-hero.printed .polaroid:focus-visible{outline:2px solid var(--accent); outline-offset:6px;}
+@media (hover:hover) and (pointer:fine){
+  .v2 .cell-hero.printed .polaroid:hover{
+    transform:translate(-50%,-50%) rotate(0deg) scale(1.02); box-shadow:0 16px 36px #00000038, 0 1px 3px #00000030;
+  }
+}
+/* Tap interactions (initPolaroidTap in v2.js cycles lift -> shake -> flip). */
+.v2 .cell-hero .polaroid.fx-lift{animation:polaroid-lift .8s cubic-bezier(.3,.7,.3,1);}
+.v2 .cell-hero .polaroid.fx-shake{animation:polaroid-shake .75s ease-in-out;}
+.v2 .cell-hero .polaroid.fx-flip{animation:polaroid-flip .95s cubic-bezier(.45,.05,.3,1);}
+.v2 .cell-hero .polaroid.fx-shake .polaroid-photo img{animation:polaroid-redevelop .9s ease-out;}
+.v2 .cell-hero .polaroid-photo::after{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:0;
+  background:linear-gradient(115deg, transparent 32%, rgba(255,255,255,.6) 50%, transparent 68%);
+  transform:translateX(-120%);
+}
+.v2 .cell-hero .polaroid.tap-fx .polaroid-photo::after{animation:polaroid-shine .85s ease-out .05s;}
+@keyframes polaroid-lift{
+  0%  {transform:translate(-50%,-50%) rotate(var(--tilt-from)) scale(1);}
+  30% {transform:translate(-50%,-57%) rotate(calc(var(--tilt) * -1)) scale(1.09); box-shadow:0 26px 44px #00000040, 0 2px 4px #00000030;}
+  60% {transform:translate(-50%,-49%) rotate(calc(var(--tilt) * 1.25)) scale(.98);}
+  80% {transform:translate(-50%,-50.6%) rotate(calc(var(--tilt) * .9)) scale(1.012);}
+  100%{transform:translate(-50%,-50%) rotate(var(--tilt)) scale(1);}
+}
+@keyframes polaroid-shake{
+  0%  {transform:translate(-50%,-50%) rotate(var(--tilt-from));}
+  12% {transform:translate(-52%,-50%) rotate(-7deg);}
+  24% {transform:translate(-48%,-50.5%) rotate(6deg);}
+  38% {transform:translate(-51.5%,-50%) rotate(-5deg);}
+  52% {transform:translate(-48.5%,-50.4%) rotate(4deg);}
+  68% {transform:translate(-50.8%,-50%) rotate(-2.5deg);}
+  84% {transform:translate(-49.5%,-50.2%) rotate(1.5deg);}
+  100%{transform:translate(-50%,-50%) rotate(var(--tilt));}
+}
+@keyframes polaroid-flip{
+  0%  {transform:translate(-50%,-50%) perspective(900px) rotateY(0deg) rotate(var(--tilt-from)) scale(1);}
+  50% {transform:translate(-50%,-53%) perspective(900px) rotateY(180deg) rotate(0deg) scale(1.08); box-shadow:0 24px 44px #00000040, 0 2px 4px #00000030;}
+  100%{transform:translate(-50%,-50%) perspective(900px) rotateY(360deg) rotate(var(--tilt)) scale(1);}
+}
+@keyframes polaroid-redevelop{
+  0%  {filter:none;}
+  20% {filter:brightness(1.45) saturate(.5) blur(1.5px);}
+  55% {filter:brightness(.7) saturate(.6) sepia(.35) blur(1px);}
+  100%{filter:none;}
+}
+@keyframes polaroid-shine{
+  0%  {opacity:1; transform:translateX(-120%);}
+  100%{opacity:1; transform:translateX(120%);}
 }
 @keyframes polaroid-feed{
   0%   {transform:translate(-50%,-220%) rotate(-2deg); animation-timing-function:cubic-bezier(.4,0,.6,1);}
@@ -413,6 +481,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .cell-hero.printing::before{opacity:.8;}
 @media (prefers-reduced-motion: reduce){
   .v2 .cell-hero .polaroid{transition:none;}
+  .v2 .cell-hero .polaroid.tap-fx, .v2 .cell-hero .polaroid.tap-fx .polaroid-photo img, .v2 .cell-hero .polaroid.tap-fx .polaroid-photo::after,
   .v2 .cell-hero.printing .polaroid,
   .v2 .cell-hero.printing .polaroid-photo img,
   .v2 .cell-hero .polaroid-camera{animation:none;}
