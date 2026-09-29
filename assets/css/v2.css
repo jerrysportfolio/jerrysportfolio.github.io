@@ -341,8 +341,8 @@ body.portal-down.portal-fade::before{opacity:.9;}
 }
 .v2 .cell-hero.printing .polaroid,
 .v2 .cell-hero.printed .polaroid{visibility:visible;}
-.v2 .cell-hero.printing .polaroid{animation:polaroid-feed 1s linear backwards;}
-.v2 .cell-hero.printing .polaroid-photo img{animation:polaroid-develop 1.2s ease-out .45s backwards;}
+.v2 .cell-hero.printing .polaroid{animation:polaroid-feed 1s linear .3s backwards;}
+.v2 .cell-hero.printing .polaroid-photo img{animation:polaroid-develop 1.2s ease-out .75s backwards;}
 .v2 .cell-hero.printed:hover .polaroid{
   transform:translate(-50%,-50%) rotate(0deg) scale(1.02); box-shadow:0 16px 36px #00000038, 0 1px 3px #00000030;
 }
@@ -360,6 +360,40 @@ body.portal-down.portal-fade::before{opacity:.9;}
   60%  {filter:brightness(.8) saturate(.4) sepia(.5) blur(2px);}
   100% {filter:none; opacity:1;}
 }
+/* Polaroid camera: shown only while the photo is still being fetched. It
+   whirs (little shake, blinking light, pulsing lens, a sheet inching out),
+   fires one flash, and slides away as the print feeds out. */
+.v2 .cell-hero .polaroid-camera{
+  position:absolute; left:50%; top:50%; z-index:1; line-height:0;
+  transform:translate(-50%,-50%); visibility:hidden; opacity:0;
+}
+.v2 .cell-hero .polaroid-camera svg{display:block; filter:drop-shadow(0 8px 14px #00000026);}
+.v2 .cell-hero.waiting .polaroid-camera,
+.v2 .cell-hero.printing .polaroid-camera{visibility:visible;}
+.v2 .cell-hero.waiting .polaroid-camera{
+  animation:cam-in .28s cubic-bezier(.22,1,.36,1) both, cam-whirr .5s ease-in-out .3s infinite;
+}
+.v2 .cell-hero.printing .polaroid-camera{animation:cam-out .4s cubic-bezier(.5,0,.9,.5) both;}
+.v2 .cell-hero .cam-led{animation:cam-blink .55s steps(1,end) infinite;}
+.v2 .cell-hero .cam-lens{transform-box:fill-box; transform-origin:center; animation:cam-pulse 1.1s ease-in-out infinite;}
+.v2 .cell-hero .cam-sheet{animation:cam-sheet 1.6s ease-in-out infinite;}
+.v2 .cell-hero::after{
+  content:""; position:absolute; inset:0; z-index:3; background:#fff; opacity:0; pointer-events:none;
+}
+.v2 .cell-hero.waiting::after{animation:cam-flash .5s ease-out .35s 1 both;}
+@keyframes cam-in{from{opacity:0; transform:translate(-50%,-46%) scale(.88);} to{opacity:1; transform:translate(-50%,-50%) scale(1);}}
+@keyframes cam-whirr{
+  0%,100%{transform:translate(-50%,-50%) rotate(-.7deg);}
+  50%{transform:translate(-50%,-50.6%) rotate(.7deg);}
+}
+@keyframes cam-out{
+  from{opacity:1; transform:translate(-50%,-50%) scale(1);}
+  to{opacity:0; transform:translate(-50%,-190%) scale(.96);}
+}
+@keyframes cam-blink{0%{fill:#e5484d;} 50%{fill:#5a1d20;}}
+@keyframes cam-pulse{0%,100%{transform:scale(1);} 50%{transform:scale(.9);}}
+@keyframes cam-sheet{0%,100%{transform:translateY(-6px);} 50%{transform:translateY(0);}}
+@keyframes cam-flash{0%{opacity:0;} 15%{opacity:.85;} 100%{opacity:0;}}
 /* Slot the frame feeds out of; only visible while printing. */
 .v2 .cell-hero::before{
   content:""; position:absolute; z-index:2; top:0; left:14%; right:14%; height:7px;
@@ -369,7 +403,9 @@ body.portal-down.portal-fade::before{opacity:.9;}
 @media (prefers-reduced-motion: reduce){
   .v2 .cell-hero .polaroid{transition:none;}
   .v2 .cell-hero.printing .polaroid,
-  .v2 .cell-hero.printing .polaroid-photo img{animation:none;}
+  .v2 .cell-hero.printing .polaroid-photo img,
+  .v2 .cell-hero .polaroid-camera{animation:none;}
+  .v2 .cell-hero .polaroid-camera{display:none;}
 }
 .v2 .cell-hero .hero-quote{
   position:relative; z-index:1; padding:28px; color:#fff;

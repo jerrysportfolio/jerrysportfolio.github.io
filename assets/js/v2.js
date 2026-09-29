@@ -205,6 +205,10 @@
     username: 'iamjerryhu'
   };
 
+  // Kept in sync with the inline <head> script in index.html, which preloads
+  // today's photo before this file even runs.
+  var HERO_CACHE_KEY = 'unsplash-hero:v2:' + UNSPLASH_CONFIG.username;
+
   function initUnsplashHero(root) {
     var img = root.querySelector('#hero-photo');
     var credit = root.querySelector('#hero-credit');
@@ -212,65 +216,142 @@
     if (!img || !credit || !creditLink) return;
     if (!UNSPLASH_CONFIG.accessKey || !UNSPLASH_CONFIG.username) return;
 
-    // A calendar-day key (UTC), not a rolling TTL — the photo changes once
-    // per day and then holds steady for that whole day, rather than
-    // re-rolling on every visit within an hour.
-    var today = new Date().toISOString().slice(0, 10);
-    var cacheKey = 'unsplash-hero:' + UNSPLASH_CONFIG.username;
     var card = img.closest('.cell-hero');
-    var apply = function (photo, animate) {
-      // Only start the polaroid print once the bytes are in, so the card
-      // never shows a half-decoded or empty frame. onload is attached before
-      // src is set so an already-cached image can't fire it too early.
-      img.onload = function () {
-        if (!card) return;
-        // Cached day-photo: no server wait to cover, so show the polaroid
-        // straight away. The print animation is only for the live Unsplash fetch.
-        if (!animate) { card.classList.add('printed'); credit.hidden = false; return; }
-        card.classList.add('printing');
-        var polaroid = card.querySelector('.polaroid');
-        var done = function () { card.classList.remove('printing'); card.classList.add('printed'); credit.hidden = false; };
-        if (reduceMotion || !polaroid) { done(); return; }
-        polaroid.addEventListener('animationend', function onEnd(e) {
-          if (e.target !== polaroid) return;
-          polaroid.removeEventListener('animationend', onEnd);
-          done();
-        });
+    var polaroid = card && card.querySelector('.polaroid');
+    if (!card || !polaroid) return;
+
+    // A calendar-day key (UTC), not a rolling TTL — the photo changes once
+    // per day and then holds steady for that whole day.
+    var today = new Date().toISOString().slice(0, 10);
+
+    var readCache = function () {
+      try { return JSON.parse(localStorage.getItem(HERO_CACHE_KEY) || 'null'); } catch (e) { return null; }
+    };
+    var writeCache = function (photo) {
+      try { localStorage.setItem(HERO_CACHE_KEY, JSON.stringify(photo)); } catch (e) { /* ignore */ }
+    };
+    // The polaroid's photo area is square and ~300 CSS px wide, so ask
+    // Unsplash's image CDN for a 720px square crop (~1/5 the bytes of the
+    // 1080px-wide "regular" rendition) instead of downloading and cropping
+    // a full photo client-side.
+    var toPhoto = function (p) {
+      var raw = p.urls.raw;
+      return {
+        id: p.id,
+        url: raw + (raw.indexOf('?') > -1 ? '&' : '?') + 'w=720&h=720&fit=crop&crop=entropy&q=75&fm=jpg',
+        alt: p.alt_description || '',
+        credit: p.user.name,
+        creditUrl: p.user.links.html + '?utm_source=jerry-hu-portfolio&utm_medium=referral'
       };
-      img.src = photo.url;
-      img.alt = photo.alt || '';
-      creditLink.href = photo.creditUrl;
-      creditLink.textContent = photo.credit;
+    };
+    // order_by=latest&per_page=1 always returned the exact same photo forever
+    // — pull a batch of recent uploads and pick at random instead.
+    var fetchList = function () {
+      return fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) + '/photos?order_by=latest&per_page=30', {
+        headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey }
+      }).then(function (res) { if (!res.ok) throw new Error('Unsplash request failed'); return res.json(); });
+    };
+    var warm = function (url) { var i = new Image(); i.src = url; };
+
+    // ---- what the card shows while waiting ----
+    // If the photo is ready almost immediately (cached), show the polaroid
+    // straight away. Otherwise, after a short grace period, a polaroid camera
+    // "processes" the shot until the bytes arrive, then the print feeds out.
+    var CAMERA_DELAY_MS = 150;   // grace period before the camera appears
+    var CAMERA_MIN_MS = 600;     // once it appears, let it read as intentional
+    var camTimer = null, waitingSince = 0, settled = false;
+
+    var showDirect = function () {
+      card.classList.remove('waiting');
+      card.classList.add('printed');
+      credit.hidden = false;
+    };
+    var armCamera = function () {
+      if (reduceMotion) return;
+      camTimer = setTimeout(function () {
+        camTimer = null;
+        if (settled) return;
+        waitingSince = Date.now();
+        card.classList.add('waiting');
+      }, CAMERA_DELAY_MS);
+    };
+    var print = function () {
+      card.classList.remove('waiting');
+      card.classList.add('printing');
+      polaroid.addEventListener('animationend', function onEnd(e) {
+        if (e.target !== polaroid) return;
+        polaroid.removeEventListener('animationend', onEnd);
+        card.classList.remove('printing');
+        card.classList.add('printed');
+        credit.hidden = false;
+      });
+    };
+    var onReady = function () {
+      if (settled) return;
+      settled = true;
+      if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+      if (current) topUp(current);
+      if (!card.classList.contains('waiting')) { showDirect(); return; }
+      setTimeout(print, Math.max(0, CAMERA_MIN_MS - (Date.now() - waitingSince)));
+    };
+    var onFail = function () {
+      settled = true;
+      if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+      card.classList.remove('waiting');
     };
 
-    var cached = null;
-    try { cached = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (e) { /* ignore */ }
+    var current = null;
+    var apply = function (photo) {
+      current = photo;
+      creditLink.href = photo.creditUrl;
+      creditLink.textContent = photo.credit;
+      img.alt = photo.alt || '';
+      img.addEventListener('load', onReady, { once: true });
+      img.addEventListener('error', onFail, { once: true });
+      // The inline script in index.html may already have started this exact
+      // request; don't restart it.
+      if (img.getAttribute('src') !== photo.url) img.src = photo.url;
+      if (img.complete && img.naturalWidth) onReady();
+    };
+
+    // Make sure tomorrow's pick is chosen, saved, and warmed in the browser
+    // cache, so the first visit of the next day is instant too.
+    var topUp = function (photo) {
+      if (photo.next) { warm(photo.next.url); return; }
+      fetchList().then(function (list) {
+        var others = (list || []).filter(function (p) { return p.id !== photo.id; });
+        if (!others.length) return;
+        photo.next = toPhoto(others[Math.floor(Math.random() * others.length)]);
+        writeCache(photo);
+        warm(photo.next.url);
+      }).catch(function () { /* best effort */ });
+    };
+
+    armCamera();
+
+    var cached = readCache();
+    var photo = null;
     if (cached && cached.day === today) {
-      apply(cached, false);
+      photo = cached;
+    } else if (cached && cached.next) {
+      photo = Object.assign({}, cached.next, { day: today });
+      writeCache(photo);
+    }
+    if (photo) {
+      apply(photo);
       return;
     }
 
-    // order_by=latest&per_page=1 (the old query) always returned the exact
-    // same single "most recent upload" photo forever — never actually
-    // random. Pull a batch of recent uploads and pick one at random instead.
-    fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) + '/photos?order_by=latest&per_page=30', {
-      headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey }
-    })
-      .then(function (res) { if (!res.ok) throw new Error('Unsplash request failed'); return res.json(); })
+    fetchList()
       .then(function (data) {
-        if (!data || !data.length) return;
-        var p = data[Math.floor(Math.random() * data.length)];
-        var photo = {
-          url: p.urls.regular,
-          alt: p.alt_description || '',
-          credit: p.user.name,
-          creditUrl: p.user.links.html + '?utm_source=jerry-hu-portfolio&utm_medium=referral',
-          day: today
-        };
-        try { localStorage.setItem(cacheKey, JSON.stringify(photo)); } catch (e) { /* ignore */ }
-        apply(photo, true);
+        if (!data || !data.length) throw new Error('no photos');
+        var picked = data[Math.floor(Math.random() * data.length)];
+        var todays = toPhoto(picked);
+        todays.day = today;
+        writeCache(todays);
+        apply(todays);
       })
-      .catch(function () { /* card just stays blank */ });
+      .catch(onFail);
   }
 
   // ---------- gallery grid, fetched live from your Unsplash photos ----------
