@@ -9,15 +9,16 @@
     <link rel="icon" href="assets/placeholder/logo/favicon.svg" type="image/svg+xml">
     <!-- PLACEHOLDER: og:image, see assets/placeholder/MANIFEST.md -->
     <meta property="og:image" content="assets/placeholder/og-social.svg">
-    <!-- Start downloading today's hero photo before the body and scripts load.
+    <!-- Start downloading the current hero photo before the body and scripts load.
          Reads the same localStorage entry initUnsplashHero (v2.js) writes;
-         falls back to the prefetched "next" pick once the day rolls over. -->
+         falls back to the prefetched "next" pick once the half-day slot rolls over. -->
     <script>
         (function () {
             try {
-                var c = JSON.parse(localStorage.getItem('unsplash-hero:v3:iamjerryhu') || 'null');
-                var today = new Date().toISOString().slice(0, 10);
-                var url = c && (c.day === today ? c.url : (c.next && c.next.url));
+                var c = JSON.parse(localStorage.getItem('unsplash-hero:v4:iamjerryhu') || 'null');
+                var now = new Date();
+                var slot = now.toISOString().slice(0, 10) + (now.getUTCHours() < 12 ? 'a' : 'b');
+                var url = c && (c.slot === slot ? c.url : (c.next && c.next.url));
                 if (!url) return;
                 var l = document.createElement('link');
                 l.rel = 'preload'; l.as = 'image'; l.href = url;

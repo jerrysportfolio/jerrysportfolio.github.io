@@ -199,7 +199,7 @@
   // 2. Paste its "Access Key" below and your Unsplash username.
   // 3. Leave accessKey empty to keep the static placeholder hero image.
   // Demo apps are capped at 50 requests/hour; the localStorage cache below
-  // means that's at most one request per calendar day, not per page view.
+  // means that is at most a couple of requests per half-day, not per page view.
   var UNSPLASH_CONFIG = {
     accessKey: 'uJbarXLse8w2nE694yShEtjsQGM0uefOtQeSZ4oksgI',
     username: 'iamjerryhu'
@@ -207,7 +207,7 @@
 
   // Kept in sync with the inline <head> script in index.html, which preloads
   // today's photo before this file even runs.
-  var HERO_CACHE_KEY = 'unsplash-hero:v3:' + UNSPLASH_CONFIG.username;
+  var HERO_CACHE_KEY = 'unsplash-hero:v4:' + UNSPLASH_CONFIG.username;
 
   function initUnsplashHero(root) {
     var img = root.querySelector('#hero-photo');
@@ -220,9 +220,11 @@
     var polaroid = card && card.querySelector('.polaroid');
     if (!card || !polaroid) return;
 
-    // A calendar-day key (UTC), not a rolling TTL — the photo changes once
-    // per day and then holds steady for that whole day.
-    var today = new Date().toISOString().slice(0, 10);
+    // Half-day slot key (UTC date + a/b for 00-12h / 12-24h), not a rolling
+    // TTL — the photo changes at fixed boundaries, twice a day, and holds
+    // steady in between. Kept in sync with the inline script in index.html.
+    var now = new Date();
+    var slot = now.toISOString().slice(0, 10) + (now.getUTCHours() < 12 ? 'a' : 'b');
 
     var readCache = function () {
       try { return JSON.parse(localStorage.getItem(HERO_CACHE_KEY) || 'null'); } catch (e) { return null; }
@@ -321,8 +323,8 @@
       if (img.complete && img.naturalWidth) onReady();
     };
 
-    // Make sure tomorrow's pick is chosen, saved, and warmed in the browser
-    // cache, so the first visit of the next day is instant too.
+    // Make sure the next slot's pick is chosen, saved, and warmed in the
+    // browser cache, so the first visit after the photo rolls over is instant.
     var topUp = function (photo) {
       if (photo.next) { warm(photo.next.url); return; }
       fetchList().then(function (list) {
@@ -336,10 +338,10 @@
 
     var cached = readCache();
     var photo = null;
-    if (cached && cached.day === today) {
+    if (cached && cached.slot === slot) {
       photo = cached;
     } else if (cached && cached.next) {
-      photo = Object.assign({}, cached.next, { day: today });
+      photo = Object.assign({}, cached.next, { slot: slot });
       writeCache(photo);
     }
     if (photo) {
@@ -356,7 +358,7 @@
         if (!data || !data.length) throw new Error('no photos');
         var picked = data[Math.floor(Math.random() * data.length)];
         var todays = toPhoto(picked);
-        todays.day = today;
+        todays.slot = slot;
         writeCache(todays);
         apply(todays);
       })
