@@ -7,3 +7,11 @@
 .impeccable/live/sessions/
 .impeccable/live/inject-journal.json
 .impeccable/config.local.json
+
+# Working notes / local-only config — not meant to ship in the public repo.
+DESIGN.md
+PRODUCT.md
+.firebaserc
+CLAUDE.md
+storage.rules
+firestore.rules
