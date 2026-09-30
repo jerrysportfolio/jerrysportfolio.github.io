@@ -288,12 +288,23 @@ body.portal-down.portal-fade::before{opacity:.9;}
 
 /* ---------- bento home ---------- */
 .v2 .bento{
-  display:grid; gap:20px; max-width:1180px; margin:40px auto 80px;
+  display:grid; gap:20px; max-width:1180px; margin:40px auto 20px;
   grid-template-columns:280px 1fr 320px;
   grid-template-areas:"latest hero intro" "older hero intro";
 }
 @media (max-width:980px){
   .v2 .bento{grid-template-columns:1fr; grid-template-areas:"intro" "hero" "latest" "older";}
+}
+/* Three equal-width project cards under the bento grid — same max-width/
+   centering as .bento so the row lines up with it, reusing the bento's own
+   .bento-cell + .mini-card styling (not .proj-card) to match the rest of
+   the homepage rather than the projects page. */
+.v2 .home-featured{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
+  max-width:1180px; margin:0 auto 80px;
+}
+@media (max-width:760px){
+  .v2 .home-featured{grid-template-columns:1fr;}
 }
 .v2 .bento-cell{
   background:var(--paper-card); border:1px solid var(--line); border-radius:var(--radius-md);
