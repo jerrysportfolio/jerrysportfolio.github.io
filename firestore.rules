@@ -43,15 +43,31 @@ service cloud.firestore {
     // Site-wide page-view events, one document per visit, powering the
     // dashboard's time-windowed traffic charts. Anyone can log a view of a
     // real page they're actually on; only the admin can read them back —
-    // visitors' browsing shouldn't be queryable by other visitors. No
-    // update/delete: each event is an immutable fact once logged.
+    // visitors' browsing shouldn't be queryable by other visitors. Events are
+    // immutable facts once logged, except for a one-time durationSeconds.
     match /pageViews/{eventId} {
       allow read: if isAdmin();
-      allow create: if request.resource.data.keys().hasOnly(['page', 'slug', 'referrerHost', 'date', 'createdAt'])
+      // Optional visitor-profile fields (country / deviceType / os) are
+      // written on create alongside the original ones; each is type- and
+      // size-checked so the collection can't be used to store arbitrary data.
+      allow create: if request.resource.data.keys().hasOnly(['page', 'slug', 'referrerHost', 'date', 'createdAt', 'country', 'deviceType', 'os'])
         && request.resource.data.page is string
         && request.resource.data.date is string
-        && request.resource.data.date.size() == 10;
-      allow update, delete: if false;
+        && request.resource.data.date.size() == 10
+        && (!('country' in request.resource.data)
+            || (request.resource.data.country is string && request.resource.data.country.size() <= 100))
+        && (!('deviceType' in request.resource.data)
+            || request.resource.data.deviceType in ['desktop', 'mobile', 'tablet'])
+        && (!('os' in request.resource.data)
+            || (request.resource.data.os is string && request.resource.data.os.size() <= 30));
+      // The one permitted update: attaching time-on-page (whole seconds) to an
+      // event, once, when the visitor leaves the page. Nothing else can change.
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['durationSeconds'])
+        && !('durationSeconds' in resource.data)
+        && request.resource.data.durationSeconds is int
+        && request.resource.data.durationSeconds >= 0
+        && request.resource.data.durationSeconds <= 86400;
+      allow delete: if false;
     }
 
     // Everything else stays closed by default.

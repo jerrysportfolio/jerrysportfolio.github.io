@@ -9,6 +9,24 @@
     <link rel="icon" href="assets/placeholder/logo/favicon.svg" type="image/svg+xml">
     <!-- PLACEHOLDER: og:image, see assets/placeholder/MANIFEST.md -->
     <meta property="og:image" content="assets/placeholder/og-social.svg">
+    <!-- Start downloading the current hero photo before the body and scripts load.
+         Reads the same localStorage entry initUnsplashHero (v2.js) writes;
+         falls back to the prefetched "next" pick once the half-day slot rolls over. -->
+    <script>
+        (function () {
+            try {
+                var c = JSON.parse(localStorage.getItem('unsplash-hero:v4:iamjerryhu') || 'null');
+                var now = new Date();
+                var slot = now.toISOString().slice(0, 10) + (now.getUTCHours() < 12 ? 'a' : 'b');
+                var url = c && (c.slot === slot ? c.url : (c.next && c.next.url));
+                if (!url) return;
+                var l = document.createElement('link');
+                l.rel = 'preload'; l.as = 'image'; l.href = url;
+                document.head.appendChild(l);
+                window.__heroEarly = url;
+            } catch (e) { }
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -63,15 +81,52 @@
                 </div>
 
                 <div class="bento-cell cell-hero">
-                    <!-- PLACEHOLDER: hero photo, see assets/placeholder/MANIFEST.md.
-                     Swapped for a real photo from your Unsplash profile at runtime by
-                     assets/js/v2.js (initUnsplashHero) once UNSPLASH_CONFIG.accessKey
-                     is set at the top of that file — falls back to this placeholder
-                     otherwise. -->
-                    <img src="assets/placeholder/photos/hero.svg" alt="" id="hero-photo">
+                    <!-- Hero photo: no placeholder. The card stays blank (card colour) until
+                     initUnsplashHero in assets/js/v2.js has a photo and it has loaded, then the
+                     polaroid "prints" out of the slot at the top of the card. -->
+                    <div class="polaroid" id="hero-polaroid" role="button" tabindex="0" aria-label="Tap the polaroid">
+                        <div class="polaroid-photo"><img alt="" id="hero-photo"></div>
+                    </div>
+                    <script>
+                        // Cached photo already downloading (see <head>): attach it now and show it as soon as it
+                        // decodes, without waiting for the rest of the page's scripts.
+                        (function () {
+                            var u = window.__heroEarly, img = document.getElementById('hero-photo');
+                            if (!u || !img) return;
+                            var card = img.closest('.cell-hero');
+                            img.addEventListener('load', function () {
+                                if (img.naturalWidth && img.naturalHeight) {
+                                    card.style.setProperty('--ar', Math.min(1.6, Math.max(0.66, img.naturalWidth / img.naturalHeight)).toFixed(4));
+                                }
+                                card.classList.add('printed');
+                            }, { once: true });
+                            img.src = u;
+                        })();
+                    </script>
+                    <!-- Polaroid camera shown while the photo is being fetched (see initUnsplashHero in v2.js) -->
+                    <div class="polaroid-camera" aria-hidden="true">
+                        <svg viewBox="0 0 200 178" width="172" height="153" xmlns="http://www.w3.org/2000/svg">
+                            <rect class="cam-sheet" x="56" y="152" width="88" height="22" rx="2" fill="#fbfaf6" stroke="#d6d3ca" />
+                            <path d="M32 44 v-16 a10 10 0 0 1 10-10 h116 a10 10 0 0 1 10 10 v16 z" fill="#e9e6de" stroke="#d2cfc5" stroke-width="2" />
+                            <rect x="10" y="42" width="180" height="114" rx="18" fill="#f5f3ed" stroke="#d2cfc5" stroke-width="2" />
+                            <rect x="11" y="66" width="178" height="4" fill="#e5484d" />
+                            <rect x="11" y="70" width="178" height="4" fill="#f5a524" />
+                            <rect x="11" y="74" width="178" height="4" fill="#46c46a" />
+                            <rect x="11" y="78" width="178" height="4" fill="#3b82f6" />
+                            <rect x="40" y="24" width="36" height="14" rx="3" fill="#cfd3d9" stroke="#b7bcc4" />
+                            <circle cx="158" cy="30" r="8" fill="#e5484d" />
+                            <circle cx="100" cy="116" r="36" fill="#2b2b30" />
+                            <circle cx="100" cy="116" r="27" fill="#141416" />
+                            <circle class="cam-lens" cx="100" cy="116" r="17" fill="#1f3a63" />
+                            <circle cx="92" cy="108" r="5" fill="#fff" opacity=".55" />
+                            <circle class="cam-led" cx="166" cy="100" r="4" fill="#e5484d" />
+                            <rect x="50" y="146" width="100" height="6" rx="3" fill="#1b1b1b" />
+                        </svg>
+                    </div>
                     <!-- Filled from a daily-cached random quote by initDailyQuote in v2.js;
                      keeps this fallback text if the fetch ever fails. -->
-                    <div class="hero-quote fill-me" id="hero-quote">"[a short line — quote, motto, or personal tagline
+                    <!-- Temporarily hidden per request; hero photo stays visible. Remove `hidden` to restore. -->
+                    <div class="hero-quote fill-me" id="hero-quote" hidden>"[a short line — quote, motto, or personal tagline
                         goes here]"</div>
                     <div class="hero-credit" id="hero-credit" hidden>Photo by <a id="hero-credit-photographer" href="#"
                             target="_blank" rel="noopener noreferrer">—</a> on <a

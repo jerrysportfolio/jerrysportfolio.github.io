@@ -199,11 +199,15 @@
   // 2. Paste its "Access Key" below and your Unsplash username.
   // 3. Leave accessKey empty to keep the static placeholder hero image.
   // Demo apps are capped at 50 requests/hour; the localStorage cache below
-  // means that's at most one request per calendar day, not per page view.
+  // means that is at most a couple of requests per half-day, not per page view.
   var UNSPLASH_CONFIG = {
     accessKey: 'uJbarXLse8w2nE694yShEtjsQGM0uefOtQeSZ4oksgI',
     username: 'iamjerryhu'
   };
+
+  // Kept in sync with the inline <head> script in index.html, which preloads
+  // today's photo before this file even runs.
+  var HERO_CACHE_KEY = 'unsplash-hero:v4:' + UNSPLASH_CONFIG.username;
 
   function initUnsplashHero(root) {
     var img = root.querySelector('#hero-photo');
@@ -212,47 +216,183 @@
     if (!img || !credit || !creditLink) return;
     if (!UNSPLASH_CONFIG.accessKey || !UNSPLASH_CONFIG.username) return;
 
-    // A calendar-day key (UTC), not a rolling TTL — the photo changes once
-    // per day and then holds steady for that whole day, rather than
-    // re-rolling on every visit within an hour.
-    var today = new Date().toISOString().slice(0, 10);
-    var cacheKey = 'unsplash-hero:' + UNSPLASH_CONFIG.username;
-    var apply = function (photo) {
-      img.src = photo.url;
-      img.alt = photo.alt || '';
-      creditLink.href = photo.creditUrl;
-      creditLink.textContent = photo.credit;
+    var card = img.closest('.cell-hero');
+    var polaroid = card && card.querySelector('.polaroid');
+    if (!card || !polaroid) return;
+
+    // Half-day slot key (UTC date + a/b for 00-12h / 12-24h), not a rolling
+    // TTL — the photo changes at fixed boundaries, twice a day, and holds
+    // steady in between. Kept in sync with the inline script in index.html.
+    var now = new Date();
+    var slot = now.toISOString().slice(0, 10) + (now.getUTCHours() < 12 ? 'a' : 'b');
+
+    var readCache = function () {
+      try { return JSON.parse(localStorage.getItem(HERO_CACHE_KEY) || 'null'); } catch (e) { return null; }
+    };
+    var writeCache = function (photo) {
+      try { localStorage.setItem(HERO_CACHE_KEY, JSON.stringify(photo)); } catch (e) { /* ignore */ }
+    };
+    // Ask Unsplash's image CDN for a 720px-wide rendition (a fraction of the
+    // bytes of the 1080px "regular" one). The polaroid film takes on the
+    // photo's own aspect ratio, so no square crop here.
+    var toPhoto = function (p) {
+      var raw = p.urls.raw;
+      return {
+        id: p.id,
+        url: raw + (raw.indexOf('?') > -1 ? '&' : '?') + 'w=720&q=75&fm=jpg',
+        alt: p.alt_description || '',
+        credit: p.user.name,
+        creditUrl: p.user.links.html + '?utm_source=jerry-hu-portfolio&utm_medium=referral'
+      };
+    };
+    // order_by=latest&per_page=1 always returned the exact same photo forever
+    // — pull a batch of recent uploads and pick at random instead.
+    var fetchList = function () {
+      return fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) + '/photos?order_by=latest&per_page=30', {
+        headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey }
+      }).then(function (res) { if (!res.ok) throw new Error('Unsplash request failed'); return res.json(); });
+    };
+    var warm = function (url) { var i = new Image(); i.src = url; };
+
+    // ---- what the card shows while waiting ----
+    // If the photo is ready almost immediately (cached), show the polaroid
+    // straight away. Otherwise, after a short grace period, a polaroid camera
+    // "processes" the shot until the bytes arrive, then the print feeds out.
+    var CAMERA_DELAY_MS = 150;   // grace period before the camera appears
+    var CAMERA_MIN_MS = 600;     // once it appears, let it read as intentional
+    var camTimer = null, waitingSince = 0, settled = false;
+
+    // Film shape follows the photo (clamped so extreme panoramas/strips stay sane;
+    // object-fit:cover crops the remainder). CSS reads --ar on the card.
+    var setRatio = function () {
+      if (!img.naturalWidth || !img.naturalHeight) return;
+      var ar = Math.min(1.6, Math.max(0.66, img.naturalWidth / img.naturalHeight));
+      card.style.setProperty('--ar', ar.toFixed(4));
+    };
+    var showDirect = function () {
+      card.classList.remove('waiting');
+      card.classList.add('printed');
       credit.hidden = false;
     };
+    var armCamera = function () {
+      if (reduceMotion) return;
+      camTimer = setTimeout(function () {
+        camTimer = null;
+        if (settled) return;
+        waitingSince = Date.now();
+        card.classList.add('waiting');
+      }, CAMERA_DELAY_MS);
+    };
+    var print = function () {
+      card.classList.remove('waiting');
+      card.classList.add('printing');
+      polaroid.addEventListener('animationend', function onEnd(e) {
+        if (e.target !== polaroid) return;
+        polaroid.removeEventListener('animationend', onEnd);
+        card.classList.remove('printing');
+        card.classList.add('printed');
+        credit.hidden = false;
+      });
+    };
+    var onReady = function () {
+      if (settled) return;
+      settled = true;
+      if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+      setRatio();
+      if (current) topUp(current);
+      if (!card.classList.contains('waiting')) { showDirect(); return; }
+      setTimeout(print, Math.max(0, CAMERA_MIN_MS - (Date.now() - waitingSince)));
+    };
+    var onFail = function () {
+      settled = true;
+      if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+      card.classList.remove('waiting');
+    };
 
-    var cached = null;
-    try { cached = JSON.parse(localStorage.getItem(cacheKey) || 'null'); } catch (e) { /* ignore */ }
-    if (cached && cached.day === today) {
-      apply(cached);
+    var current = null;
+    var apply = function (photo) {
+      current = photo;
+      creditLink.href = photo.creditUrl;
+      creditLink.textContent = photo.credit;
+      img.alt = photo.alt || '';
+      img.addEventListener('load', onReady, { once: true });
+      img.addEventListener('error', onFail, { once: true });
+      // The inline script in index.html may already have started this exact
+      // request; don't restart it.
+      if (img.getAttribute('src') !== photo.url) img.src = photo.url;
+      if (img.complete && img.naturalWidth) onReady();
+    };
+
+    // Make sure the next slot's pick is chosen, saved, and warmed in the
+    // browser cache, so the first visit after the photo rolls over is instant.
+    var topUp = function (photo) {
+      if (photo.next) { warm(photo.next.url); return; }
+      fetchList().then(function (list) {
+        var others = (list || []).filter(function (p) { return p.id !== photo.id; });
+        if (!others.length) return;
+        photo.next = toPhoto(others[Math.floor(Math.random() * others.length)]);
+        writeCache(photo);
+        warm(photo.next.url);
+      }).catch(function () { /* best effort */ });
+    };
+
+    var cached = readCache();
+    var photo = null;
+    if (cached && cached.slot === slot) {
+      photo = cached;
+    } else if (cached && cached.next) {
+      photo = Object.assign({}, cached.next, { slot: slot });
+      writeCache(photo);
+    }
+    if (photo) {
+      // Already cached: no server wait to cover, so no camera and no print —
+      // the polaroid simply appears whenever the (browser-cached) image is ready.
+      apply(photo);
       return;
     }
 
-    // order_by=latest&per_page=1 (the old query) always returned the exact
-    // same single "most recent upload" photo forever — never actually
-    // random. Pull a batch of recent uploads and pick one at random instead.
-    fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) + '/photos?order_by=latest&per_page=30', {
-      headers: { Authorization: 'Client-ID ' + UNSPLASH_CONFIG.accessKey }
-    })
-      .then(function (res) { if (!res.ok) throw new Error('Unsplash request failed'); return res.json(); })
+    // Nothing cached: this is the only case that gets the camera + print.
+    armCamera();
+    fetchList()
       .then(function (data) {
-        if (!data || !data.length) return;
-        var p = data[Math.floor(Math.random() * data.length)];
-        var photo = {
-          url: p.urls.regular,
-          alt: p.alt_description || '',
-          credit: p.user.name,
-          creditUrl: p.user.links.html + '?utm_source=jerry-hu-portfolio&utm_medium=referral',
-          day: today
-        };
-        try { localStorage.setItem(cacheKey, JSON.stringify(photo)); } catch (e) { /* ignore */ }
-        apply(photo);
+        if (!data || !data.length) throw new Error('no photos');
+        var picked = data[Math.floor(Math.random() * data.length)];
+        var todays = toPhoto(picked);
+        todays.slot = slot;
+        writeCache(todays);
+        apply(todays);
       })
-      .catch(function () { /* keep the placeholder hero image */ });
+      .catch(onFail);
+  }
+
+  // ---------- hero polaroid: tap to play with it ----------
+  // Once the photo has printed (card gets .printed), each tap plays the next
+  // effect (lift -> shake -> flip) and swings the tilt to the other side.
+  function initPolaroidTap(root) {
+    var pol = root.querySelector('#hero-polaroid');
+    var card = pol && pol.closest('.cell-hero');
+    if (!pol || !card) return;
+    var FX = ['lift', 'shake', 'flip'], ALL = ['tap-fx', 'fx-lift', 'fx-shake', 'fx-flip'];
+    var n = 0;
+    var fire = function () {
+      if (!card.classList.contains('printed')) return;
+      var from = parseFloat(getComputedStyle(pol).getPropertyValue('--tilt')) || -2;
+      pol.style.setProperty('--tilt-from', from + 'deg');
+      pol.style.setProperty('--tilt', (n % 2 === 0 ? 2.4 : -2.2) + 'deg');
+      if (reduceMotion) { n++; return; }
+      ALL.forEach(function (c) { pol.classList.remove(c); });
+      void pol.offsetWidth; // restart the animation if it is already playing
+      pol.classList.add('tap-fx', 'fx-' + FX[n % FX.length]);
+      n++;
+    };
+    pol.addEventListener('click', fire);
+    pol.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fire(); }
+    });
+    pol.addEventListener('animationend', function (e) {
+      if (e.target !== pol) return;
+      ALL.forEach(function (c) { pol.classList.remove(c); });
+    });
   }
 
   // ---------- gallery grid, fetched live from your Unsplash photos ----------
@@ -678,12 +818,24 @@
 
   // ---------- mobile menu + liquid-glass pointer glow (bind once, nav persists) ----------
 
+  var menuCloser = null;
+
   function initChrome() {
     var toggle = document.querySelector('.nav-toggle');
     var close = document.querySelector('.nav-close');
     var links = document.querySelector('.nav-links');
-    if (toggle && links) toggle.addEventListener('click', function () { links.classList.add('open'); });
-    if (close && links) close.addEventListener('click', function () { links.classList.remove('open'); });
+    // Opening the menu also freezes the page behind it (html.menu-open sets
+    // overflow:hidden in CSS), so it can't be scrolled underneath the overlay.
+    var setMenu = function (open) {
+      if (!links) return;
+      links.classList.toggle('open', open);
+      document.documentElement.classList.toggle('menu-open', open);
+    };
+    menuCloser = function () { setMenu(false); };
+    if (toggle && links) toggle.addEventListener('click', function () { setMenu(true); });
+    if (close && links) close.addEventListener('click', function () { setMenu(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setMenu(false); });
+    window.addEventListener('resize', function () { if (window.innerWidth > 760) setMenu(false); });
 
     var navbar = document.querySelector('.navbar');
     if (navbar && !reduceMotion) {
@@ -862,6 +1014,7 @@
     root = root || document;
 
     initUnsplashHero(root);
+    initPolaroidTap(root);
     initDailyQuote(root);
     initGalleryStats(root);
     initGalleryPhotos(root);
@@ -954,7 +1107,7 @@
     var tappedLink = e.target.closest('a');
     if (tappedLink) {
       var openNav = tappedLink.closest('.nav-links.open');
-      if (openNav) openNav.classList.remove('open');
+      if (openNav && menuCloser) menuCloser();
     }
 
     if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
