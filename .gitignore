@@ -1,12 +1,10 @@
 .DS_Store
 
 # Impeccable local/session state — machine-specific, not project source.
-# .impeccable/live/config.json is intentionally NOT ignored (portable project config).
-.impeccable/hook.cache.json
-.impeccable/live/roots.json
-.impeccable/live/sessions/
-.impeccable/live/inject-journal.json
-.impeccable/config.local.json
+.impeccable/
+
+# JetBrains IDE project files — machine-specific.
+.idea/
 
 # Working notes / local-only config — not meant to ship in the public repo.
 DESIGN.md
@@ -15,3 +13,5 @@ PRODUCT.md
 CLAUDE.md
 storage.rules
 firestore.rules
+firebase.json
+firestore.indexes.json
