@@ -278,8 +278,9 @@
       if (reduceMotion) return;
       camTimer = setTimeout(function () {
         camTimer = null;
-        if (settled) return;
+        if (settled || card.classList.contains('waiting')) return;
         waitingSince = Date.now();
+        card.dataset.waitSince = waitingSince;
         card.classList.add('waiting');
       }, CAMERA_DELAY_MS);
     };
@@ -300,8 +301,10 @@
       if (camTimer) { clearTimeout(camTimer); camTimer = null; }
       setRatio();
       if (current) topUp(current);
-      if (!card.classList.contains('waiting')) { showDirect(); return; }
-      setTimeout(print, Math.max(0, CAMERA_MIN_MS - (Date.now() - waitingSince)));
+      // The inline script in index.html may have started the camera before this file ran.
+      if (reduceMotion || !card.classList.contains('waiting')) { showDirect(); return; }
+      var since = Number(card.dataset.waitSince) || waitingSince;
+      setTimeout(print, Math.max(0, CAMERA_MIN_MS - (Date.now() - since)));
     };
     var onFail = function () {
       settled = true;
@@ -345,8 +348,10 @@
       writeCache(photo);
     }
     if (photo) {
-      // Already cached: no server wait to cover, so no camera and no print —
-      // the polaroid simply appears whenever the (browser-cached) image is ready.
+      // Already cached: if the image is ready right away (browser-cached) the
+      // polaroid just appears; if it's slow, the camera covers the wait and
+      // the print follows, exactly like a first visit.
+      armCamera();
       apply(photo);
       return;
     }
