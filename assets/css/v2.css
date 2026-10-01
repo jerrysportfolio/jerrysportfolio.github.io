@@ -386,6 +386,9 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .cell-hero.printed .polaroid{visibility:visible;}
 .v2 .cell-hero.printing .polaroid{animation:polaroid-feed 1s linear .3s backwards;}
 .v2 .cell-hero.printing .polaroid-photo img{animation:polaroid-develop 1.2s ease-out .75s backwards;}
+/* No camera to wait for (instant image, stale visit): start feeding straight away. */
+.v2 .cell-hero.no-camera.printing .polaroid{animation-delay:0s;}
+.v2 .cell-hero.no-camera.printing .polaroid-photo img{animation-delay:.45s;}
 .v2 .cell-hero.printed .polaroid{cursor:pointer;}
 .v2 .cell-hero.printed .polaroid:focus-visible{outline:2px solid var(--accent); outline-offset:6px;}
 @media (hover:hover) and (pointer:fine){

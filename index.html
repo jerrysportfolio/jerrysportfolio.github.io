@@ -11,19 +11,24 @@
     <meta property="og:image" content="assets/placeholder/og-social.svg">
     <!-- Start downloading the current hero photo before the body and scripts load.
          Reads the same localStorage entry initUnsplashHero (v2.js) writes;
-         falls back to the prefetched "next" pick once the half-day slot rolls over. -->
+         falls back to the prefetched "next" pick once the half-day slot rolls over.
+         Also decides whether this counts as a fresh visit: if the site hasn't been
+         opened in the last 3 hours (site-last-visit, written by v2.js) the polaroid
+         is printed even when its image is already cached. -->
     <script>
         (function () {
             try {
                 var c = JSON.parse(localStorage.getItem('unsplash-hero:v4:iamjerryhu') || 'null');
                 var now = new Date();
                 var slot = now.toISOString().slice(0, 10) + (now.getUTCHours() < 12 ? 'a' : 'b');
-                var url = c && (c.slot === slot ? c.url : (c.next && c.next.url));
-                if (!url) return;
+                var p = c && (c.slot === slot ? c : c.next);
+                if (!p || !p.url) return;
+                var last = Number(localStorage.getItem('site-last-visit')) || 0;
+                window.__heroStale = !last || (Date.now() - last) > 3 * 60 * 60 * 1000;
                 var l = document.createElement('link');
-                l.rel = 'preload'; l.as = 'image'; l.href = url;
+                l.rel = 'preload'; l.as = 'image'; l.href = p.url;
                 document.head.appendChild(l);
-                window.__heroEarly = url;
+                window.__heroEarly = p;
             } catch (e) { }
         })();
     </script>
@@ -87,29 +92,6 @@
                     <div class="polaroid" id="hero-polaroid" role="button" tabindex="0" aria-label="Tap the polaroid">
                         <div class="polaroid-photo"><img alt="" id="hero-photo"></div>
                     </div>
-                    <script>
-                        // Cached photo already downloading (see <head>): attach it now, without waiting for the
-                        // rest of the page's scripts. If it arrives almost instantly (browser-cached) show the
-                        // polaroid straight away; if it's slow, show the camera until it lands and let
-                        // initUnsplashHero in v2.js print it (same behaviour as a first visit).
-                        (function () {
-                            var u = window.__heroEarly, img = document.getElementById('hero-photo');
-                            if (!u || !img) return;
-                            var card = img.closest('.cell-hero');
-                            var camTimer = setTimeout(function () {
-                                camTimer = null;
-                                card.dataset.waitSince = Date.now();
-                                card.classList.add('waiting');
-                            }, 150);
-                            img.addEventListener('load', function () {
-                                if (img.naturalWidth && img.naturalHeight) {
-                                    card.style.setProperty('--ar', Math.min(1.6, Math.max(0.66, img.naturalWidth / img.naturalHeight)).toFixed(4));
-                                }
-                                if (camTimer) { clearTimeout(camTimer); camTimer = null; card.classList.add('printed'); }
-                            }, { once: true });
-                            img.src = u;
-                        })();
-                    </script>
                     <!-- Polaroid camera shown while the photo is being fetched (see initUnsplashHero in v2.js) -->
                     <div class="polaroid-camera" aria-hidden="true">
                         <svg viewBox="0 0 200 178" width="172" height="153" xmlns="http://www.w3.org/2000/svg">
@@ -139,6 +121,64 @@
                             target="_blank" rel="noopener noreferrer">—</a> on <a
                             href="https://unsplash.com/?utm_source=jerry-hu-portfolio&amp;utm_medium=referral"
                             target="_blank" rel="noopener noreferrer">Unsplash</a></div>
+                    <script>
+                        // Cached photo already downloading (see <head>). Runs the whole show without waiting
+                        // for the rest of the page's scripts:
+                        //  - slow to arrive: camera while it loads, then the print
+                        //  - instant + last visit over 3h ago: print (no camera)
+                        //  - instant + recent visit: polaroid appears directly
+                        // initUnsplashHero in v2.js skips this card when it sees data-hero-inline.
+                        (function () {
+                            var e = window.__heroEarly, img = document.getElementById('hero-photo');
+                            if (!e || !img) return;
+                            var card = img.closest('.cell-hero'), pol = card.querySelector('.polaroid');
+                            var credit = document.getElementById('hero-credit');
+                            var creditLink = document.getElementById('hero-credit-photographer');
+                            var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                            var since = 0, camTimer = null;
+                            card.dataset.heroInline = '1';
+                            if (creditLink) { creditLink.href = e.creditUrl; creditLink.textContent = e.credit; }
+                            img.alt = e.alt || '';
+                            function done() {
+                                card.classList.remove('waiting', 'printing', 'no-camera');
+                                card.classList.add('printed');
+                                if (credit) credit.hidden = false;
+                            }
+                            function print(noCamera) {
+                                card.classList.remove('waiting');
+                                if (noCamera) card.classList.add('no-camera');
+                                card.classList.add('printing');
+                                pol.addEventListener('animationend', function onEnd(ev) {
+                                    if (ev.target !== pol) return;
+                                    pol.removeEventListener('animationend', onEnd);
+                                    done();
+                                });
+                            }
+                            if (!reduce) {
+                                camTimer = setTimeout(function () {
+                                    camTimer = null;
+                                    since = Date.now();
+                                    card.dataset.waitSince = since;
+                                    card.classList.add('waiting');
+                                }, 150);
+                            }
+                            img.addEventListener('load', function () {
+                                if (img.naturalWidth && img.naturalHeight) {
+                                    card.style.setProperty('--ar', Math.min(1.6, Math.max(0.66, img.naturalWidth / img.naturalHeight)).toFixed(4));
+                                }
+                                var cameraShown = card.classList.contains('waiting');
+                                if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+                                if (reduce) { done(); return; }
+                                if (cameraShown) { setTimeout(function () { print(false); }, Math.max(0, 600 - (Date.now() - since))); return; }
+                                if (window.__heroStale) print(true); else done();
+                            }, { once: true });
+                            img.addEventListener('error', function () {
+                                if (camTimer) { clearTimeout(camTimer); camTimer = null; }
+                                card.classList.remove('waiting');
+                            }, { once: true });
+                            img.src = e.url;
+                        })();
+                    </script>
                 </div>
 
                 <div class="intro-stack">

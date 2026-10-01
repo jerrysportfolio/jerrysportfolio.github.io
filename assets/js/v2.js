@@ -205,11 +205,27 @@
     username: 'iamjerryhu'
   };
 
+  // "Has the visitor been here in the last 3 hours?" Every page view (full load or
+  // route swap) stamps site-last-visit; the hero polaroid prints when this returns
+  // true (no recorded visit, or the last one was over 3 hours ago) even if its
+  // image is already cached. The inline <head> script in index.html reads the
+  // same key for the first page load, before this file has stamped it.
+  var VISIT_KEY = 'site-last-visit';
+  var STALE_VISIT_MS = 3 * 60 * 60 * 1000;
+  function consumeVisit() {
+    var now = Date.now(), last = 0;
+    try {
+      last = Number(localStorage.getItem(VISIT_KEY)) || 0;
+      localStorage.setItem(VISIT_KEY, String(now));
+    } catch (e) { /* ignore */ }
+    return !last || (now - last) > STALE_VISIT_MS;
+  }
+
   // Kept in sync with the inline <head> script in index.html, which preloads
   // today's photo before this file even runs.
   var HERO_CACHE_KEY = 'unsplash-hero:v4:' + UNSPLASH_CONFIG.username;
 
-  function initUnsplashHero(root) {
+  function initUnsplashHero(root, staleVisit) {
     var img = root.querySelector('#hero-photo');
     var credit = root.querySelector('#hero-credit');
     var creditLink = root.querySelector('#hero-credit-photographer');
@@ -284,13 +300,14 @@
         card.classList.add('waiting');
       }, CAMERA_DELAY_MS);
     };
-    var print = function () {
+    var print = function (noCamera) {
       card.classList.remove('waiting');
+      if (noCamera) card.classList.add('no-camera');
       card.classList.add('printing');
       polaroid.addEventListener('animationend', function onEnd(e) {
         if (e.target !== polaroid) return;
         polaroid.removeEventListener('animationend', onEnd);
-        card.classList.remove('printing');
+        card.classList.remove('printing', 'no-camera');
         card.classList.add('printed');
         credit.hidden = false;
       });
@@ -302,9 +319,14 @@
       setRatio();
       if (current) topUp(current);
       // The inline script in index.html may have started the camera before this file ran.
-      if (reduceMotion || !card.classList.contains('waiting')) { showDirect(); return; }
+      if (reduceMotion) { showDirect(); return; }
+      if (!card.classList.contains('waiting')) {
+        // Instant (cached) image: print only if it's been over 3 hours since the last visit.
+        if (staleVisit) print(true); else showDirect();
+        return;
+      }
       var since = Number(card.dataset.waitSince) || waitingSince;
-      setTimeout(print, Math.max(0, CAMERA_MIN_MS - (Date.now() - since)));
+      setTimeout(function () { print(false); }, Math.max(0, CAMERA_MIN_MS - (Date.now() - since)));
     };
     var onFail = function () {
       settled = true;
@@ -348,6 +370,13 @@
       writeCache(photo);
     }
     if (photo) {
+      // The inline script in index.html already owns this card (it started the
+      // very same download before this file ran): just keep tomorrow's pick warm.
+      if (card.dataset.heroInline && img.getAttribute('src') === photo.url) {
+        settled = true;
+        topUp(photo);
+        return;
+      }
       // Already cached: if the image is ready right away (browser-cached) the
       // polaroid just appears; if it's slow, the camera covers the wait and
       // the print follows, exactly like a first visit.
@@ -1018,7 +1047,7 @@
   function initPageBehaviors(root) {
     root = root || document;
 
-    initUnsplashHero(root);
+    initUnsplashHero(root, consumeVisit());
     initPolaroidTap(root);
     initDailyQuote(root);
     initGalleryStats(root);
