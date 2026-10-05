@@ -526,6 +526,9 @@ body.portal-down.portal-fade::before{opacity:.9;}
   letter-spacing:-.02em; line-height:1.05; margin:0;
 }
 .v2 .cell-intro .role{color:var(--ink-soft); font-size:.95rem;}
+.v2 .cell-intro .role-now{display:block; margin-top:12px;}
+.v2 .cell-intro .role b{color:var(--ink); font-weight:800;}
+.v2 .role-em{text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px; text-decoration-color:var(--ink-faint);}
 .v2 .cell-intro p{margin:0; font-size:.95rem; color:var(--ink-soft);}
 .v2 .projects-link{
   font-weight:600; color:var(--accent); font-size:.92rem;
