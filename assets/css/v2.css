@@ -603,6 +603,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
   overflow:hidden; cursor:pointer; transition:transform .35s, opacity .3s;
 }
 .v2 .gallery-item:hover{transform:scale(1.035);}
+.v2 .gallery-item[hidden]{display:none;}
 .v2 .load-more{
   display:block; margin:32px auto 48px; padding:12px 28px; border-radius:100px;
   border:1px solid var(--line); background:var(--paper-card); font-weight:600; cursor:pointer;

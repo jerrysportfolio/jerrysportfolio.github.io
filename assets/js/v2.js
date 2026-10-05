@@ -451,12 +451,19 @@
     // only the first three grid rows render up front, the rest wait in `pending`
     // behind the button.
     var PAGE_SIZE = 30;
-    var pending = [];
     var revealAll = false;
-    var initialShown = false;
-    var initialCount = function () {
-      var cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
-      return Math.max(cols, 1) * 3;
+    // Every fetched photo is in the DOM; until "More photographs" is clicked,
+    // items past the third grid row are hidden. Re-run on resize so the cut
+    // always lands on a row boundary for the current column count.
+    var applyLimit = function () {
+      var items = grid.querySelectorAll('.gallery-item');
+      var cols = Math.max(getComputedStyle(grid).gridTemplateColumns.split(' ').length, 1);
+      var limit = revealAll ? items.length : cols * 3;
+      for (var i = 0; i < items.length; i++) items[i].hidden = i >= limit;
+      if (loadMoreBtn) setButtonState();
+    };
+    var hasHidden = function () {
+      return !!grid.querySelector('.gallery-item[hidden]');
     };
     var page = 1;
     var loading = false;
@@ -506,7 +513,7 @@
 
     var setButtonState = function () {
       if (!loadMoreBtn) return;
-      loadMoreBtn.hidden = exhausted && !pending.length;
+      loadMoreBtn.hidden = revealAll ? exhausted : (exhausted && !hasHidden());
       loadMoreBtn.disabled = loading;
       loadMoreBtn.textContent = loading ? (loadingAll ? 'Loading all photographs…' : 'Loading…') : 'More photographs ↓';
     };
@@ -533,20 +540,13 @@
         .then(function (photos) {
           clearTimeout(timeoutId);
           if (page === 1) grid.innerHTML = ''; // clear the fallback placeholders once real data arrives
-          pending = pending.concat(photos);
-          if (revealAll) {
-            appendPhotos(pending);
-            pending = [];
-          } else if (!initialShown) {
-            appendPhotos(pending.splice(0, initialCount()));
-          }
-          initialShown = true;
+          appendPhotos(photos);
           page += 1;
           if (!photos.length || photos.length < PAGE_SIZE) {
             exhausted = true;
           }
           loading = false;
-          setButtonState();
+          applyLimit();
         })
         .catch(function () {
           clearTimeout(timeoutId);
@@ -564,7 +564,7 @@
     // No scroll-triggered auto-load: only the first three rows show until then.
     var loadAllRemaining = function () {
       revealAll = true;
-      if (pending.length) { appendPhotos(pending); pending = []; }
+      applyLimit();
       if (exhausted) { setButtonState(); return; }
       loadingAll = true;
       loadNextPage().then(function () {
@@ -577,6 +577,7 @@
       loadMoreBtn.addEventListener('click', loadAllRemaining);
     }
 
+    window.addEventListener('resize', applyLimit);
     loadNextPage();
   }
 
