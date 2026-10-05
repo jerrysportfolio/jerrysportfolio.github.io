@@ -529,8 +529,9 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .cell-intro .role-now{display:inline; margin-top:0;}
 .v2 .cell-intro .role b{color:var(--ink); font-weight:800;}
 .v2 .role-em{text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:3px; text-decoration-color:var(--ink-faint);
-  transition:text-decoration-color .2s, text-underline-offset .2s;}
-.v2 .role-em:hover{font-style:italic; text-decoration-color:var(--ink); text-underline-offset:5px;}
+  display:inline-block; transform-origin:left bottom;
+  transition:text-decoration-color .35s ease, text-underline-offset .35s ease, transform .35s ease;}
+.v2 .role-em:hover{transform:skewX(-6deg); text-decoration-color:var(--ink); text-underline-offset:4px;}
 .v2 .cell-intro p{margin:0; font-size:.95rem; color:var(--ink-soft);}
 .v2 .projects-link{
   font-weight:600; color:var(--accent); font-size:.92rem;
