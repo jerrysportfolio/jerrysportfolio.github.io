@@ -447,7 +447,17 @@
     if (grid.dataset.galleryBound) return;
     grid.dataset.galleryBound = '1';
 
-    var PAGE_SIZE = 8;
+    // Fixed page size (Unsplash's max) so offset pagination stays consistent;
+    // only the first three grid rows render up front, the rest wait in `pending`
+    // behind the button.
+    var PAGE_SIZE = 30;
+    var pending = [];
+    var revealAll = false;
+    var initialShown = false;
+    var initialCount = function () {
+      var cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+      return Math.max(cols, 1) * 3;
+    };
     var page = 1;
     var loading = false;
     var exhausted = false;
@@ -496,7 +506,7 @@
 
     var setButtonState = function () {
       if (!loadMoreBtn) return;
-      loadMoreBtn.hidden = exhausted;
+      loadMoreBtn.hidden = exhausted && !pending.length;
       loadMoreBtn.disabled = loading;
       loadMoreBtn.textContent = loading ? (loadingAll ? 'Loading all photographs…' : 'Loading…') : 'More photographs ↓';
     };
@@ -523,11 +533,17 @@
         .then(function (photos) {
           clearTimeout(timeoutId);
           if (page === 1) grid.innerHTML = ''; // clear the fallback placeholders once real data arrives
-          appendPhotos(photos);
+          pending = pending.concat(photos);
+          if (revealAll) {
+            appendPhotos(pending);
+            pending = [];
+          } else if (!initialShown) {
+            appendPhotos(pending.splice(0, initialCount()));
+          }
+          initialShown = true;
           page += 1;
           if (!photos.length || photos.length < PAGE_SIZE) {
             exhausted = true;
-            if (observer) observer.disconnect();
           }
           loading = false;
           setButtonState();
@@ -545,10 +561,11 @@
 
     // The button's own click loads every remaining page in one go — the
     // point of clicking it at all is to stop having to click it again.
-    // Scroll-triggered auto-loads (below) still fetch one page at a time,
-    // for a lighter-weight infinite-scroll feel while just browsing.
+    // No scroll-triggered auto-load: only the first three rows show until then.
     var loadAllRemaining = function () {
-      if (exhausted) return;
+      revealAll = true;
+      if (pending.length) { appendPhotos(pending); pending = []; }
+      if (exhausted) { setButtonState(); return; }
       loadingAll = true;
       loadNextPage().then(function () {
         if (!exhausted) return loadAllRemaining();
@@ -558,20 +575,6 @@
 
     if (loadMoreBtn) {
       loadMoreBtn.addEventListener('click', loadAllRemaining);
-
-      // Auto-load the next single page once the button scrolls near the
-      // viewport, so browsing feels like infinite scroll; the button stays
-      // visible as a keyboard-accessible manual trigger (now a "load
-      // everything" trigger) and as the fallback for browsers without
-      // IntersectionObserver.
-      if ('IntersectionObserver' in window) {
-        observer = new IntersectionObserver(function (entries) {
-          entries.forEach(function (entry) {
-            if (entry.isIntersecting) loadNextPage();
-          });
-        }, { rootMargin: '600px' });
-        observer.observe(loadMoreBtn);
-      }
     }
 
     loadNextPage();
