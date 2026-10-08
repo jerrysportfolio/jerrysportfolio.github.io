@@ -1,11 +1,11 @@
-// GitHub card (homepage): contribution heatmap for the last 22 weeks.
+// GitHub card (homepage): contribution heatmap for the last year, drawn vertically (one row per week).
 // Data: public contributions API (no token needed). The card hides itself if it's unreachable.
 // Exposes window.initGithubMap(root) so the AJAX router can re-run it after a swap.
 (function () {
     var USER = "AccessRetrieved";
     var URL = "https://github-contributions-api.jogruber.de/v4/" + USER + "?y=last";
     var NS = "http://www.w3.org/2000/svg";
-    var WEEKS = 22, CELL = 11, GAP = 3, LEVELS = [0.1, 0.3, 0.5, 0.75, 1];
+    var DAYS = 365, CELL = 11, GAP = 3, LABEL = 34, MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], LEVELS = [0.1, 0.3, 0.5, 0.75, 1];
     var cache = null;
 
     function load() {
@@ -18,22 +18,24 @@
         return cache;
     }
 
-    function render(card, days) {
+    function render(card, all) {
+        var days = all.slice(-DAYS);
         var first = new Date(days[0].date + "T00:00:00Z").getUTCDay(); // 0 = Sunday
-        var cols = Math.ceil((first + days.length) / 7);
-        var start = Math.max(0, cols - WEEKS);
-        var W = WEEKS * (CELL + GAP) - GAP, H = 7 * (CELL + GAP) - GAP;
+        var rows = Math.ceil((first + days.length) / 7);
+        var step = CELL + GAP;
+        var W = 7 * step - GAP + LABEL, H = rows * step - GAP;
         var s = document.createElementNS(NS, "svg");
         s.setAttribute("viewBox", "0 0 " + W + " " + H);
+        s.setAttribute("width", W);
+        s.setAttribute("height", H);
         s.setAttribute("role", "img");
-        var total = 0;
+        var total = 0, lastMonth = -1;
         days.forEach(function (d, i) {
-            var col = Math.floor((first + i) / 7) - start;
-            if (col < 0) return;
+            var row = Math.floor((first + i) / 7), col = (first + i) % 7;
             total += d.count;
             var r = document.createElementNS(NS, "rect");
-            r.setAttribute("x", col * (CELL + GAP));
-            r.setAttribute("y", ((first + i) % 7) * (CELL + GAP));
+            r.setAttribute("x", col * step);
+            r.setAttribute("y", row * step);
             r.setAttribute("width", CELL);
             r.setAttribute("height", CELL);
             r.setAttribute("rx", 2.5);
@@ -43,8 +45,19 @@
             t.textContent = d.count + " contribution" + (d.count === 1 ? "" : "s") + " on " + d.date;
             r.appendChild(t);
             s.appendChild(r);
+            // Month label beside the first week row that starts a new month.
+            var m = parseInt(d.date.slice(5, 7), 10);
+            if (col === 0 && m !== lastMonth) {
+                lastMonth = m;
+                var l = document.createElementNS(NS, "text");
+                l.setAttribute("x", 7 * step + 6);
+                l.setAttribute("y", row * step + CELL - 1);
+                l.setAttribute("class", "g-month");
+                l.textContent = MONTHS[m - 1];
+                s.appendChild(l);
+            }
         });
-        s.setAttribute("aria-label", total + " GitHub contributions in the last " + WEEKS + " weeks");
+        s.setAttribute("aria-label", total + " GitHub contributions in the last year");
         var map = card.querySelector(".g-map");
         map.textContent = "";
         map.appendChild(s);
