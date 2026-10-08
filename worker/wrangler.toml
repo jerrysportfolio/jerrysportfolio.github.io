@@ -1,0 +1,7 @@
+name = "portfolio-visitors"
+main = "visitors.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+CF_ZONE_ID = "REPLACE_WITH_ZONE_ID"
+ALLOWED_ORIGIN = "https://portfolio.iamjerryhu.org"
