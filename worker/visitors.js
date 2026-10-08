@@ -74,12 +74,15 @@ export class Sleep {
   }
 }
 
+// Origins allowed to read data / open the live socket: the site, plus the local preview server.
+const originOk = (origin, env) => [env.ALLOWED_ORIGIN, "http://localhost:8000", "http://127.0.0.1:8000"].includes(origin);
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname === "/live") {
       if (request.headers.get("Upgrade") !== "websocket") return new Response("Expected websocket", { status: 426 });
-      if (request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return new Response("Forbidden", { status: 403 });
+      if (!originOk(request.headers.get("Origin"), env)) return new Response("Forbidden", { status: 403 });
       return env.PRESENCE.get(env.PRESENCE.idFromName("site")).fetch(request);
     }
 
@@ -87,7 +90,7 @@ export default {
 
     const origin = request.headers.get("Origin") || "";
     const cors = {
-      "Access-Control-Allow-Origin": origin === env.ALLOWED_ORIGIN ? origin : env.ALLOWED_ORIGIN,
+      "Access-Control-Allow-Origin": originOk(origin, env) ? origin : env.ALLOWED_ORIGIN,
       "Vary": "Origin",
     };
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -140,7 +143,7 @@ async function handleSleep(request, env) {
   // The local preview server (python -m http.server 8000) may read the chart data too.
   const origin = request.headers.get("Origin") || "";
   const cors = {
-    "Access-Control-Allow-Origin": [env.ALLOWED_ORIGIN, "http://localhost:8000", "http://127.0.0.1:8000"].includes(origin) ? origin : env.ALLOWED_ORIGIN,
+    "Access-Control-Allow-Origin": originOk(origin, env) ? origin : env.ALLOWED_ORIGIN,
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Vary": "Origin",
   };
