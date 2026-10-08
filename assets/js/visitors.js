@@ -109,7 +109,7 @@
         var el = (root || document).querySelector(".v-online");
         if (!el || online < 1) return;
         el.querySelector("span").textContent = online.toLocaleString() + " online now";
-        el.hidden = false;
+        el.classList.add("on");
     }
 
     var retry = 1000, pingTimer = null;
