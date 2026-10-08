@@ -137,8 +137,10 @@ const withHeaders = (res, headers) => {
 //   `date` is the morning you woke up. Upserts by date, so re-sending a week is harmless.
 // GET  /sleep  -> {"nights":[{"date","hours"|null} x7]}, the last 7 days ending today (UTC).
 async function handleSleep(request, env) {
+  // The local preview server (python -m http.server 8000) may read the chart data too.
+  const origin = request.headers.get("Origin") || "";
   const cors = {
-    "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN,
+    "Access-Control-Allow-Origin": [env.ALLOWED_ORIGIN, "http://localhost:8000", "http://127.0.0.1:8000"].includes(origin) ? origin : env.ALLOWED_ORIGIN,
     "Access-Control-Allow-Headers": "Authorization, Content-Type",
     "Vary": "Origin",
   };
