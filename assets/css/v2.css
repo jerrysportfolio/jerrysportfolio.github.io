@@ -1039,3 +1039,25 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .info-card.github-card .g-map.dragging{cursor:grabbing; user-select:none;}
 .v2 .info-card.github-card .g-map svg{display:block; width:auto; max-width:none; height:auto;}
 .v2 .g-month{font-family:var(--font-code); font-size:10px; fill:var(--ink-faint);}
+
+/* Sleep card on the About page: shares the GitHub card's header typography; bars use the same green. */
+.v2 .info-card.sleep-card{--g-color:#1b9a55; position:relative;}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .v2 .info-card.sleep-card{--g-color:#3ddc84;}
+}
+:root[data-theme="dark"] .v2 .info-card.sleep-card{--g-color:#3ddc84;}
+.v2 .info-card.sleep-card h3{font-family:var(--font-display); font-size:1.05rem; font-weight:600; letter-spacing:0; margin:0; padding:0;}
+.v2 .info-card.sleep-card .post-meta{font-family:var(--font-code); font-size:.75rem; letter-spacing:.03em; color:var(--ink-faint); margin:3px 0 0;}
+.v2 .info-card.sleep-card .g-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
+.v2 .info-card.sleep-card .g-stat{text-align:right;}
+.v2 .info-card.sleep-card .g-total{font-family:var(--font-display); font-size:1.7rem; font-weight:600; letter-spacing:-.02em; line-height:1;}
+.v2 .info-card.sleep-card .g-stat small{display:block; font-family:var(--font-code); font-size:.68rem; color:var(--ink-faint); margin-top:3px;}
+/* Space reserved up front so nothing shifts when data arrives; the whole card is hidden if there is none. */
+.v2 .s-chart{margin-top:16px; aspect-ratio:252/120;}
+.v2 .s-chart svg{display:block; width:100%; height:auto;}
+.v2 .s-bar{fill:var(--g-color);}
+.v2 .s-goal{stroke:var(--line); stroke-dasharray:3 4;}
+.v2 .s-day{font-family:var(--font-code); font-size:10px; fill:var(--ink-faint);}
+.v2 .s-val{font-family:var(--font-code); font-size:10px; fill:var(--ink-soft);}
+.v2 .sleep-card:not(.ready):not(.failed) .s-chart{background:var(--line); opacity:.4; border-radius:4px;}
+.v2 .sleep-card.failed{display:none;}

@@ -1076,6 +1076,7 @@
     initResumeTracking(root);
     if (window.initVisitorsChart) window.initVisitorsChart(root);
     if (window.initGithubMap) window.initGithubMap(root);
+    if (window.initSleepChart) window.initSleepChart(root);
     initDynamicBlogList(root); // also generates + binds blog's filter pills and search, once posts are known
 
     // Projects page: live search by name, description, and type (chip)
