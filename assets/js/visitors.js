@@ -42,8 +42,8 @@
             "aria-label": "Unique visitors per day for the last " + days.length + " days. Today: " + days[days.length - 1].uniques + "." });
         var defs = svg("defs", {});
         var g = svg("linearGradient", { id: "v-fill", x1: 0, y1: 0, x2: 0, y2: 1 });
-        g.appendChild(svg("stop", { offset: "0", "stop-color": "#3ddc84", "stop-opacity": ".32" }));
-        g.appendChild(svg("stop", { offset: "1", "stop-color": "#3ddc84", "stop-opacity": "0" }));
+        g.appendChild(svg("stop", { offset: "0", class: "v-stop", "stop-opacity": ".28" }));
+        g.appendChild(svg("stop", { offset: "1", class: "v-stop", "stop-opacity": "0" }));
         defs.appendChild(g);
         s.appendChild(defs);
 
