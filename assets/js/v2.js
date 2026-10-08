@@ -406,8 +406,22 @@
     var pol = root.querySelector('#hero-polaroid');
     var card = pol && pol.closest('.cell-hero');
     if (!pol || !card) return;
-    var FX = ['lift', 'shake', 'flip'], ALL = ['tap-fx', 'fx-lift', 'fx-shake', 'fx-flip'];
-    var n = 0;
+    var FX = ['lift', 'shake', 'flip', 'spin', 'swing', 'drop', 'pop', 'flipx'];
+    var ALL = ['tap-fx'].concat(FX.map(function (f) { return 'fx-' + f; }));
+    var n = 0, bag = [], last = null;
+    // Shuffle-bag: every effect plays once in random order before any repeats,
+    // and the first of a new round never repeats the previous round's last.
+    var nextFx = function () {
+      if (!bag.length) {
+        bag = FX.slice();
+        for (var i = bag.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1)), t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+        }
+        if (bag[bag.length - 1] === last) { var k = bag.length - 1; bag[k] = bag[0]; bag[0] = last; }
+      }
+      last = bag.pop();
+      return last;
+    };
     var fire = function () {
       if (!card.classList.contains('printed')) return;
       var from = parseFloat(getComputedStyle(pol).getPropertyValue('--tilt')) || -2;
@@ -416,7 +430,7 @@
       if (reduceMotion) { n++; return; }
       ALL.forEach(function (c) { pol.classList.remove(c); });
       void pol.offsetWidth; // restart the animation if it is already playing
-      pol.classList.add('tap-fx', 'fx-' + FX[n % FX.length]);
+      pol.classList.add('tap-fx', 'fx-' + nextFx());
       n++;
     };
     pol.addEventListener('click', fire);
