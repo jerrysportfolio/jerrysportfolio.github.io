@@ -10,6 +10,14 @@ ALLOWED_ORIGIN = "https://portfolio.iamjerryhu.org"
 name = "PRESENCE"
 class_name = "Presence"
 
+[[durable_objects.bindings]]
+name = "SLEEP"
+class_name = "Sleep"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Presence"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["Sleep"]

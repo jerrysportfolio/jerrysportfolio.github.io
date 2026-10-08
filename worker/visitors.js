@@ -5,6 +5,7 @@
 //   CF_API_TOKEN  secret  token with "Zone > Analytics > Read"
 //   CF_ZONE_ID    var     zone id of iamjerryhu.org
 //   ALLOWED_ORIGIN var    https://portfolio.iamjerryhu.org
+//   SLEEP_TOKEN    secret  shared secret the iOS Shortcut sends to POST /sleep
 
 const QUERY = `
 query($zone: String!, $from: Date!, $to: Date!) {
@@ -52,6 +53,27 @@ export class Presence {
   }
 }
 
+// Sleep data pushed from an iOS Shortcut (Apple Health). One object holds a {date: hours} map
+// (nightly totals only, no bed/wake times) and keeps the most recent 30 nights.
+export class Sleep {
+  constructor(state) {
+    this.state = state;
+  }
+
+  async fetch(request) {
+    const nights = (await this.state.storage.get("nights")) || {};
+    if (request.method === "POST") {
+      const body = await request.json();
+      for (const n of body.nights) nights[n.date] = Math.round(n.hours * 100) / 100;
+      const keep = Object.keys(nights).sort().slice(-30);
+      const trimmed = Object.fromEntries(keep.map((d) => [d, nights[d]]));
+      await this.state.storage.put("nights", trimmed);
+      return new Response(JSON.stringify({ ok: true, stored: keep.length }));
+    }
+    return new Response(JSON.stringify(nights));
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -60,6 +82,8 @@ export default {
       if (request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return new Response("Forbidden", { status: 403 });
       return env.PRESENCE.get(env.PRESENCE.idFromName("site")).fetch(request);
     }
+
+    if (url.pathname === "/sleep") return handleSleep(request, env);
 
     const origin = request.headers.get("Origin") || "";
     const cors = {
@@ -108,3 +132,47 @@ const withHeaders = (res, headers) => {
   for (const [k, v] of Object.entries(headers)) r.headers.set(k, v);
   return r;
 };
+
+// POST /sleep  (Authorization: Bearer SLEEP_TOKEN)  body: {"nights":[{"date":"2026-10-07","hours":7.4}, ...]}
+//   `date` is the morning you woke up. Upserts by date, so re-sending a week is harmless.
+// GET  /sleep  -> {"nights":[{"date","hours"|null} x7]}, the last 7 days ending today (UTC).
+async function handleSleep(request, env) {
+  // The local preview server (python -m http.server 8000) may read the chart data too.
+  const origin = request.headers.get("Origin") || "";
+  const cors = {
+    "Access-Control-Allow-Origin": [env.ALLOWED_ORIGIN, "http://localhost:8000", "http://127.0.0.1:8000"].includes(origin) ? origin : env.ALLOWED_ORIGIN,
+    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+    "Vary": "Origin",
+  };
+  if (request.method === "OPTIONS") return new Response(null, { headers: cors });
+  const store = env.SLEEP.get(env.SLEEP.idFromName("sleep"));
+
+  if (request.method === "POST") {
+    const auth = request.headers.get("Authorization") || "";
+    if (!env.SLEEP_TOKEN || !timingSafeEqual(auth, `Bearer ${env.SLEEP_TOKEN}`)) return json({ error: "unauthorized" }, 401, cors);
+    let body;
+    try { body = await request.json(); } catch { return json({ error: "bad json" }, 400, cors); }
+    const nights = body?.nights;
+    const valid = Array.isArray(nights) && nights.length > 0 && nights.length <= 31 && nights.every((n) =>
+      n && /^\d{4}-\d{2}-\d{2}$/.test(n.date) && typeof n.hours === "number" && n.hours >= 0 && n.hours <= 24);
+    if (!valid) return json({ error: "expected {nights:[{date:'YYYY-MM-DD',hours:0-24}]}" }, 400, cors);
+    const res = await store.fetch("https://do/sleep", { method: "POST", body: JSON.stringify({ nights }) });
+    return new Response(res.body, { status: 200, headers: { "Content-Type": "application/json", ...cors } });
+  }
+
+  if (request.method !== "GET") return json({ error: "method" }, 405, cors);
+  const stored = await (await store.fetch("https://do/sleep")).json();
+  const nights = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(Date.now() - (6 - i) * 864e5).toISOString().slice(0, 10);
+    return { date, hours: stored[date] ?? null };
+  });
+  return json({ nights }, 200, { ...cors, "Cache-Control": "public, max-age=300" });
+}
+
+function timingSafeEqual(a, b) {
+  const enc = new TextEncoder();
+  const x = enc.encode(a), y = enc.encode(b);
+  let diff = x.length ^ y.length;
+  for (let i = 0; i < Math.max(x.length, y.length); i++) diff |= (x[i] || 0) ^ (y[i] || 0);
+  return diff === 0;
+}

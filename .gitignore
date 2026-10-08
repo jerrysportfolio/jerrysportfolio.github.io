@@ -15,3 +15,4 @@ storage.rules
 firestore.rules
 firebase.json
 firestore.indexes.json
+worker/.wrangler/
