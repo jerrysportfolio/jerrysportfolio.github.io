@@ -1034,5 +1034,8 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .info-card.github-card .g-total{font-family:var(--font-display); font-size:1.7rem; font-weight:600; letter-spacing:-.02em; line-height:1;}
 .v2 .info-card.github-card .g-stat small{font-family:var(--font-code); font-size:.68rem; color:var(--ink-faint); margin-top:3px;}
 .v2 .info-card.github-card .g-map{margin-top:16px;}
-.v2 .info-card.github-card .g-map{aspect-ratio:307/115;}
+.v2 .info-card.github-card .g-map{aspect-ratio:auto; min-height:115px; overflow-x:auto; overflow-y:hidden; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; cursor:grab; scrollbar-width:none;}
+.v2 .info-card.github-card .g-map::-webkit-scrollbar{display:none;}
+.v2 .info-card.github-card .g-map.dragging{cursor:grabbing; user-select:none;}
+.v2 .info-card.github-card .g-map svg{display:block; width:auto; max-width:none; height:auto;}
 .v2 .g-month{font-family:var(--font-code); font-size:10px; fill:var(--ink-faint);}
