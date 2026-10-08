@@ -1040,12 +1040,12 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .info-card.github-card .g-map svg{display:block; width:auto; max-width:none; height:auto;}
 .v2 .g-month{font-family:var(--font-code); font-size:10px; fill:var(--ink-faint);}
 
-/* Sleep card on the About page: shares the GitHub card's header typography; bars use the same green. */
-.v2 .info-card.sleep-card{--g-color:#1b9a55; position:relative;}
+/* Sleep card on the About page: shares the GitHub card's header typography; bars are purple. */
+.v2 .info-card.sleep-card{--g-color:#6d4fd6; position:relative;}
 @media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]) .v2 .info-card.sleep-card{--g-color:#3ddc84;}
+  :root:not([data-theme="light"]) .v2 .info-card.sleep-card{--g-color:#a78bfa;}
 }
-:root[data-theme="dark"] .v2 .info-card.sleep-card{--g-color:#3ddc84;}
+:root[data-theme="dark"] .v2 .info-card.sleep-card{--g-color:#a78bfa;}
 .v2 .info-card.sleep-card h3{font-family:var(--font-display); font-size:1.05rem; font-weight:600; letter-spacing:0; margin:0; padding:0;}
 .v2 .info-card.sleep-card .post-meta{font-family:var(--font-code); font-size:.75rem; letter-spacing:.03em; color:var(--ink-faint); margin:3px 0 0;}
 .v2 .info-card.sleep-card .g-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
