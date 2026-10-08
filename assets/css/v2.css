@@ -964,6 +964,23 @@ body.portal-down.portal-fade::before{opacity:.9;}
   :root:not([data-theme="light"]) .v2 .visitors-card{--v-color:#3ddc84;}
 }
 :root[data-theme="dark"] .v2 .visitors-card{--v-color:#3ddc84;}
+/* ---------- homepage GitHub card: contribution heatmap, same green as visitors ---------- */
+.v2 .github-card{--g-color:#1b9a55;}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .v2 .github-card{--g-color:#3ddc84;}
+}
+:root[data-theme="dark"] .v2 .github-card{--g-color:#3ddc84;}
+.v2 .github-card h3{padding-right:0;}
+.v2 .github-card .post-meta{margin:3px 0 0;}
+.v2 .github-card .g-stat{position:absolute; right:0; top:14px; text-align:right; line-height:1;}
+.v2 .github-card .g-total{font-family:var(--font-display); font-size:1.7rem; font-weight:600; letter-spacing:-.02em;}
+.v2 .github-card .g-stat small{display:block; margin-top:3px; font-family:var(--font-code); font-size:.68rem; color:var(--ink-faint);}
+/* Fixed aspect ratio reserves the space up front so nothing shifts when the data arrives. */
+.v2 .g-map{margin-top:12px; aspect-ratio:307/95;}
+.v2 .g-map svg{display:block; width:100%; height:auto;}
+.v2 .g-cell{fill:var(--g-color);}
+.v2 .github-card:not(.ready):not(.failed) .g-map{background:var(--line); opacity:.4; border-radius:4px;}
+.v2 .github-card.failed{display:none;}
 .v2 .visitors-card h3{padding-right:0;}
 .v2 .visitors-card .post-meta{margin:3px 0 0;}
 .v2 .visitors-card .v-stat{position:absolute; right:0; top:14px; text-align:right; line-height:1;}
