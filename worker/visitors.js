@@ -18,8 +18,49 @@ query($zone: String!, $from: Date!, $to: Date!) {
   }
 }`;
 
+// Live presence: every open tab holds a WebSocket to this one Durable Object, and the
+// "online now" number is the count of open sockets. Counts every connection (no dedupe),
+// so it errs on the high side. Uses WebSocket hibernation, so idle tabs cost nothing.
+export class Presence {
+  constructor(state) {
+    this.state = state;
+    // Answered by the runtime without waking the object.
+    state.setWebSocketAutoResponse(new WebSocketRequestResponsePair("ping", "pong"));
+  }
+
+  async fetch(request) {
+    if (request.headers.get("Upgrade") !== "websocket") return new Response("Expected websocket", { status: 426 });
+    const [client, server] = Object.values(new WebSocketPair());
+    this.state.acceptWebSocket(server);
+    this.broadcast();
+    return new Response(null, { status: 101, webSocket: client });
+  }
+
+  webSocketClose(ws, code) {
+    try { ws.close(code); } catch {}
+    this.broadcast();
+  }
+
+  webSocketError() {
+    this.broadcast();
+  }
+
+  broadcast() {
+    const open = this.state.getWebSockets().filter((w) => w.readyState === 1);
+    const msg = JSON.stringify({ online: open.length });
+    for (const w of open) { try { w.send(msg); } catch {} }
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    if (url.pathname === "/live") {
+      if (request.headers.get("Upgrade") !== "websocket") return new Response("Expected websocket", { status: 426 });
+      if (request.headers.get("Origin") !== env.ALLOWED_ORIGIN) return new Response("Forbidden", { status: 403 });
+      return env.PRESENCE.get(env.PRESENCE.idFromName("site")).fetch(request);
+    }
+
     const origin = request.headers.get("Origin") || "";
     const cors = {
       "Access-Control-Allow-Origin": origin === env.ALLOWED_ORIGIN ? origin : env.ALLOWED_ORIGIN,

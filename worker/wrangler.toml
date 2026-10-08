@@ -5,3 +5,11 @@ compatibility_date = "2026-10-01"
 [vars]
 CF_ZONE_ID = "c181fbee6b76e40bd46198d80d933864"
 ALLOWED_ORIGIN = "https://portfolio.iamjerryhu.org"
+
+[[durable_objects.bindings]]
+name = "PRESENCE"
+class_name = "Presence"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Presence"]
