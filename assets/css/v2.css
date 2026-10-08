@@ -1062,3 +1062,14 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .sleep-card:not(.ready):not(.failed) .s-chart{background:var(--line); opacity:.4; border-radius:4px;}
 .v2 .sleep-card.failed{display:none;}
 .v2 .info-card.github-card .g-map{max-width:100%;}
+
+/* Mobile About page: profile, GitHub, the page text, then Sleep last. The rail wrapper dissolves
+   (display:contents) so its cards become grid items that can be reordered around the text. */
+@media (max-width:860px){
+  .v2 .about-grid{row-gap:16px;}
+  .v2 .about-rail{display:contents;}
+  .v2 .about-rail > aside{order:0;}
+  .v2 .about-rail > .github-card{order:1;}
+  .v2 .about-grid > .about-content{order:2; margin-top:24px;}
+  .v2 .about-rail > .sleep-card{order:3; margin-top:24px;}
+}
