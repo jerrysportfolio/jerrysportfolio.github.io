@@ -3,5 +3,5 @@ main = "visitors.js"
 compatibility_date = "2026-10-01"
 
 [vars]
-CF_ZONE_ID = "REPLACE_WITH_ZONE_ID"
+CF_ZONE_ID = "c181fbee6b76e40bd46198d80d933864"
 ALLOWED_ORIGIN = "https://portfolio.iamjerryhu.org"
