@@ -6,6 +6,7 @@
     var NS = "http://www.w3.org/2000/svg";
     var W = 300, H = 112, PX = 10, PT = 14, PB = 20;
     var cache = null; // one fetch per page load, reused across router swaps
+    var online = 0;   // live count pushed over the WebSocket
 
     function load() {
         if (!cache) {
@@ -103,9 +104,40 @@
         card.classList.add("ready");
     }
 
+    // ---------- live "online now": one WebSocket per tab, kept across router swaps ----------
+    function showOnline(root) {
+        var el = (root || document).querySelector(".v-online");
+        if (!el || online < 1) return;
+        el.querySelector("span").textContent = online.toLocaleString() + " online now";
+        el.hidden = false;
+    }
+
+    var retry = 1000, pingTimer = null;
+    function connect() {
+        var ws;
+        try { ws = new WebSocket(VISITORS_URL.replace(/^http/, "ws") + "/live"); } catch (e) { return; }
+        ws.onopen = function () {
+            retry = 1000;
+            clearInterval(pingTimer);
+            pingTimer = setInterval(function () { if (ws.readyState === 1) ws.send("ping"); }, 25000);
+        };
+        ws.onmessage = function (e) {
+            if (e.data === "pong") return;
+            try { online = JSON.parse(e.data).online | 0; } catch (err) { return; }
+            showOnline(document);
+        };
+        ws.onclose = function () {
+            clearInterval(pingTimer);
+            setTimeout(connect, retry);
+            retry = Math.min(retry * 2, 30000);
+        };
+    }
+    connect();
+
     window.initVisitorsChart = function (root) {
         var card = (root || document).querySelector("#visitors-card");
         if (!card) return;
+        showOnline(card);
         load().then(function (days) { render(card, days); }, function () { card.classList.add("failed"); });
     };
 

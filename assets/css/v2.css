@@ -940,6 +940,10 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .visitors-card .v-stat{position:absolute; right:0; top:14px; text-align:right; line-height:1;}
 .v2 .visitors-card .v-today{font-family:var(--font-display); font-size:1.7rem; font-weight:600; letter-spacing:-.02em;}
 .v2 .visitors-card .v-stat small{display:block; margin-top:3px; font-family:var(--font-code); font-size:.68rem; color:var(--ink-faint);}
+.v2 .v-online{display:flex; align-items:center; gap:7px; margin-top:6px; font-size:.78rem; color:var(--ink-soft);}
+.v2 .v-online[hidden]{display:none;}
+.v2 .v-online i{width:8px; height:8px; border-radius:50%; background:var(--v-color); box-shadow:0 0 0 0 var(--v-color); animation:v-live 2s ease-out infinite;}
+@keyframes v-live{0%{box-shadow:0 0 0 0 color-mix(in srgb, var(--v-color) 55%, transparent);} 100%{box-shadow:0 0 0 8px transparent;}}
 .v2 .v-chart{
   position:relative; margin-top:12px; border-radius:14px; overflow:hidden;
   background-image:radial-gradient(color-mix(in srgb, var(--v-color) 22%, transparent) 1px, transparent 1.2px); background-size:14px 14px;
@@ -968,5 +972,6 @@ body.portal-down.portal-fade::before{opacity:.9;}
 @keyframes v-pulse{50%{opacity:.6;}}
 @media (prefers-reduced-motion:reduce){
   .v2 .v-line{animation:none; stroke-dashoffset:0;}
+  .v2 .v-online i{animation:none;}
   .v2 .visitors-card:not(.ready):not(.failed) .v-chart{animation:none;}
 }
