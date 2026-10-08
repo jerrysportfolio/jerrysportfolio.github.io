@@ -1073,3 +1073,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
   .v2 .about-grid > .about-content{order:2; margin-top:24px;}
   .v2 .about-rail > .sleep-card{order:3; margin-top:24px; margin-bottom:40px;}
 }
+/* Desktop About page: keep the rail (and its last card) clear of the footer line. */
+@media (min-width:861px){
+  .v2 .about-grid{padding-bottom:40px;}
+}
