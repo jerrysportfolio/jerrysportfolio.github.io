@@ -709,13 +709,13 @@ body.portal-down.portal-fade::before{opacity:.9;}
 
 /* ---------- about page ---------- */
 .v2 .about-grid{display:grid; grid-template-columns:300px 1fr; gap:40px;}
-@media (max-width:860px){.v2 .about-grid{grid-template-columns:1fr;}}
+@media (max-width:860px){.v2 .about-grid{grid-template-columns:minmax(0,1fr);}}
 .v2 .info-card{
   background:var(--paper-card); border:1px solid var(--line); border-radius:var(--radius-md);
   padding:24px; box-shadow:var(--shadow-sm);
 }
 /* Sticky rail holding the profile card and the GitHub card below it. */
-.v2 .about-rail{align-self:start; position:sticky; top:24px; display:flex; flex-direction:column; gap:16px;}
+.v2 .about-rail{min-width:0; align-self:start; position:sticky; top:24px; display:flex; flex-direction:column; gap:16px;}
 /* The sidebar only makes sense as a sticky rail next to a second column;
    once the grid collapses to one column (see the media query above) it's
    just another block, and leaving it sticky makes it float over the
@@ -1061,3 +1061,4 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .s-val{font-family:var(--font-code); font-size:10px; fill:var(--ink-soft);}
 .v2 .sleep-card:not(.ready):not(.failed) .s-chart{background:var(--line); opacity:.4; border-radius:4px;}
 .v2 .sleep-card.failed{display:none;}
+.v2 .info-card.github-card .g-map{max-width:100%;}
