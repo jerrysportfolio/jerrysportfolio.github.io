@@ -712,8 +712,10 @@ body.portal-down.portal-fade::before{opacity:.9;}
 @media (max-width:860px){.v2 .about-grid{grid-template-columns:1fr;}}
 .v2 .info-card{
   background:var(--paper-card); border:1px solid var(--line); border-radius:var(--radius-md);
-  padding:24px; box-shadow:var(--shadow-sm); align-self:start; position:sticky; top:24px;
+  padding:24px; box-shadow:var(--shadow-sm);
 }
+/* Sticky rail holding the profile card and the GitHub card below it. */
+.v2 .about-rail{align-self:start; position:sticky; top:24px; display:flex; flex-direction:column; gap:16px;}
 /* The sidebar only makes sense as a sticky rail next to a second column;
    once the grid collapses to one column (see the media query above) it's
    just another block, and leaving it sticky makes it float over the
@@ -722,7 +724,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
    and a media-scoped override placed before the unconditional rule it's
    meant to override gets silently beaten by it regardless of viewport. */
 @media (max-width:860px){
-  .v2 .info-card{position:static; top:auto;}
+  .v2 .about-rail{position:static; top:auto;}
 }
 .v2 .info-card .avatar{
   width:110px; height:110px; border-radius:50%; object-fit:cover;
@@ -972,7 +974,8 @@ body.portal-down.portal-fade::before{opacity:.9;}
 :root[data-theme="dark"] .v2 .github-card{--g-color:#3ddc84;}
 .v2 .github-card h3{padding-right:0;}
 .v2 .github-card .post-meta{margin:3px 0 0;}
-.v2 .github-card .g-stat{position:absolute; right:0; top:14px; text-align:right; line-height:1;}
+.v2 .github-card{position:relative;}
+.v2 .github-card .g-stat{position:absolute; right:24px; top:24px; text-align:right; line-height:1;}
 .v2 .github-card .g-total{font-family:var(--font-display); font-size:1.7rem; font-weight:600; letter-spacing:-.02em;}
 .v2 .github-card .g-stat small{display:block; margin-top:3px; font-family:var(--font-code); font-size:.68rem; color:var(--ink-faint);}
 /* Fixed aspect ratio reserves the space up front so nothing shifts when the data arrives. */
