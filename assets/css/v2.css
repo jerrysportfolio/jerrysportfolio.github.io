@@ -1026,11 +1026,11 @@ body.portal-down.portal-fade::before{opacity:.9;}
   .v2 .visitors-card:not(.ready):not(.failed) .v-chart{animation:none;}
 }
 
-/* GitHub card on the About page: matches the profile card's typography and keeps title + total on one row. */
-.v2 .info-card.github-card h3{font-family:var(--font-main); font-size:1.6rem; font-weight:700; letter-spacing:-.02em; margin:0 0 4px; padding:0;}
-.v2 .info-card.github-card .post-meta{font-family:var(--font-main); font-size:.9rem; letter-spacing:0; color:var(--ink-soft); margin:0;}
-.v2 .info-card.github-card .g-head{display:flex; justify-content:space-between; align-items:flex-end; gap:12px;}
+/* GitHub card on the About page: same typography as the homepage visitors card, title + total on one row. */
+.v2 .info-card.github-card h3{font-family:var(--font-display); font-size:1.05rem; font-weight:600; letter-spacing:0; margin:0; padding:0;}
+.v2 .info-card.github-card .post-meta{font-family:var(--font-code); font-size:.75rem; letter-spacing:.03em; color:var(--ink-faint); margin:3px 0 0;}
+.v2 .info-card.github-card .g-head{display:flex; justify-content:space-between; align-items:flex-start; gap:12px;}
 .v2 .info-card.github-card .g-stat{position:static; text-align:right;}
-.v2 .info-card.github-card .g-total{font-family:var(--font-main); font-size:1.6rem; font-weight:700; letter-spacing:-.02em; line-height:1;}
-.v2 .info-card.github-card .g-stat small{font-family:var(--font-main); font-size:.9rem; color:var(--ink-soft); margin-top:4px;}
-.v2 .info-card.github-card .g-map{margin-top:18px;}
+.v2 .info-card.github-card .g-total{font-family:var(--font-display); font-size:1.7rem; font-weight:600; letter-spacing:-.02em; line-height:1;}
+.v2 .info-card.github-card .g-stat small{font-family:var(--font-code); font-size:.68rem; color:var(--ink-faint); margin-top:3px;}
+.v2 .info-card.github-card .g-map{margin-top:16px;}
