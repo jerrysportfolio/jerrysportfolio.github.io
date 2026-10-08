@@ -296,7 +296,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .page-header{padding:64px 0 28px; max-width:1180px; margin:0 auto;}
 .v2 .eyebrow{
   font-family:var(--font-code); font-size:.8rem; letter-spacing:.09em; text-transform:uppercase;
-  color:var(--accent); font-weight:600; display:block; margin-bottom:10px;
+  color:var(--ink-faint); font-weight:600; display:block; margin-bottom:10px;
 }
 .v2 h1.page-title{
   font-family:var(--font-display); font-weight:600; font-size:clamp(2.1rem,5vw,3.1rem);
