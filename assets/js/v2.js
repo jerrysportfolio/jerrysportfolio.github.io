@@ -402,6 +402,15 @@
   // ---------- hero polaroid: tap to play with it ----------
   // Once the photo has printed (card gets .printed), each tap plays the next
   // effect (lift -> shake -> flip) and swings the tilt to the other side.
+  // Email is assembled at runtime so Cloudflare's email obfuscation (which
+  // rewrites addresses in the served HTML into a click-through decode page)
+  // never sees it. Also fixes the placeholder mailto: hrefs in the HTML.
+  function initEmail(root) {
+    var addr = ['jerry', 'iamjerryhu.org'].join('@');
+    root.querySelectorAll('a[href^="mailto:"]').forEach(function (a) { a.href = 'mailto:' + addr; });
+    root.querySelectorAll('[data-email]').forEach(function (el) { el.textContent = addr; });
+  }
+
   function initPolaroidTap(root) {
     var pol = root.querySelector('#hero-polaroid');
     var card = pol && pol.closest('.cell-hero');
@@ -1067,6 +1076,7 @@
 
     initUnsplashHero(root, consumeVisit());
     initPolaroidTap(root);
+    initEmail(root);
     initDailyQuote(root);
     initGalleryStats(root);
     initGalleryPhotos(root);

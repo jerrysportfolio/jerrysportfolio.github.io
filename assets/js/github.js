@@ -23,11 +23,24 @@
             });
     }
 
+    // Last good response lives in localStorage so the graph paints instantly and still shows
+    // (slightly stale) if the third-party API is slow or down.
+    var STORE = "gh-contrib-v1";
+    function readStore() {
+        try { var d = JSON.parse(localStorage.getItem(STORE)); return Array.isArray(d) && d.length ? d : null; } catch (e) { return null; }
+    }
+    function writeStore(d) {
+        try { localStorage.setItem(STORE, JSON.stringify(d)); } catch (e) {}
+    }
+
     function load() {
         if (!cache) {
             cache = fetchRetry(URL)
-                .then(function (d) { return Array.isArray(d.contributions) && d.contributions.length ? d.contributions : Promise.reject(); });
-            cache.catch(function () { cache = null; });
+                .then(function (d) { return Array.isArray(d.contributions) && d.contributions.length ? d.contributions : Promise.reject(); })
+                .then(function (days) { writeStore(days); return days; });
+            // Only dedupe concurrent calls; every later init refetches so the data stays current.
+            var clear = function () { cache = null; };
+            cache.then(clear, clear);
         }
         return cache;
     }
@@ -78,10 +91,10 @@
         var map = card.querySelector(".g-map");
         map.textContent = "";
         map.appendChild(s);
-        map.scrollLeft = map.scrollWidth; // start on the most recent weeks
         enableDrag(map);
         card.querySelector(".g-total").textContent = total.toLocaleString();
         card.classList.add("ready");
+        map.scrollLeft = map.scrollWidth; // start on the most recent weeks (after .ready so it has layout)
     }
 
     // Touchpad swipes, touch and the scrollbar scroll natively; this adds click-and-drag for a mouse.
@@ -105,7 +118,9 @@
     window.initGithubMap = function (root) {
         var card = (root || document).querySelector("#github-card");
         if (!card) return;
-        load().then(function (days) { render(card, days); }, function () { card.classList.add("failed"); });
+        var stored = readStore();
+        if (stored) render(card, stored);
+        load().then(function (days) { render(card, days); }, function () { if (!stored) card.classList.add("failed"); });
     };
 
     window.initGithubMap(document);
