@@ -715,7 +715,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
   padding:24px; box-shadow:var(--shadow-sm);
 }
 /* Sticky rail holding the profile card and the GitHub card below it. */
-.v2 .about-rail{align-self:start; display:flex; flex-direction:column; gap:16px;}
+.v2 .about-rail{align-self:start; position:sticky; top:24px; display:flex; flex-direction:column; gap:16px;}
 /* The sidebar only makes sense as a sticky rail next to a second column;
    once the grid collapses to one column (see the media query above) it's
    just another block, and leaving it sticky makes it float over the
@@ -1034,6 +1034,5 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .info-card.github-card .g-total{font-family:var(--font-display); font-size:1.7rem; font-weight:600; letter-spacing:-.02em; line-height:1;}
 .v2 .info-card.github-card .g-stat small{font-family:var(--font-code); font-size:.68rem; color:var(--ink-faint); margin-top:3px;}
 .v2 .info-card.github-card .g-map{margin-top:16px;}
-.v2 .info-card.github-card .g-map{aspect-ratio:auto; min-height:745px;}
-.v2 .info-card.github-card .g-map svg{width:auto; max-width:100%;}
-.v2 .g-month{font-family:var(--font-code); font-size:10px; fill:var(--ink-faint);}
+.v2 .info-card.github-card .g-map{aspect-ratio:634/116;}
+.v2 .g-month{font-family:var(--font-code); font-size:22px; fill:var(--ink-faint);}
