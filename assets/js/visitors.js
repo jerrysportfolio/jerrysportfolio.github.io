@@ -8,10 +8,24 @@
     var cache = null; // one fetch per page load, reused across router swaps
     var online = 0;   // live count pushed over the WebSocket
 
+    // GET JSON with up to 3 attempts (timeout + backoff), so one slow or dropped request doesn't hide the card.
+    function fetchRetry(url, attempt) {
+        attempt = attempt || 0;
+        var ctl = window.AbortController ? new AbortController() : null;
+        var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
+        return fetch(url, ctl ? { signal: ctl.signal } : undefined)
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            .finally(function () { clearTimeout(timer); })
+            .catch(function () {
+                if (attempt >= 2) return Promise.reject();
+                return new Promise(function (res) { setTimeout(res, 600 * Math.pow(2, attempt)); })
+                    .then(function () { return fetchRetry(url, attempt + 1); });
+            });
+    }
+
     function load() {
         if (!cache) {
-            cache = fetch(VISITORS_URL)
-                .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            cache = fetchRetry(VISITORS_URL)
                 .then(function (d) { return Array.isArray(d.days) && d.days.length > 1 ? d.days : Promise.reject(); });
             cache.catch(function () { cache = null; });
         }

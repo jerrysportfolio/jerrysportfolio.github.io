@@ -8,10 +8,24 @@
     var DAYS = 365, CELL = 11, GAP = 3, LABEL = 20, MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], LEVELS = [0.1, 0.3, 0.5, 0.75, 1];
     var cache = null;
 
+    // GET JSON with up to 3 attempts (timeout + backoff), so one slow or dropped request doesn't hide the card.
+    function fetchRetry(url, attempt) {
+        attempt = attempt || 0;
+        var ctl = window.AbortController ? new AbortController() : null;
+        var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
+        return fetch(url, ctl ? { signal: ctl.signal } : undefined)
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            .finally(function () { clearTimeout(timer); })
+            .catch(function () {
+                if (attempt >= 2) return Promise.reject();
+                return new Promise(function (res) { setTimeout(res, 600 * Math.pow(2, attempt)); })
+                    .then(function () { return fetchRetry(url, attempt + 1); });
+            });
+    }
+
     function load() {
         if (!cache) {
-            cache = fetch(URL)
-                .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            cache = fetchRetry(URL)
                 .then(function (d) { return Array.isArray(d.contributions) && d.contributions.length ? d.contributions : Promise.reject(); });
             cache.catch(function () { cache = null; });
         }

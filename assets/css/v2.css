@@ -1077,3 +1077,8 @@ body.portal-down.portal-fade::before{opacity:.9;}
 @media (min-width:861px){
   .v2 .about-grid{padding-bottom:40px;}
 }
+
+/* Profile photo: stays invisible until fully decoded, then fades in as a whole (no line-by-line paint). */
+.v2 .info-card .avatar{opacity:0; transition:opacity .35s ease;}
+.v2 .info-card .avatar.loaded{opacity:1;}
+@media (prefers-reduced-motion: reduce){ .v2 .info-card .avatar{transition:none;} }

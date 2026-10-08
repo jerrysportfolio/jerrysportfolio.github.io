@@ -7,10 +7,24 @@
     var W = 252, H = 120, PT = 16, PB = 18, BAR = 22, GOAL = 8;
     var cache = null;
 
+    // GET JSON with up to 3 attempts (timeout + backoff), so one slow or dropped request doesn't hide the card.
+    function fetchRetry(url, attempt) {
+        attempt = attempt || 0;
+        var ctl = window.AbortController ? new AbortController() : null;
+        var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
+        return fetch(url, ctl ? { signal: ctl.signal } : undefined)
+            .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            .finally(function () { clearTimeout(timer); })
+            .catch(function () {
+                if (attempt >= 2) return Promise.reject();
+                return new Promise(function (res) { setTimeout(res, 600 * Math.pow(2, attempt)); })
+                    .then(function () { return fetchRetry(url, attempt + 1); });
+            });
+    }
+
     function load() {
         if (!cache) {
-            cache = fetch(SLEEP_URL)
-                .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+            cache = fetchRetry(SLEEP_URL)
                 .then(function (d) {
                     var ok = Array.isArray(d.nights) && d.nights.some(function (n) { return n.hours != null; });
                     return ok ? d.nights : Promise.reject();
