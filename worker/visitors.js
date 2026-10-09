@@ -170,7 +170,7 @@ const withHeaders = (res, headers) => {
 
 // POST /sleep  (Authorization: Bearer SLEEP_TOKEN)  body: {"nights":[{"date":"2026-10-07","hours":7.4}, ...]}
 //   `date` is the morning you woke up. Upserts by date, so re-sending a week is harmless.
-// GET  /sleep  -> {"nights":[{"date","hours"|null} x7]}, the last 7 days ending today (America/Chicago).
+// GET  /sleep  -> {"nights":[{"date","hours"|null} x7]}, the last 7 days ending today (America/Chicago), where "today" rolls over at 1pm local.
 async function handleSleep(request, env) {
   // The local preview server (python -m http.server 8000) may read the chart data too.
   const origin = request.headers.get("Origin") || "";
@@ -197,8 +197,11 @@ async function handleSleep(request, env) {
 
   if (request.method !== "GET") return json({ error: "method" }, 405, cors);
   const stored = await (await store.fetch("https://do/sleep")).json();
+  // The sleep "day" rolls over at 1pm (not midnight): last night's data isn't in until midday, so a new
+  // empty slot should only appear after that. Shifting "now" back 13h makes 1pm the day boundary.
+  const sleepNow = Date.now() - 13 * 36e5;
   const nights = Array.from({ length: 7 }, (_, i) => {
-    const date = localDate(Date.now() - (6 - i) * 864e5);
+    const date = localDate(sleepNow - (6 - i) * 864e5);
     return { date, hours: stored[date] ?? null };
   });
   return json({ nights }, 200, { ...cors, "Cache-Control": "public, max-age=300" });
