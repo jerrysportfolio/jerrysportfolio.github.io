@@ -615,6 +615,126 @@
     var backdrop = lb.querySelector('#lightbox-backdrop');
     if (closeBtn) closeBtn.addEventListener('click', closeLightbox);
     if (backdrop) backdrop.addEventListener('click', closeLightbox);
+    initLightboxSwipe(lb);
+    initLightboxDesktopClose(lb);
+  }
+
+  // Desktop (wider than the phone layout): drag the photo with the mouse and let go past ~120px to dismiss,
+  // click the dark area around the photo, or flick the trackpad / wheel over the photo area.
+  function initLightboxDesktopClose(lb) {
+    var media = lb.querySelector('.lightbox-media');
+    var frame = lb.querySelector('.lightbox-frame');
+    var img = lb.querySelector('#lightbox-img');
+    var backdrop = lb.querySelector('#lightbox-backdrop');
+    var narrow = window.matchMedia ? window.matchMedia('(max-width: 760px)') : null;
+    if (!media || !frame || !img || !narrow) return;
+    var sx = 0, sy = 0, dx = 0, dy = 0, pid = null, moved = false;
+
+    var restore = function () {
+      frame.style.transition = 'transform .25s cubic-bezier(.22,1,.36,1)';
+      frame.style.transform = '';
+      if (backdrop) backdrop.style.opacity = '';
+    };
+    img.draggable = false;
+    img.style.cursor = 'grab';
+
+    img.addEventListener('pointerdown', function (e) {
+      if (narrow.matches || e.pointerType === 'touch' || e.button !== 0) return;
+      pid = e.pointerId; sx = e.clientX; sy = e.clientY; dx = dy = 0; moved = false;
+      img.setPointerCapture(pid);
+      img.style.cursor = 'grabbing';
+      frame.style.transition = 'none';
+    });
+    img.addEventListener('pointermove', function (e) {
+      if (e.pointerId !== pid) return;
+      dx = e.clientX - sx; dy = e.clientY - sy;
+      if (!moved && Math.hypot(dx, dy) < 6) return;
+      moved = true;
+      var d = Math.hypot(dx, dy);
+      frame.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + (1 - Math.min(d / 2000, .08)) + ')';
+      if (backdrop) backdrop.style.opacity = String(1 - Math.min(d / 400, .7));
+    });
+    var up = function (e) {
+      if (e.pointerId !== pid) return;
+      pid = null;
+      img.style.cursor = 'grab';
+      if (Math.hypot(dx, dy) > 120) {
+        frame.style.transition = 'transform .22s ease-out';
+        frame.style.transform = 'translate(' + dx * 2 + 'px,' + dy * 2 + 'px) scale(.9)';
+        closeLightbox();
+      } else {
+        restore();
+      }
+    };
+    img.addEventListener('pointerup', up);
+    img.addEventListener('pointercancel', up);
+
+    // Click on the empty area around the photo (not the photo itself).
+    media.addEventListener('click', function (e) {
+      if (narrow.matches || e.target !== media) return;
+      closeLightbox();
+    });
+
+    // Trackpad / wheel flick over the photo area: a strong vertical scroll dismisses.
+    var acc = 0, accTimer = null;
+    media.addEventListener('wheel', function (e) {
+      if (narrow.matches || lb.hidden) return;
+      acc += e.deltaY;
+      clearTimeout(accTimer);
+      accTimer = setTimeout(function () { acc = 0; }, 160);
+      if (Math.abs(acc) > 260) { acc = 0; closeLightbox(); }
+    }, { passive: true });
+  }
+
+  // Phone-width: when the lightbox is scrolled to the top, drag in any direction to dismiss. The sheet follows the finger;
+  // past ~100px (or a quick flick) it closes, otherwise it springs back. A mostly-upward drag just scrolls to the info.
+  function initLightboxSwipe(lb) {
+    var frame = lb.querySelector('.lightbox-frame');
+    var backdrop = lb.querySelector('#lightbox-backdrop');
+    var narrow = window.matchMedia ? window.matchMedia('(max-width: 760px)') : null;
+    if (!frame || !narrow) return;
+    var x0 = 0, y0 = 0, t0 = 0, dx = 0, dy = 0, dragging = false, tracking = false;
+    var reset = function (animate) {
+      frame.style.transition = animate ? 'transform .25s cubic-bezier(.22,1,.36,1)' : '';
+      frame.style.transform = '';
+      if (backdrop) backdrop.style.opacity = '';
+    };
+    lb.addEventListener('touchstart', function (e) {
+      if (!narrow.matches || e.touches.length !== 1 || lb.scrollTop > 0) { tracking = false; return; }
+      tracking = true; dragging = false; dx = dy = 0;
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; t0 = Date.now();
+    }, { passive: true });
+    lb.addEventListener('touchmove', function (e) {
+      if (!tracking) return;
+      dx = e.touches[0].clientX - x0;
+      dy = e.touches[0].clientY - y0;
+      if (!dragging) {
+        if (Math.hypot(dx, dy) < 8) return;
+        // Any direction dismisses (down, sideways, diagonal) except a mostly-upward drag, which scrolls to the info.
+        if (dy < 0 && Math.abs(dy) > Math.abs(dx)) { tracking = false; return; }
+        dragging = true;
+        frame.style.transition = 'none';
+      }
+      e.preventDefault(); // we own this gesture now: no scroll bounce / pull-to-refresh
+      var d = Math.hypot(dx, dy);
+      frame.style.transform = 'translate(' + dx + 'px,' + dy + 'px) scale(' + (1 - Math.min(d / 1500, .08)) + ')';
+      if (backdrop) backdrop.style.opacity = String(1 - Math.min(d / 320, .7));
+    }, { passive: false });
+    var end = function () {
+      if (!tracking || !dragging) { tracking = false; return; }
+      tracking = false; dragging = false;
+      var d = Math.hypot(dx, dy);
+      var fast = d / Math.max(Date.now() - t0, 1) > 0.5;
+      if (d > 100 || (fast && d > 30)) {
+        frame.style.transition = 'transform .22s ease-out';
+        frame.style.transform = 'translate(' + dx * 3 + 'px,' + dy * 3 + 'px) scale(.9)';
+        closeLightbox();
+      } else {
+        reset(true);
+      }
+    };
+    lb.addEventListener('touchend', end);
+    lb.addEventListener('touchcancel', end);
   }
 
   // ---------- blog post inline photos open in the same lightbox as the gallery ----------
@@ -759,6 +879,7 @@
 
     lb.hidden = false;
     document.body.style.overflow = 'hidden';
+    lb.scrollTop = 0; // phone layout scrolls: always open on the photo, not the details
     // Two rAFs: the first lets the browser paint the [hidden]-removed state,
     // the second then adds the class that actually triggers the transition —
     // adding it in the same frame as un-hiding would just skip straight to
@@ -776,6 +897,10 @@
     var finish = function () {
       lb.hidden = true;
       lb.removeEventListener('transitionend', finish);
+      // Clear any swipe-to-dismiss offsets so the next open starts clean.
+      var frame = lb.querySelector('.lightbox-frame'), bd = lb.querySelector('#lightbox-backdrop');
+      if (frame) { frame.style.transition = ''; frame.style.transform = ''; }
+      if (bd) bd.style.opacity = '';
     };
     lb.addEventListener('transitionend', finish);
     // Fallback in case transitionend never fires (reduced motion, etc.).
