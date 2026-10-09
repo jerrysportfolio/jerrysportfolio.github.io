@@ -1290,16 +1290,24 @@
   // About page, mobile only: Education / Research / Hackathons show just their first entry, with a
   // chevron left of the heading that animates the list open. Heights are set in JS so it can animate.
   var mobileMQ = window.matchMedia ? window.matchMedia('(max-width: 860px)') : null;
+  // Hackathons keeps its newest two visible; the other lists keep one.
+  function tlShow(ul) { return Number(ul.dataset.tlShow) || 1; }
+  function tlCollapsedHeight(ul) {
+    var last = ul.children[tlShow(ul) - 1];
+    return Math.ceil(last.getBoundingClientRect().bottom - ul.getBoundingClientRect().top);
+  }
   function applyTimelineHeight(ul) {
     if (!mobileMQ || !mobileMQ.matches) { ul.style.height = ''; return; }
     var open = ul.classList.contains('tl-open');
-    ul.style.height = open ? '' : ul.firstElementChild.offsetHeight + 'px';
+    ul.style.height = open ? '' : tlCollapsedHeight(ul) + 'px';
   }
   function initTimelineCollapse(root) {
     Array.prototype.forEach.call(root.querySelectorAll('.about-content h3'), function (h) {
       var ul = h.nextElementSibling;
       if (!/^(Education|Research|Hackathons)$/.test(h.textContent.trim())) return;
-      if (!ul || !ul.classList.contains('timeline') || ul.children.length < 2 || h.querySelector('.tl-toggle')) return;
+      if (!ul || !ul.classList.contains('timeline') || h.querySelector('.tl-toggle')) return;
+      ul.dataset.tlShow = /^Hackathons$/.test(h.textContent.trim()) ? '2' : '1';
+      if (ul.children.length <= tlShow(ul)) return;
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'tl-toggle';
@@ -1309,7 +1317,7 @@
       h.insertBefore(btn, h.firstChild);
       var more = document.createElement('span');
       more.className = 'tl-more';
-      more.textContent = '+' + (ul.children.length - 1) + ' more';
+      more.textContent = '+' + (ul.children.length - tlShow(ul)) + ' more';
       h.appendChild(more);
       ul.classList.add('tl-collapsible');
       applyTimelineHeight(ul);
@@ -1317,7 +1325,7 @@
       btn.addEventListener('click', function () {
         var open = !ul.classList.contains('tl-open');
         if (open) {
-          ul.style.height = ul.firstElementChild.offsetHeight + 'px';
+          ul.style.height = tlCollapsedHeight(ul) + 'px';
           void ul.offsetHeight;
           ul.classList.add('tl-open');
           ul.style.height = ul.scrollHeight + 'px';
@@ -1327,7 +1335,7 @@
           ul.style.height = ul.offsetHeight + 'px';
           void ul.offsetHeight;
           ul.classList.remove('tl-open');
-          ul.style.height = ul.firstElementChild.offsetHeight + 'px';
+          ul.style.height = tlCollapsedHeight(ul) + 'px';
         }
         more.classList.toggle('hidden', open);
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
