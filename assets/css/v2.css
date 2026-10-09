@@ -282,7 +282,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
 
 /* ---------- page content (AJAX-swapped by v2.js router) ---------- */
 .v2 main.page-content{
-  display:block;
+  display:block; padding-bottom:56px; /* breathing room above the footer divider on every page */
   transition:opacity .22s ease, transform .22s ease;
 }
 .v2 main.page-content.is-transitioning{
@@ -318,7 +318,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
    the homepage rather than the projects page. */
 .v2 .home-featured{
   display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
-  max-width:1180px; margin:0 auto 60px; grid-column:1 / -1;
+  max-width:1180px; margin:0 auto; grid-column:1 / -1;
 }
 @media (max-width:760px){
   .v2 .home-featured{grid-template-columns:1fr;}
@@ -1170,7 +1170,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
      cards join the grid; .home-featured sits inside .bento and dissolves the same way. */
   .v2 .bento{
     grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:none;
-    align-items:stretch; margin-bottom:80px;
+    align-items:stretch;
   }
   .v2 .home-featured, .v2 .intro-stack{display:contents;}
   .v2 .intro-stack .cell-intro{grid-column:1 / -1; grid-row:1;}
