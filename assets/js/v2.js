@@ -415,6 +415,28 @@
     root.querySelectorAll('[data-email]').forEach(function (el) { el.textContent = addr; });
   }
 
+  // Home project cards: the whole card opens its link (not just the ↗ button). The arrow's
+  // hover animation (rotate + accent fill) is played first via .arrow-play, then we navigate
+  // after a short beat so touch taps — which have no hover — still see it.
+  function initCardLinks(root) {
+    root.querySelectorAll('.bento-cell > .mini-card').forEach(function (card) {
+      var link = card.querySelector('a.post-arrow');
+      if (!link || card.dataset.cardLink) return;
+      card.dataset.cardLink = '1';
+      card.style.cursor = 'pointer';
+      card.addEventListener('click', function (e) {
+        if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button) return;
+        e.preventDefault();
+        if (card.classList.contains('arrow-play')) return;
+        card.classList.add('arrow-play');
+        setTimeout(function () {
+          if (link.target === '_blank') window.open(link.href, '_blank', 'noopener'); else location.href = link.href;
+          card.classList.remove('arrow-play');
+        }, 260);
+      });
+    });
+  }
+
   function initPolaroidTap(root) {
     var pol = root.querySelector('#hero-polaroid');
     var card = pol && pol.closest('.cell-hero');
@@ -1237,6 +1259,7 @@
 
     initUnsplashHero(root, consumeVisit());
     initPolaroidTap(root);
+    initCardLinks(root);
     initEmail(root);
     initDailyQuote(root);
     initGalleryStats(root);

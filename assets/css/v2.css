@@ -579,7 +579,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
   border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
   transition:all .2s cubic-bezier(.25,.8,.25,1);
 }
-.v2 .post-card:hover .post-arrow, .v2 .mini-card:hover .post-arrow{background:var(--accent); border-color:var(--accent); color:var(--on-accent); transform:rotate(45deg);}
+.v2 .post-card:hover .post-arrow, .v2 .mini-card:hover .post-arrow, .v2 .mini-card.arrow-play .post-arrow{background:var(--accent); border-color:var(--accent); color:var(--on-accent); transform:rotate(45deg);}
 
 /* ---------- section shells ---------- */
 .v2 section.v2-section{max-width:1180px; margin:0 auto 80px;}
