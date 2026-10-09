@@ -1165,21 +1165,24 @@ body.portal-down.portal-fade::before{opacity:.9;}
 
 /* Home bento, ~761–980px: intro and hero full width, the two post cards side by side. */
 @media (min-width:700px) and (max-width:980px){
-  /* Two columns: polaroid + CodeGPT + visitors on the left; intro and every other project tile
-     stacked on the right. .home-featured dissolves so its tiles join the same grid. */
+  /* Two columns: intro and Constellation span both; below them the polaroid + CodeGPT + visitors
+     sit on the left and the other project tiles stack on the right. .intro-stack dissolves so its
+     cards join the grid; .home-featured sits inside .bento and dissolves the same way. */
   .v2 .bento{
     grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:none;
-    align-items:start; margin-bottom:80px;
+    align-items:stretch; margin-bottom:80px;
   }
-  .v2 .home-featured{display:contents;}
-  .v2 .cell-hero{grid-area:auto; grid-column:1; grid-row:1; height:auto; aspect-ratio:1 / 1.15; min-height:0;}
-  .v2 .cell-latest{grid-area:auto; grid-column:1; grid-row:2 / span 5;}
-  .v2 .intro-stack{grid-area:auto; grid-column:2; grid-row:1;}
-  .v2 .cell-older{grid-area:auto; grid-column:2; grid-row:2;}
-  .v2 .home-featured > .bento-cell:nth-child(1){grid-column:2; grid-row:3;}
-  .v2 .home-featured > .bento-cell:nth-child(2){grid-column:2; grid-row:4;}
-  .v2 .home-featured > .bento-cell:nth-child(3){grid-column:2; grid-row:5;}
+  .v2 .home-featured, .v2 .intro-stack{display:contents;}
+  .v2 .intro-stack .cell-intro{grid-column:1 / -1; grid-row:1;}
+  .v2 .intro-stack .cell-spotlight{grid-column:1 / -1; grid-row:2; flex:none;}
+  .v2 .cell-hero{grid-area:auto; grid-column:1; grid-row:3 / span 2; height:auto; aspect-ratio:auto; min-height:380px;}
+  .v2 .cell-latest{grid-area:auto; grid-column:1; grid-row:5 / span 2;}
+  .v2 .cell-older{grid-area:auto; grid-column:2; grid-row:3;}
+  .v2 .home-featured > .bento-cell:nth-child(1){grid-column:2; grid-row:4;}
+  .v2 .home-featured > .bento-cell:nth-child(2){grid-column:2; grid-row:5;}
+  .v2 .home-featured > .bento-cell:nth-child(3){grid-column:2; grid-row:6;}
 }
+
 
 /* Very narrow screens (foldable cover displays, ≤380px): tighter profile header and gutters. */
 @media (max-width:380px){
