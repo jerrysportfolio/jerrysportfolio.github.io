@@ -5,6 +5,10 @@
   var PAGES = ['index.html', 'about.html', 'projects.html', 'gallery.html', 'blog.html'];
   var TRANSITION_MS = 220;
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Polaroid print/tap effects and the page-swap fade deliberately ignore the OS Reduce Motion
+  // setting (iPadOS often has it on, which made them silently vanish there). They are short and
+  // opacity/transform-only; everything else still honours reduceMotion.
+  var skipSignatureFx = false;
   var activePageKey = document.body.dataset.page || '';
   var navigating = false;
 
@@ -291,7 +295,7 @@
       credit.hidden = false;
     };
     var armCamera = function () {
-      if (reduceMotion) return;
+      if (skipSignatureFx) return;
       camTimer = setTimeout(function () {
         camTimer = null;
         if (settled || card.classList.contains('waiting')) return;
@@ -319,7 +323,7 @@
       setRatio();
       if (current) topUp(current);
       // The inline script in index.html may have started the camera before this file ran.
-      if (reduceMotion) { showDirect(); return; }
+      if (skipSignatureFx) { showDirect(); return; }
       if (!card.classList.contains('waiting')) {
         // Instant (cached) image: print only if it's been over 3 hours since the last visit.
         if (staleVisit) print(true); else showDirect();
@@ -436,7 +440,7 @@
       var from = parseFloat(getComputedStyle(pol).getPropertyValue('--tilt')) || -2;
       pol.style.setProperty('--tilt-from', from + 'deg');
       pol.style.setProperty('--tilt', (n % 2 === 0 ? 2.4 : -2.2) + 'deg');
-      if (reduceMotion) { n++; return; }
+      if (skipSignatureFx) { n++; return; }
       ALL.forEach(function (c) { pol.classList.remove(c); });
       void pol.offsetWidth; // restart the animation if it is already playing
       pol.classList.add('tap-fx', 'fx-' + nextFx());
@@ -1435,7 +1439,7 @@
 
         if (push) history.pushState({ href: url.pathname }, '', url.pathname + url.hash);
 
-        if (reduceMotion) {
+        if (skipSignatureFx) {
           finish();
         } else {
           curMain.classList.add('is-transitioning');

@@ -288,9 +288,6 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 main.page-content.is-transitioning{
   opacity:0; transform:translateY(8px);
 }
-@media (prefers-reduced-motion: reduce){
-  .v2 main.page-content{transition:none;}
-}
 
 /* ---------- page header ---------- */
 .v2 .page-header{padding:64px 0 28px; max-width:1180px; margin:0 auto;}
@@ -321,7 +318,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
    the homepage rather than the projects page. */
 .v2 .home-featured{
   display:grid; grid-template-columns:repeat(3,1fr); gap:20px;
-  max-width:1180px; margin:0 auto 80px;
+  max-width:1180px; margin:0 auto 60px; grid-column:1 / -1;
 }
 @media (max-width:760px){
   .v2 .home-featured{grid-template-columns:1fr;}
@@ -521,14 +518,6 @@ body.portal-down.portal-fade::before{opacity:.9;}
   background:#111; border-radius:0 0 8px 8px; opacity:0; transition:opacity .5s ease;
 }
 .v2 .cell-hero.printing::before{opacity:.8;}
-@media (prefers-reduced-motion: reduce){
-  .v2 .cell-hero .polaroid{transition:none;}
-  .v2 .cell-hero .polaroid.tap-fx, .v2 .cell-hero .polaroid.tap-fx .polaroid-photo img,
-  .v2 .cell-hero.printing .polaroid,
-  .v2 .cell-hero.printing .polaroid-photo img,
-  .v2 .cell-hero .polaroid-camera{animation:none;}
-  .v2 .cell-hero .polaroid-camera{display:none;}
-}
 .v2 .cell-hero .hero-quote{
   position:relative; z-index:1; padding:28px; color:#fff;
   font-family:var(--font-main); font-style:italic; font-weight:500; font-size:1.2rem; line-height:1.4;
@@ -1175,8 +1164,21 @@ body.portal-down.portal-fade::before{opacity:.9;}
 }
 
 /* Home bento, ~761–980px: intro and hero full width, the two post cards side by side. */
-@media (min-width:761px) and (max-width:980px){
-  .v2 .bento{grid-template-columns:1fr 1fr; grid-template-areas:"intro intro" "hero hero" "latest older";}
+@media (min-width:700px) and (max-width:980px){
+  /* Two columns: polaroid + CodeGPT + visitors on the left; intro and every other project tile
+     stacked on the right. .home-featured dissolves so its tiles join the same grid. */
+  .v2 .bento{
+    grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-areas:none;
+    align-items:start; margin-bottom:80px;
+  }
+  .v2 .home-featured{display:contents;}
+  .v2 .cell-hero{grid-area:auto; grid-column:1; grid-row:1; height:auto; aspect-ratio:1 / 1.15; min-height:0;}
+  .v2 .cell-latest{grid-area:auto; grid-column:1; grid-row:2 / span 5;}
+  .v2 .intro-stack{grid-area:auto; grid-column:2; grid-row:1;}
+  .v2 .cell-older{grid-area:auto; grid-column:2; grid-row:2;}
+  .v2 .home-featured > .bento-cell:nth-child(1){grid-column:2; grid-row:3;}
+  .v2 .home-featured > .bento-cell:nth-child(2){grid-column:2; grid-row:4;}
+  .v2 .home-featured > .bento-cell:nth-child(3){grid-column:2; grid-row:5;}
 }
 
 /* Very narrow screens (foldable cover displays, ≤380px): tighter profile header and gutters. */
