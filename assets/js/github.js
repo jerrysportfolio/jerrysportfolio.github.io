@@ -8,17 +8,17 @@
     var DAYS = 365, CELL = 11, GAP = 3, LABEL = 20, MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], LEVELS = [0.1, 0.3, 0.5, 0.75, 1];
     var cache = null;
 
-    // GET JSON with up to 3 attempts (timeout + backoff), so one slow or dropped request doesn't hide the card.
+    // GET JSON with up to 5 attempts (timeout + backoff), so one slow or dropped request doesn't hide the card.
     function fetchRetry(url, attempt) {
         attempt = attempt || 0;
         var ctl = window.AbortController ? new AbortController() : null;
-        var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 8000);
+        var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 20000);
         return fetch(url, ctl ? { signal: ctl.signal } : undefined)
             .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
             .finally(function () { clearTimeout(timer); })
             .catch(function () {
-                if (attempt >= 2) return Promise.reject();
-                return new Promise(function (res) { setTimeout(res, 600 * Math.pow(2, attempt)); })
+                if (attempt >= 4) return Promise.reject();
+                return new Promise(function (res) { setTimeout(res, 500 * (attempt + 1)); })
                     .then(function () { return fetchRetry(url, attempt + 1); });
             });
     }
@@ -124,4 +124,27 @@
     };
 
     window.initGithubMap(document);
+
+    // Back/forward restores the page from bfcache without re-running this script, and a fetch that was
+    // in flight when the page froze can stay stuck; drop it and reload if the card never filled in.
+    window.addEventListener("pageshow", function (e) {
+        var card = document.querySelector("#github-card");
+        if (!card) return;
+        if (e.persisted || !card.classList.contains("ready")) {
+            cache = null;
+            card.classList.remove("failed");
+            window.initGithubMap(document);
+        }
+    });
+
+    // Cold first visit (no stored copy): if the load gave up, try again when the network returns or the tab is shown.
+    function retryIfEmpty() {
+        var card = document.querySelector("#github-card");
+        if (card && !card.classList.contains("ready") && !cache) {
+            card.classList.remove("failed");
+            window.initGithubMap(document);
+        }
+    }
+    window.addEventListener("online", retryIfEmpty);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) retryIfEmpty(); });
 })();

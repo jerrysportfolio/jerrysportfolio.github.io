@@ -659,7 +659,9 @@
       .then(function (photos) {
         if (!photos || !photos.length) return;
         // Shuffle so each matched image gets a different random photo.
-        var pool = photos.slice();
+        // Prefer landscape shots for the cards; only fall back to portraits if there aren't enough.
+        var land = photos.filter(function (p) { return p.width >= p.height; });
+        var pool = (land.length >= imgs.length ? land : photos).slice();
         for (var i = pool.length - 1; i > 0; i--) {
           var j = Math.floor(Math.random() * (i + 1));
           var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
@@ -988,6 +990,17 @@
     });
   }
 
+  // Blog covers are stored as full-size originals (10–17 MB). The list shows them at ~120px, so it loads
+  // a small same-origin copy from assets/img/blog-thumbs/ when one exists (named after the Storage file),
+  // and falls back to the original if not.
+  function blogThumbSrc(src) {
+    var m = /\/o\/(.+?)\?/.exec(src || '');
+    if (!m) return src;
+    var name;
+    try { name = decodeURIComponent(m[1]).split('/').pop(); } catch (e) { return src; }
+    return 'assets/img/blog-thumbs/' + name.replace(/[^a-zA-Z0-9_.-]/g, '-').replace(/\.[^.]+$/, '') + '.jpg';
+  }
+
   function renderBlogPosts(root, list, pillGroup, searchInput, posts) {
     blogThumbTimers.forEach(clearInterval);
     blogThumbTimers = [];
@@ -1000,7 +1013,7 @@
         var tagLabel = TAG_LABELS[post.tag] || post.tag || 'Misc';
         var images = post.images || [];
         var cover = images.map(function (src, i) {
-          return '<img src="' + src + '" alt="" class="thumb-slide' + (i === 0 ? ' active' : '') + '">';
+          return '<img src="' + blogThumbSrc(src) + '" data-full="' + src + '" onerror="this.onerror=null;this.src=this.dataset.full" alt="" decoding="async"' + (i === 0 ? ' fetchpriority="high"' : '') + ' class="thumb-slide' + (i === 0 ? ' active' : '') + '">';
         }).join('');
         return '<a class="blog-row" data-category="' + (post.tag || 'misc') + '" href="post.html?slug=' + encodeURIComponent(post.slug) + '">' +
           '<div class="blog-thumb">' + cover + '</div>' +
@@ -1021,10 +1034,17 @@
           var slides = thumb.querySelectorAll('.thumb-slide');
           if (slides.length < 2) return;
           var idx = 0;
+          // Only rotate onto a slide that has finished loading (skipping any still in flight), so the
+          // thumb never fades to grey waiting on a slow image.
           blogThumbTimers.push(setInterval(function () {
-            slides[idx].classList.remove('active');
-            idx = (idx + 1) % slides.length;
-            slides[idx].classList.add('active');
+            for (var step = 1; step < slides.length; step++) {
+              var next = (idx + step) % slides.length;
+              if (!slides[next].complete || !slides[next].naturalWidth) continue;
+              slides[idx].classList.remove('active');
+              idx = next;
+              slides[idx].classList.add('loaded', 'active');
+              break;
+            }
           }, 3500));
         });
       }
@@ -1071,8 +1091,20 @@
 
   // ---------- per-page behaviors (re-run after every content swap) ----------
 
+  // Images fade in once decoded (see "Profile photo" / .loaded rules in v2.css). The capture listener
+  // catches images added later (gallery, blog thumbs); the sweep catches ones already finished.
+  function markLoaded(img) { img.classList.add('loaded'); }
+  document.addEventListener('load', function (e) { if (e.target && e.target.tagName === 'IMG') markLoaded(e.target); }, true);
+  document.addEventListener('error', function (e) { if (e.target && e.target.tagName === 'IMG') markLoaded(e.target); }, true);
+  function sweepLoadedImages(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('img'), function (img) { if (img.complete) markLoaded(img); });
+  }
+
   function initPageBehaviors(root) {
     root = root || document;
+    sweepLoadedImages(root);
+    initTimelineCollapse(root);
+    initChipCollapse(root);
 
     initUnsplashHero(root, consumeVisit());
     initPolaroidTap(root);
@@ -1103,6 +1135,113 @@
     }
   }
 
+  // About page, mobile only: Education / Research / Hackathons show just their first entry, with a
+  // chevron left of the heading that animates the list open. Heights are set in JS so it can animate.
+  var mobileMQ = window.matchMedia ? window.matchMedia('(max-width: 860px)') : null;
+  function applyTimelineHeight(ul) {
+    if (!mobileMQ || !mobileMQ.matches) { ul.style.height = ''; return; }
+    var open = ul.classList.contains('tl-open');
+    ul.style.height = open ? '' : ul.firstElementChild.offsetHeight + 'px';
+  }
+  function initTimelineCollapse(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('.about-content h3'), function (h) {
+      var ul = h.nextElementSibling;
+      if (!/^(Education|Research|Hackathons)$/.test(h.textContent.trim())) return;
+      if (!ul || !ul.classList.contains('timeline') || ul.children.length < 2 || h.querySelector('.tl-toggle')) return;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tl-toggle';
+      btn.setAttribute('aria-label', 'Show all ' + h.textContent.trim());
+      btn.setAttribute('aria-expanded', 'false');
+      btn.innerHTML = '<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M4.5 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      h.insertBefore(btn, h.firstChild);
+      var more = document.createElement('span');
+      more.className = 'tl-more';
+      more.textContent = '+' + (ul.children.length - 1) + ' more';
+      h.appendChild(more);
+      ul.classList.add('tl-collapsible');
+      applyTimelineHeight(ul);
+      h.addEventListener('click', function (e) { if (mobileMQ && mobileMQ.matches && e.target !== btn && !btn.contains(e.target)) btn.click(); });
+      btn.addEventListener('click', function () {
+        var open = !ul.classList.contains('tl-open');
+        if (open) {
+          ul.style.height = ul.firstElementChild.offsetHeight + 'px';
+          void ul.offsetHeight;
+          ul.classList.add('tl-open');
+          ul.style.height = ul.scrollHeight + 'px';
+          var done = function () { ul.removeEventListener('transitionend', done); if (ul.classList.contains('tl-open')) ul.style.height = ''; };
+          ul.addEventListener('transitionend', done);
+        } else {
+          ul.style.height = ul.offsetHeight + 'px';
+          void ul.offsetHeight;
+          ul.classList.remove('tl-open');
+          ul.style.height = ul.firstElementChild.offsetHeight + 'px';
+        }
+        more.classList.toggle('hidden', open);
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        btn.setAttribute('aria-label', (open ? 'Show fewer ' : 'Show all ') + h.textContent.trim());
+      });
+    });
+  }
+  function refreshTimelines() {
+    Array.prototype.forEach.call(document.querySelectorAll('.timeline.tl-collapsible'), applyTimelineHeight);
+  }
+  window.addEventListener('resize', refreshTimelines);
+  if (mobileMQ && mobileMQ.addEventListener) mobileMQ.addEventListener('change', refreshTimelines);
+
+  // About: tech-stack categories over a limit (15 on desktop, 10 on mobile) show that many chips plus a
+  // "+N more" chip that animates the rest open. Applies to every category, so it kicks in if one grows.
+  function chipLimit() { return mobileMQ && mobileMQ.matches ? 10 : 15; }
+  function layoutChipList(list) {
+    if (list.classList.contains('chip-open')) return;
+    var chips = list.querySelectorAll('.skill-chip:not(.chip-more)');
+    var limit = chipLimit();
+    var old = list.querySelector('.chip-more');
+    if (old) old.remove();
+    list.style.height = '';
+    Array.prototype.forEach.call(chips, function (c, i) { c.classList.toggle('chip-extra', i >= limit); });
+    list.classList.toggle('chip-collapsible', chips.length > limit);
+    if (chips.length <= limit) return;
+    var more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'skill-chip chip-more';
+    more.textContent = '+' + (chips.length - limit) + ' more';
+    more.setAttribute('aria-expanded', 'false');
+    list.insertBefore(more, chips[limit]);
+    list.style.height = (more.offsetTop + more.offsetHeight + 3) + 'px'; // + the list's bottom padding
+    // No focus on tap: a focused chip that then disappears can make mobile browsers scroll the page.
+    more.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    more.addEventListener('click', function () {
+      var y = window.pageYOffset, x = window.pageXOffset;
+      list.style.height = list.offsetHeight + 'px';
+      list.classList.add('chip-open'); // hides the "+N more" chip so the full height can be measured
+      if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+      void list.offsetHeight;
+      list.style.height = list.scrollHeight + 'px';
+      var done = function (e) {
+        if (e && (e.target !== list || e.propertyName !== 'height')) return;
+        list.removeEventListener('transitionend', done);
+        list.style.height = '';
+      };
+      list.addEventListener('transitionend', done);
+      // Hold the scroll position for the length of the animation so nothing moves the page.
+      var until = Date.now() + 650;
+      (function pin() {
+        if (window.pageYOffset !== y || window.pageXOffset !== x) window.scrollTo(x, y);
+        if (Date.now() < until) requestAnimationFrame(pin);
+      })();
+    });
+  }
+  function refreshChipLists() {
+    Array.prototype.forEach.call(document.querySelectorAll('.chip-list'), layoutChipList);
+  }
+  function initChipCollapse(root) {
+    Array.prototype.forEach.call(root.querySelectorAll('.chip-list'), layoutChipList);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(refreshChipLists);
+  }
+  window.addEventListener('resize', refreshChipLists);
+  if (mobileMQ && mobileMQ.addEventListener) mobileMQ.addEventListener('change', refreshChipLists);
+
   // Reading progress bar looks up its element live on every scroll instead of
   // being (re)bound per page, so it survives #page-content swaps with a
   // single persistent listener rather than accumulating one per navigation.
@@ -1119,6 +1258,25 @@
   // ---------- router: swap #page-content, keep navbar/footer mounted ----------
 
   function contentEl() { return document.getElementById('page-content'); }
+
+  // Page-specific scripts (github.js, sleep.js, visitors.js…) only load on the pages whose HTML
+  // lists them, so after an AJAX swap, load any the new page needs that this document lacks.
+  function ensureScripts(doc, done) {
+    var have = {};
+    Array.prototype.forEach.call(document.scripts, function (s) { if (s.src) have[s.getAttribute('src')] = true; });
+    var need = Array.prototype.filter.call(doc.scripts, function (s) {
+      var src = s.getAttribute('src');
+      return src && /^assets\/js\//.test(src) && !have[src] && s.type !== 'module';
+    });
+    if (!need.length) { done(); return; }
+    var left = need.length, fin = function () { if (--left === 0) done(); };
+    need.forEach(function (s) {
+      var el = document.createElement('script');
+      el.src = s.getAttribute('src');
+      el.onload = el.onerror = fin;
+      document.body.appendChild(el);
+    });
+  }
 
   function navigateTo(href, push) {
     if (navigating) return;
@@ -1144,10 +1302,10 @@
           document.title = newTitle;
           document.body.setAttribute('data-page', newPageKey);
           setActiveNav(newPageKey);
-          initPageBehaviors(curMain);
           window.scrollTo(0, 0);
           requestAnimationFrame(function () { curMain.classList.remove('is-transitioning'); });
           navigating = false;
+          ensureScripts(doc, function () { initPageBehaviors(curMain); });
         };
 
         if (push) history.pushState({ href: url.pathname }, '', url.pathname + url.hash);

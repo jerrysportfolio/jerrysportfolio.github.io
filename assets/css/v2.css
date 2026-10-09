@@ -607,6 +607,8 @@ body.portal-down.portal-fade::before{opacity:.9;}
   color:var(--ink-faint); font-family:var(--font-code); font-size:.8rem;
 }
 .v2 .proj-cover img{display:block; width:100%; height:auto; max-height:280px; object-fit:cover; object-position:center;}
+/* Random Unsplash covers can be portrait: fix their frame to 16:9 and crop, so every card is the same height. */
+.v2 .proj-cover img[data-unsplash-random]{aspect-ratio:16/9; height:auto; max-height:none; object-fit:cover;}
 .v2 .proj-body{padding:22px 20px 26px;}
 .v2 .proj-chip{
   display:inline-block; font-family:var(--font-code); font-size:.72rem; text-transform:uppercase;
@@ -632,6 +634,10 @@ body.portal-down.portal-fade::before{opacity:.9;}
 }
 .v2 .gallery-item:hover{transform:scale(1.035);}
 .v2 .gallery-item[hidden]{display:none;}
+.v2 .gallery-item.gallery-ph{background:#e4e4e6; cursor:default;}
+.v2 .gallery-item.gallery-ph:hover{transform:none;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .v2 .gallery-item.gallery-ph{background:#2a2a2d;}}
+:root[data-theme="dark"] .v2 .gallery-item.gallery-ph{background:#2a2a2d;}
 .v2 .load-more{
   display:block; margin:32px auto 48px; padding:12px 28px; border-radius:100px;
   border:1px solid var(--line); background:var(--paper-card); font-weight:600; cursor:pointer;
@@ -725,6 +731,18 @@ body.portal-down.portal-fade::before{opacity:.9;}
    meant to override gets silently beaten by it regardless of viewport. */
 @media (max-width:860px){
   .v2 .about-rail{position:static; top:auto;}
+}
+/* Phone (<600px): photo left, a vertical divider, name + bio on the right; the info rows run full width below.
+   600–860px keeps the stacked desktop-style card (see the tablet block at the end). */
+@media (max-width:599px){
+  .v2 .about-rail > aside.info-card{display:grid; grid-template-columns:110px 1px minmax(0,1fr); column-gap:16px; align-items:center;}
+  .v2 .about-rail > aside.info-card::before{content:""; grid-column:2; grid-row:1 / 3; align-self:stretch; background:var(--line);}
+  .v2 .about-rail > aside.info-card .avatar{grid-column:1; grid-row:1 / 3; margin-bottom:0;}
+  .v2 .about-rail > aside.info-card h2{grid-column:3; grid-row:1; align-self:end; margin:0 0 4px;}
+  .v2 .about-rail > aside.info-card .role{grid-column:3; grid-row:2; align-self:start; margin-bottom:0;}
+  .v2 .about-rail > aside.info-card .info-row,
+  .v2 .about-rail > aside.info-card .social-row{grid-column:1 / -1;}
+  .v2 .about-rail > aside.info-card .role + .info-row{margin-top:18px; border-top:none;}
 }
 .v2 .info-card .avatar{
   width:110px; height:110px; border-radius:50%; object-fit:cover;
@@ -846,7 +864,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
   position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
   border-radius:var(--radius-sm); opacity:0; transition:opacity .8s ease, transform .25s;
 }
-.v2 .blog-thumb .thumb-slide.active{opacity:1;}
+.v2 .blog-thumb .thumb-slide.active.loaded{opacity:1;}
 @media (prefers-reduced-motion: reduce){
   .v2 .blog-thumb .thumb-slide{transition:transform .25s;}
 }
@@ -1070,7 +1088,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
   .v2 .about-rail{display:contents;}
   .v2 .about-rail > aside{order:0;}
   .v2 .about-rail > .github-card{order:1;}
-  .v2 .about-grid > .about-content{order:2; margin-top:24px;}
+  .v2 .about-grid > .about-content{order:2; margin-top:0;}
   .v2 .about-rail > .sleep-card{order:3; margin-top:0; margin-bottom:40px;}
 }
 /* Desktop About page: keep the rail (and its last card) clear of the footer line. */
@@ -1082,3 +1100,112 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .info-card .avatar{opacity:0; transition:opacity .35s ease;}
 .v2 .info-card .avatar.loaded{opacity:1;}
 @media (prefers-reduced-motion: reduce){ .v2 .info-card .avatar{transition:none;} }
+/* Same for project covers, gallery photos and blog images: hidden until decoded, then fade in whole
+   (v2.js adds .loaded on load/error), instead of painting line by line. */
+.v2 .proj-cover img, .v2 .gallery-item img, .v2 .post-gallery img{opacity:0; transition:opacity .35s ease;}
+.v2 .proj-cover img.loaded, .v2 .gallery-item img.loaded, .v2 .post-gallery img.loaded{opacity:1;}
+@media (prefers-reduced-motion: reduce){ .v2 .proj-cover img, .v2 .gallery-item img, .v2 .post-gallery img{transition:none;} }
+
+/* About (mobile): collapsible Education / Research / Hackathons lists. */
+.v2 .tl-toggle{display:none;}
+@media (max-width:860px){
+  .v2 .about-content h3:has(> .tl-toggle){display:flex; align-items:center; gap:8px;}
+  .v2 .tl-toggle{
+    display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; flex:none; padding:0;
+    border:1px solid var(--line); border-radius:50%; background:var(--paper-card); color:var(--ink-soft); cursor:pointer;
+    transition:transform .3s ease, border-color .2s ease, color .2s ease;
+  }
+  .v2 .tl-toggle[aria-expanded="true"]{transform:rotate(90deg); color:var(--accent); border-color:var(--accent);}
+  .v2 .timeline.tl-collapsible{overflow:hidden; transition:height .35s cubic-bezier(.22,1,.36,1);}
+}
+@media (prefers-reduced-motion: reduce){
+  .v2 .timeline.tl-collapsible, .v2 .tl-toggle{transition:none;}
+}
+
+.v2 .s-source{display:flex; align-items:center; gap:6px; margin-top:10px; font-family:var(--font-code); font-size:.68rem; letter-spacing:.02em; color:var(--ink-faint);}
+.v2 .s-source .health-ico{flex:none; display:block; width:16px; height:16px; border-radius:4px; box-shadow:0 0 0 1px var(--line);}
+/* "+N more" hint beside collapsed headings (mobile only) */
+.v2 .tl-more{display:none;}
+@media (max-width:860px){
+  .v2 .about-content h3:has(> .tl-toggle){cursor:pointer; -webkit-tap-highlight-color:transparent;}
+  .v2 .tl-more{
+    display:inline-block; margin-left:auto; padding:3px 10px; border-radius:100px; background:var(--accent-wash); color:var(--accent);
+    font-family:var(--font-code); font-size:.72rem; font-weight:600; letter-spacing:.02em; line-height:1.4;
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .v2 .tl-more.hidden{opacity:0; transform:scale(.9); pointer-events:none;}
+}
+
+/* About tech stack: categories over 10 chips collapse behind a "+N more" chip. */
+.v2 .chip-list.chip-collapsible{box-sizing:border-box; position:relative; overflow:hidden; overflow-anchor:none; transition:height .4s cubic-bezier(.22,1,.36,1); padding:3px; margin:7px -3px 23px;}
+.v2 .chip-more{font:inherit; font-size:.85rem; font-weight:600; color:var(--accent); background:var(--accent-wash); border-color:transparent; cursor:pointer;}
+.v2 .chip-list.chip-open .chip-more{display:none;}
+.v2 .chip-extra{opacity:0; transform:translateY(8px); pointer-events:none; transition:opacity .35s ease .08s, transform .35s ease .08s, border-color .18s ease, color .18s ease, box-shadow .18s ease;}
+.v2 .chip-list.chip-open .chip-extra{opacity:1; transform:none; pointer-events:auto;}
+@media (prefers-reduced-motion: reduce){
+  .v2 .chip-list.chip-collapsible, .v2 .chip-extra{transition:none;}
+}
+
+/* ---------- Tablet / foldable layouts (viewport-based) ---------- */
+/* The sleep chart scales with its card; cap it so a wide single-column card doesn't balloon. */
+.v2 .s-chart{max-width:340px; margin-left:auto; margin-right:auto;}
+
+/* About, ~600–860px (mini tablets, unfolded foldables): profile card on the left, GitHub over Sleep on the
+   right (stacked, so no wide gap between them), the page text full width below. */
+@media (min-width:600px) and (max-width:860px){
+  .v2 .about-grid{grid-template-columns:repeat(2,minmax(0,1fr)); align-items:stretch; gap:16px;}
+  .v2 .about-rail > aside{grid-column:1; grid-row:1 / span 2; order:0;}
+  .v2 .about-rail > .github-card{grid-column:2; grid-row:1; order:0;}
+  .v2 .about-rail > .sleep-card{grid-column:2; grid-row:2; order:0; margin-bottom:0;}
+  .v2 .about-grid > .about-content{grid-column:1 / -1; grid-row:3; order:0; margin-top:0;}
+}
+
+/* Home bento, ~761–980px: intro and hero full width, the two post cards side by side. */
+@media (min-width:761px) and (max-width:980px){
+  .v2 .bento{grid-template-columns:1fr 1fr; grid-template-areas:"intro intro" "hero hero" "latest older";}
+}
+
+/* Very narrow screens (foldable cover displays, ≤380px): tighter profile header and gutters. */
+@media (max-width:380px){
+  .v2 .about-rail > aside.info-card{grid-template-columns:80px 1px minmax(0,1fr); column-gap:12px; padding:18px;}
+  .v2 .info-card .avatar{width:80px; height:80px;}
+  .v2 .info-card h2{font-size:1.3rem;}
+  .v2 .info-card{padding:18px;}
+}
+
+/* ---------- Tablet / foldable support, site-wide (all viewport-based) ---------- */
+/* Never let a card grid's minimum column width exceed a very narrow viewport (foldable cover screens). */
+.v2 .grid-cards{grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));}
+
+/* ~600–860px: one consistent 16px gutter between cards in every grid, matching the About page. */
+@media (min-width:600px) and (max-width:860px){
+  .v2 .grid-cards{grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px;}
+  .v2 .bento, .v2 .home-featured{gap:16px;}
+  .v2 .post-gallery{gap:16px;}
+}
+
+/* Blog list, ~600–760px: keep the compact side-by-side row (a full-width 16:9 thumb is huge on a tablet). */
+@media (min-width:600px) and (max-width:760px){
+  .v2 .blog-row{flex-wrap:nowrap; align-items:center;}
+  .v2 .blog-thumb{width:140px; height:100px; aspect-ratio:auto;}
+}
+
+/* Narrow-tablet hero: keep the pinned height proportionate. */
+@media (max-width:480px){
+  .v2 .cell-hero{height:360px;}
+}
+
+/* Very narrow screens (≤380px): tighter navbar and footer so nothing overflows. */
+@media (max-width:380px){
+  .v2 .navbar{padding:10px 12px; gap:6px;}
+  .v2 .navbar .logo{font-size:1rem;}
+  .v2 .contact-link{padding:5px 10px; font-size:.72rem;}
+  .v2 footer.v2-footer{padding:32px 16px 44px; justify-content:center; text-align:center;}
+  .v2 .footer-links{flex-wrap:wrap; justify-content:center; gap:12px 16px;}
+}
+
+/* Tablet / phone: tighter space under every page heading (it was 64px top + 40px below the title). */
+@media (max-width:860px){
+  .v2 .page-header{padding:40px 0 16px;}
+  .v2 h1.page-title{margin-bottom:0;}
+}
