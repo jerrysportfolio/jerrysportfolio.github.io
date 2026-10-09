@@ -19,6 +19,24 @@ query($zone: String!, $from: Date!, $to: Date!) {
   }
 }`;
 
+// Hourly buckets, so days can be cut in the site owner's time zone instead of UTC.
+const QUERY_HOURLY = `
+query($zone: String!, $from: Time!) {
+  viewer {
+    zones(filter: { zoneTag: $zone }) {
+      httpRequests1hGroups(limit: 500, orderBy: [datetime_ASC], filter: { datetime_geq: $from }) {
+        dimensions { datetime }
+        uniq { uniques }
+      }
+    }
+  }
+}`;
+
+// "Today" and the day buckets follow this zone (the owner's), not UTC.
+const TZ = "America/Chicago";
+const dayFmt = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+const localDate = (ms) => dayFmt.format(ms); // YYYY-MM-DD in TZ
+
 // Live presence: every open tab holds a WebSocket to this one Durable Object, and the
 // "online now" number is the count of open sockets. Counts every connection (no dedupe),
 // so it errs on the high side. Uses WebSocket hibernation, so idle tabs cost nothing.
@@ -101,26 +119,40 @@ export default {
     const hit = await cache.match(cacheKey);
     if (hit) return withHeaders(hit, cors);
 
-    // UTC days, matching Cloudflare's buckets.
+    // Days are cut in TZ (see above). Hourly rows are summed per local day; Cloudflare only
+    // exposes uniques per bucket, so a visitor active in several hours counts once per hour
+    // and the daily figure runs a little high. If the hourly query fails, fall back to
+    // Cloudflare's own UTC daily buckets.
     const DAYS = 14;
-    const to = new Date().toISOString().slice(0, 10);
-    const from = new Date(Date.now() - (DAYS - 1) * 864e5).toISOString().slice(0, 10);
-    const res = await fetch("https://api.cloudflare.com/client/v4/graphql", {
+    const dates = Array.from({ length: DAYS }, (_, i) => localDate(Date.now() - (DAYS - 1 - i) * 864e5));
+    const to = dates[DAYS - 1];
+    const gql = (query, variables) => fetch("https://api.cloudflare.com/client/v4/graphql", {
       method: "POST",
       headers: { "Authorization": `Bearer ${env.CF_API_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ query: QUERY, variables: { zone: env.CF_ZONE_ID, from, to } }),
+      body: JSON.stringify({ query, variables: { zone: env.CF_ZONE_ID, ...variables } }),
     });
-    if (!res.ok) return json({ error: "upstream" }, 502, cors);
 
-    const data = await res.json();
-    const groups = data?.data?.viewer?.zones?.[0]?.httpRequests1dGroups;
-    if (!groups) return json({ error: "no data" }, 502, cors);
+    let byDate = null;
+    const hres = await gql(QUERY_HOURLY, { from: new Date(Date.now() - (DAYS + 1) * 864e5).toISOString() });
+    if (hres.ok) {
+      const rows = (await hres.json())?.data?.viewer?.zones?.[0]?.httpRequests1hGroups;
+      if (rows) {
+        byDate = {};
+        for (const r of rows) {
+          const d = localDate(Date.parse(r.dimensions.datetime));
+          byDate[d] = (byDate[d] || 0) + r.uniq.uniques;
+        }
+      }
+    }
+    if (!byDate) {
+      const res = await gql(QUERY, { from: dates[0], to });
+      if (!res.ok) return json({ error: "upstream" }, 502, cors);
+      const groups = (await res.json())?.data?.viewer?.zones?.[0]?.httpRequests1dGroups;
+      if (!groups) return json({ error: "no data" }, 502, cors);
+      byDate = Object.fromEntries(groups.map((g) => [g.dimensions.date, g.uniq.uniques]));
+    }
     // Fill days Cloudflare has no row for with 0 so the chart always spans DAYS points.
-    const byDate = Object.fromEntries(groups.map((g) => [g.dimensions.date, g.uniq.uniques]));
-    const days = Array.from({ length: DAYS }, (_, i) => {
-      const date = new Date(Date.parse(from) + i * 864e5).toISOString().slice(0, 10);
-      return { date, uniques: byDate[date] ?? 0 };
-    });
+    const days = dates.map((date) => ({ date, uniques: byDate[date] ?? 0 }));
 
     const out = json({ days, uniques: days[days.length - 1].uniques, day: to }, 200, { ...cors, "Cache-Control": "public, max-age=300" });
     ctx.waitUntil(cache.put(cacheKey, out.clone()));
@@ -138,7 +170,7 @@ const withHeaders = (res, headers) => {
 
 // POST /sleep  (Authorization: Bearer SLEEP_TOKEN)  body: {"nights":[{"date":"2026-10-07","hours":7.4}, ...]}
 //   `date` is the morning you woke up. Upserts by date, so re-sending a week is harmless.
-// GET  /sleep  -> {"nights":[{"date","hours"|null} x7]}, the last 7 days ending today (UTC).
+// GET  /sleep  -> {"nights":[{"date","hours"|null} x7]}, the last 7 days ending today (America/Chicago).
 async function handleSleep(request, env) {
   // The local preview server (python -m http.server 8000) may read the chart data too.
   const origin = request.headers.get("Origin") || "";
@@ -166,7 +198,7 @@ async function handleSleep(request, env) {
   if (request.method !== "GET") return json({ error: "method" }, 405, cors);
   const stored = await (await store.fetch("https://do/sleep")).json();
   const nights = Array.from({ length: 7 }, (_, i) => {
-    const date = new Date(Date.now() - (6 - i) * 864e5).toISOString().slice(0, 10);
+    const date = localDate(Date.now() - (6 - i) * 864e5);
     return { date, hours: stored[date] ?? null };
   });
   return json({ nights }, 200, { ...cors, "Cache-Control": "public, max-age=300" });
