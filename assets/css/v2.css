@@ -538,7 +538,7 @@ body.portal-down.portal-fade::before{opacity:.9;}
   --font-display, bold and tight, so it reads as a wordmark/lockup rather
   than a plain heading among the rest of the page's headings.
 */
-.v2 .cell-intro h2{
+.v2 .cell-intro h1, .v2 .cell-intro h2{
   font-family:var(--font-main); font-size:2.15rem; font-weight:700;
   letter-spacing:-.02em; line-height:1.05; margin:0;
 }
