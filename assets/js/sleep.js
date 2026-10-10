@@ -12,7 +12,7 @@
         attempt = attempt || 0;
         var ctl = window.AbortController ? new AbortController() : null;
         var timer = setTimeout(function () { if (ctl) ctl.abort(); }, 20000);
-        return fetch(url, ctl ? { signal: ctl.signal } : undefined)
+        return fetch(url, ctl ? { signal: ctl.signal, cache: "no-cache" } : { cache: "no-cache" })
             .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
             .finally(function () { clearTimeout(timer); })
             .catch(function () {
