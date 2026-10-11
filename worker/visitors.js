@@ -154,7 +154,7 @@ export default {
     // Fill days Cloudflare has no row for with 0 so the chart always spans DAYS points.
     const days = dates.map((date) => ({ date, uniques: byDate[date] ?? 0 }));
 
-    const out = json({ days, uniques: days[days.length - 1].uniques, day: to }, 200, { ...cors, "Cache-Control": "public, max-age=300" });
+    const out = json({ days, uniques: days[days.length - 1].uniques, day: to }, 200, { ...cors, "Cache-Control": "no-cache" });
     ctx.waitUntil(cache.put(cacheKey, out.clone()));
     return out;
   },
@@ -170,7 +170,7 @@ const withHeaders = (res, headers) => {
 
 // POST /sleep  (Authorization: Bearer SLEEP_TOKEN)  body: {"nights":[{"date":"2026-10-07","hours":7.4}, ...]}
 //   `date` is the morning you woke up. Upserts by date, so re-sending a week is harmless.
-// GET  /sleep  -> {"nights":[{"date","hours"|null} x7]}, the last 7 days ending today (America/Chicago), where "today" rolls over at 12:45pm local.
+// GET  /sleep  -> {"nights":[{"date","hours"|null} x7]}, the 7 days ending at the newest night with data (falls back to today in America/Chicago, rolling over at 12:45pm, if the data is 3+ days stale).
 async function handleSleep(request, env) {
   // The local preview server (python -m http.server 8000) may read the chart data too.
   const origin = request.headers.get("Origin") || "";
@@ -197,14 +197,19 @@ async function handleSleep(request, env) {
 
   if (request.method !== "GET") return json({ error: "method" }, 405, cors);
   const stored = await (await store.fetch("https://do/sleep")).json();
-  // The sleep "day" rolls over at 12:45pm (not midnight): last night's data isn't in until midday, so a new
-  // empty slot should only appear after that. Shifting "now" back 12h45m makes 12:45pm the day boundary.
-  const sleepNow = Date.now() - (12 * 60 + 45) * 6e4;
+  // The window ends at the newest night that has data, so a new bar appears the moment the Shortcut POSTs
+  // (no clock cutoff). If the data is stale (newest night is 3+ days behind the clock), fall back to the
+  // clock so missed days show as empty slots. The clock "day" rolls over at 12:45pm, not midnight:
+  // shifting "now" back 12h45m makes 12:45pm the boundary.
+  const clockEnd = Date.now() - (12 * 60 + 45) * 6e4;
+  const latest = Object.keys(stored).filter((d) => stored[d] != null).sort().pop();
+  const latestMs = latest ? Date.parse(`${latest}T12:00:00Z`) : null;
+  const endMs = latestMs !== null && latestMs > clockEnd - 3 * 864e5 ? latestMs : clockEnd;
   const nights = Array.from({ length: 7 }, (_, i) => {
-    const date = localDate(sleepNow - (6 - i) * 864e5);
+    const date = localDate(endMs - (6 - i) * 864e5);
     return { date, hours: stored[date] ?? null };
   });
-  return json({ nights }, 200, { ...cors, "Cache-Control": "public, max-age=300" });
+  return json({ nights }, 200, { ...cors, "Cache-Control": "no-cache" });
 }
 
 function timingSafeEqual(a, b) {

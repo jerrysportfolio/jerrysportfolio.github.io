@@ -121,5 +121,17 @@
         }
     }
     window.addEventListener("online", retryIfEmpty);
-    document.addEventListener("visibilitychange", function () { if (!document.hidden) retryIfEmpty(); });
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) return;
+        retryIfEmpty();
+        // Pick up a fresh Shortcut POST when returning to an already-open tab.
+        var card = document.querySelector("#sleep-card");
+        if (card && card.classList.contains("ready")) {
+            fetchRetry(SLEEP_URL).then(function (d) {
+                if (!hasData(d.nights)) return;
+                writeStore(d.nights);
+                render(card, d.nights);
+            }, function () {});
+        }
+    });
 })();
