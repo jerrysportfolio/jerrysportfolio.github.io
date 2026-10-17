@@ -596,6 +596,21 @@ body.portal-down.portal-fade::before{opacity:.9;}
   color:var(--ink-faint); font-family:var(--font-code); font-size:.8rem;
 }
 .v2 .proj-cover img{display:block; width:100%; height:auto; max-height:280px; object-fit:cover; object-position:center;}
+/* Multi-image project cover (e.g. Ripple): slides sit side by side in .proj-track, which slides left by one
+   frame at a time. initProjectCarousels (v2.js) drives the transform and builds the hover-able dots. */
+.v2 .proj-cover.proj-carousel{position:relative; overflow:hidden; display:block;}
+.v2 .proj-carousel .proj-track{display:flex; width:100%; transition:transform .5s cubic-bezier(.4,0,.2,1);}
+.v2 .proj-cover.proj-carousel img.proj-slide{flex:0 0 100%; min-width:0; opacity:1;}
+.v2 .proj-carousel .proj-dots{
+  position:absolute; left:50%; bottom:8px; transform:translateX(-50%); display:flex; gap:1px;
+  padding:2px 5px; border-radius:999px; background:rgba(0,0,0,.28); backdrop-filter:blur(4px);
+}
+.v2 .proj-carousel .proj-dot{display:block; width:12px; height:12px; position:relative; cursor:pointer;}
+.v2 .proj-carousel .proj-dot::after{
+  content:""; position:absolute; inset:3px; border-radius:50%; background:rgba(255,255,255,.55); transition:background .2s, transform .2s;
+}
+.v2 .proj-carousel .proj-dot.active::after{background:#fff; transform:scale(1.15);}
+@media (prefers-reduced-motion: reduce){ .v2 .proj-carousel .proj-track{transition:none;} }
 /* Random Unsplash covers can be portrait: fix their frame to 16:9 and crop, so every card is the same height. */
 .v2 .proj-cover img[data-unsplash-random]{aspect-ratio:16/9; height:auto; max-height:none; object-fit:cover;}
 .v2 .proj-body{padding:22px 20px 26px;}

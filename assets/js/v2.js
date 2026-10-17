@@ -1251,6 +1251,49 @@
     Array.prototype.forEach.call(root.querySelectorAll('img'), function (img) { if (img.complete) markLoaded(img); });
   }
 
+  // Auto-sliding project covers (.proj-carousel): .proj-track slides one frame left every 1.5s, looping, starting on
+  // the first image. Dots at the bottom center jump to a slide on hover (click/tap for touch) and pause the
+  // auto-advance while the pointer is over the cover. Each carousel owns its timer (stored on the element) and
+  // clears it once its node leaves the DOM, since the router swaps content via innerHTML and this can run twice.
+  function initProjectCarousels(root) {
+    root.querySelectorAll('.proj-carousel').forEach(function (cover) {
+      if (cover._carouselTimer) clearInterval(cover._carouselTimer);
+      var track = cover.querySelector('.proj-track');
+      var slides = cover.querySelectorAll('.proj-slide');
+      if (!track || slides.length < 2) return;
+      var old = cover.querySelector('.proj-dots');
+      if (old) old.remove();
+      var dotsWrap = document.createElement('span');
+      dotsWrap.className = 'proj-dots';
+      var dots = Array.prototype.map.call(slides, function (_, k) {
+        var d = document.createElement('span');
+        d.className = 'proj-dot';
+        d.addEventListener('mouseenter', function () { show(k); });
+        d.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); show(k); });
+        dotsWrap.appendChild(d);
+        return d;
+      });
+      cover.appendChild(dotsWrap);
+
+      var idx = 0;
+      function show(n) {
+        idx = n;
+        track.style.transform = 'translateX(' + (-100 * n) + '%)';
+        dots.forEach(function (d, k) { d.classList.toggle('active', k === n); });
+      }
+      show(0);
+      if (reduceMotion) return;
+
+      var paused = false;
+      cover.addEventListener('mouseenter', function () { paused = true; });
+      cover.addEventListener('mouseleave', function () { paused = false; });
+      cover._carouselTimer = setInterval(function () {
+        if (!cover.isConnected) { clearInterval(cover._carouselTimer); return; }
+        if (!paused) show((idx + 1) % slides.length);
+      }, 1500);
+    });
+  }
+
   function initPageBehaviors(root) {
     root = root || document;
     sweepLoadedImages(root);
@@ -1265,6 +1308,7 @@
     initGalleryStats(root);
     initGalleryPhotos(root);
     initRandomProjectCovers(root);
+    initProjectCarousels(root);
     initLightboxChrome(root);
     initPostImageLightbox(root);
     initResumeTracking(root);
