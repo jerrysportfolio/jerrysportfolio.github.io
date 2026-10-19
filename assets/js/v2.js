@@ -795,6 +795,20 @@
   function initRandomProjectCovers(root) {
     var imgs = root.querySelectorAll('img[data-unsplash-random]');
     if (!imgs.length) return;
+
+    // Small "i" badge (top right of the cover) explaining why the image isn't project-specific.
+    imgs.forEach(function (img) {
+      var cover = img.parentNode;
+      if (cover.querySelector('.proj-cover-note')) return;
+      var note = document.createElement('span');
+      note.className = 'proj-cover-note';
+      note.tabIndex = 0;
+      note.setAttribute('aria-label', 'No project photo available; this image is from my Unsplash.');
+      note.innerHTML = '<span aria-hidden="true">i</span><span class="proj-cover-tip" role="tooltip">' +
+        'No photo available for this project, so this one is from my Unsplash.</span>';
+      cover.appendChild(note);
+    });
+
     if (!UNSPLASH_CONFIG.accessKey || !UNSPLASH_CONFIG.username) return;
 
     fetch('https://api.unsplash.com/users/' + encodeURIComponent(UNSPLASH_CONFIG.username) +

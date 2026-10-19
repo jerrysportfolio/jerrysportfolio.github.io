@@ -612,6 +612,21 @@ body.portal-down.portal-fade::before{opacity:.9;}
 .v2 .proj-carousel .proj-dot.active::after{background:#fff; transform:scale(1.15);}
 @media (prefers-reduced-motion: reduce){ .v2 .proj-carousel .proj-track{transition:none;} }
 /* Random Unsplash covers can be portrait: fix their frame to 16:9 and crop, so every card is the same height. */
+/* "i" badge on covers filled from Unsplash (added by initRandomProjectCovers in v2.js); tooltip on hover/focus. */
+.v2 .proj-cover:has(.proj-cover-note){position:relative;}
+.v2 .proj-cover-note{
+  position:absolute; top:10px; right:10px; z-index:2; width:22px; height:22px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; cursor:help;
+  background:rgba(0,0,0,.55); color:#fff; font:italic 600 .8rem/1 var(--font-display);
+  backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+}
+.v2 .proj-cover-tip{
+  position:absolute; top:calc(100% + 6px); right:0; width:200px; padding:8px 10px; border-radius:8px;
+  background:rgba(20,20,20,.92); color:#fff; font:400 .75rem/1.4 var(--font-main);
+  font-style:normal; text-align:left; opacity:0; visibility:hidden; transform:translateY(-3px);
+  transition:opacity .15s ease, transform .15s ease; pointer-events:none;
+}
+.v2 .proj-cover-note:hover .proj-cover-tip, .v2 .proj-cover-note:focus .proj-cover-tip{opacity:1; visibility:visible; transform:none;}
 .v2 .proj-cover img[data-unsplash-random]{aspect-ratio:16/9; height:auto; max-height:none; object-fit:cover;}
 .v2 .proj-body{padding:22px 20px 26px;}
 .v2 .proj-chip{
